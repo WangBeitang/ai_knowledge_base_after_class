@@ -57,4 +57,4 @@ main_graph_builder.add_edge("node_item_name_recognition", "node_bge_embedding")
 main_graph_builder.add_edge("node_bge_embedding", "node_import_milvus")
 
 # 5.编译
-main_graph = main_graph_builder.compile()
+kb_import_app = main_graph_builder.compile()

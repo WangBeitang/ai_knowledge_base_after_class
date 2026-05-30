@@ -1,3 +1,3 @@
-from app.process.import_.agent.main_graph import main_graph
+from app.process.import_.agent.main_graph import kb_import_app
 
-main_graph.get_graph().print_ascii()
+kb_import_app.get_graph().print_ascii()
