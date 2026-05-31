@@ -112,42 +112,45 @@ def _trace_id(state) -> str:
         return str(state.get("session_id") or state.get("task_id") or "-")
     return "-"
 
-def node_log(node_name: str):
+def node_log(node_name: str = None):
     def deco(func):
         @wraps(func)
         def wrapper(state, *args, **kwargs):
+            actual_node_name = node_name if node_name is not None else func.__name__
             trace_id = _trace_id(state)
             start_ts = time.time()
-            logger.info(f"[{node_name}] 节点开始，追踪ID={trace_id}")
+            logger.info(f"[{actual_node_name}] 节点开始，追踪ID={trace_id}")
             try:
                 result = func(state, *args, **kwargs)
                 cost_ms = int((time.time() - start_ts) * 1000)
-                logger.info(f"[{node_name}] 节点完成，追踪ID={trace_id}，耗时={cost_ms}ms")
+                logger.info(f"[{actual_node_name}] 节点完成，追踪ID={trace_id}，耗时={cost_ms}ms")
                 return result
             except Exception:
-                logger.exception(f"[{node_name}] 节点异常，追踪ID={trace_id}")
+                logger.exception(f"[{actual_node_name}] 节点异常，追踪ID={trace_id}")
                 raise
         return wrapper
     return deco
 
-def step_log(step_name: str):
+def step_log(step_name: str = None):
     """
     步骤日志装饰器：
     - 自动打印 步骤开始 / 步骤完成 / 步骤异常（含堆栈）
     - 不吞异常，保持原有业务语义
+    - 如果不传step_name参数，则默认使用函数名
     """
     def deco(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            actual_step_name = step_name if step_name is not None else func.__name__
             start_ts = time.time()
-            logger.info(f"[{step_name}] 步骤开始")
+            logger.info(f"[{actual_step_name}] 步骤开始")
             try:
                 result = func(*args, **kwargs)
                 cost_ms = int((time.time() - start_ts) * 1000)
-                logger.info(f"[{step_name}] 步骤完成，耗时={cost_ms}ms")
+                logger.info(f"[{actual_step_name}] 步骤完成，耗时={cost_ms}ms")
                 return result
             except Exception:
-                logger.exception(f"[{step_name}] 步骤异常")
+                logger.exception(f"[{actual_step_name}] 步骤异常")
                 raise
         return wrapper
     return deco

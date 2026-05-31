@@ -20,5 +20,5 @@ class InfraConfig:
     mineru: MinerUConfig = field(default_factory=lambda: mineru_config)
     minio: MinIOConfig = field(default_factory=lambda: minio_config)
 
-# infra_config = InfraConfig()
+infra_config = InfraConfig()
 # print(infra_config.app.import_app_name)

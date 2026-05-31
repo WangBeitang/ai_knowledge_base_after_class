@@ -3,7 +3,7 @@ from app.shared.utils.task_utils import add_done_task, add_running_task
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.entry_service import resolve_input_file
 
-@node_log("node_entry")
+@node_log()
 def node_entry(state: ImportGraphState) -> ImportGraphState:
     """
     节点: 入口节点 (node_entry)
