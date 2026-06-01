@@ -1,3 +1,4 @@
+import shutil
 import time
 import requests
 from app.process.import_.agent.state import ImportGraphState
@@ -158,8 +159,55 @@ def _upload_pdf_and_poll(pdf_path_obj):
         logger.warning(f"MinerU交互，获取zip_url，状态码为{result_state}，将会在等待后重试")
         time.sleep(interval_time)
 
+@step_log()
+def download_and_extract_markdown(zip_url:Path, local_dir_obj: Path, stem: str):
+    # 1.下载MinerU返回的zip结果包
+    response = requests.get(zip_url, timeout=MINERU_POLL_TIMEOUT_SECONDS)
+    if response.status_code != 200:
+        logger.error(f"MinerU文件下载地址{zip_url}下载失败，响应状态码：{response.status_code}")
+        raise RuntimeError(f"MinerU文件下载地址{zip_url}下载失败，响应状态码：{response.status_code}")
+
+    # 2.将ZIP保存到输出目录
+    # 目标存储位置
+    zip_path_obj = local_dir_obj / f"{stem}_result.zip"
+    zip_path_obj.write_bytes(response.content)
+
+    # 3.清理旧解压目录并重新解压
+    extract_dir_obj = local_dir_obj / f"{stem}"
+    if extract_dir_obj.is_dir():
+        shutil.rmtree(extract_dir_obj)
+    # 创建解压文件夹
+    extract_dir_obj.mkdir(parents=True, exist_ok=True)
+    # 解压
+    shutil.unpack_archive(zip_path_obj, extract_dir_obj)
+
+    # 4.递归查找.md文件
+    md_file_obj_list = list(extract_dir_obj.rglob("*.md"))
+    if not any(md_file_obj_list):
+        logger.error(f"MinerU交互，获取zip_url{zip_url}成功，但未找到.md文件，请检查！")
+        raise RuntimeError(f"MinerU交互，获取zip_url{zip_url}成功，但未找到.md文件，请检查！")
+
+    # 5.优先选择与pdf同名的.md文件
+    for md_file_obj in md_file_obj_list:
+        if md_file_obj.stem == stem:
+            return md_file_obj
+
+    # 6.没有同名文件，取full.md
+    target_md_obj = None
+    for md_file_obj in md_file_obj_list:
+        if md_file_obj.name.lower() == "full.md":
+            target_md_obj = md_file_obj
+            break
+    # 7.没有full.md，取第一个.md文件
+    if not target_md_obj:
+        target_md_obj = md_file_obj_list[0]
+
+    # 8.重命名为stem.md
+    logger.info(f"MinerU交互，获取zip_url{zip_url}成功，已找到.md文件，将重命名为{stem}.md")
+    return target_md_obj.rename(target_md_obj.with_name(f"{stem}.md"))
 
 
+@step_log()
 def parse_pdf_to_markdown(state: ImportGraphState) -> ImportGraphState:
     """
     PDF 解析服务：
@@ -174,6 +222,9 @@ def parse_pdf_to_markdown(state: ImportGraphState) -> ImportGraphState:
     zip_url = _upload_pdf_and_poll(pdf_path_obj)
     print(zip_url)
     # 3.zip文件下载、解压及md文件重命名
+    md_path_obj = download_and_extract_markdown(zip_url, local_dir_obj, pdf_path_obj.stem)
 
     # 4.md_path  md_content 回写
+    state["md_path"] = str(md_path_obj)
+    state["md_content"] = md_path_obj.read_text(encoding="utf-8")
     return state
