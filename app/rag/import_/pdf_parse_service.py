@@ -4,9 +4,11 @@ import requests
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.config import MINERU_DOWNLOAD_TIMEOUT_SECONDS, MINERU_POLL_INTERVAL_SECONDS, \
     MINERU_POLL_TIMEOUT_SECONDS
+from app.rag.import_.mineru_status import is_success_code, parse_extract_state, MinerUExtractState, is_running_state
 from app.shared.runtime.logger import logger, PROJECT_ROOT, step_log
 from pathlib import Path
 from app.infra.config.providers import infra_config
+from app.shared.utils.http_status_utils import is_http_ok, is_retryable_server_error
 
 
 # pdf文件路径校验
@@ -70,14 +72,14 @@ def _upload_pdf_and_poll(pdf_path_obj):
     try:
         response = requests.post(url, json=data, headers=header, timeout=MINERU_DOWNLOAD_TIMEOUT_SECONDS)
         # 状态码校验
-        if response.status_code != 200:
+        if not is_http_ok(response.status_code):
             logger.error(f"MinerU交互，请求失败，请检查！状态码：{response.status_code}")
             raise RuntimeError(f"MinerU交互，请求失败，请检查！状态码：{response.status_code}")
 
         # 业务状态校验
         response_dict = response.json()
         code = response_dict.get("code")
-        if code != 0:
+        if not is_success_code(code):
             logger.error(f"MinerU交互，业务状态码为{code},异常信息：{response_dict.get('msg')}")
             raise RuntimeError(f"MinerU交互，业务状态码为{code},异常信息：{response_dict.get('msg')}")
 
@@ -95,7 +97,7 @@ def _upload_pdf_and_poll(pdf_path_obj):
             session.trust_env = False
             put_response = session.put(upload_url, data=pdf_path_obj.read_bytes())
             # 状态码校验
-            if put_response.status_code != 200:
+            if not is_http_ok(put_response.status_code):
                 logger.error(f"MinerU交互，pdf文件{upload_url}上传失败，请检查！状态码：{put_response.status_code}")
                 raise RuntimeError(f"MinerU交互，pdf文件{upload_url}上传失败，请检查！状态码：{put_response.status_code}")
     except Exception as e:
@@ -124,9 +126,9 @@ def _upload_pdf_and_poll(pdf_path_obj):
             continue
 
         # 4.3 状态码校验
-        if get_response.status_code != 200:
+        if not is_http_ok(get_response.status_code):
             # 重试500-599的状态码
-            if 500 <= get_response.status_code < 600:
+            if is_retryable_server_error(get_response.status_code):
                 logger.warning(f"MinerU交互，获取zip_url请求异常，状态码：{get_response.status_code}，将会在等待后重试")
                 time.sleep(interval_time)
                 continue
@@ -135,29 +137,36 @@ def _upload_pdf_and_poll(pdf_path_obj):
 
         # 4.4 业务状态校验
         response_dict = get_response.json()
-        if response_dict.get("code") != 0:
+        if not is_success_code(response_dict.get("code")):
             logger.error(f"MinerU交互，获取zip_url业务状态码为{response_dict.get('code')},异常信息：{response_dict.get('msg')}")
             raise RuntimeError(f"MinerU交互，获取zip_url业务状态码为{response_dict.get('code')},异常信息：{response_dict.get('msg')}")
 
         # 4.5 获取结果信息
         # 完成:done，waiting-file: 等待文件上传排队提交解析任务中，pending: 排队中，running: 正在解析，failed：解析失败，converting：格式转换中
         result_dict = response_dict.get("data", {}).get("extract_result", [])[0]
-        result_state = result_dict.get("state", "failed")
+        try:
+            result_state = parse_extract_state(result_dict.get("state"))
+        except ValueError as e:
+            logger.error(f"轮询获取zip_url,MinerU服务器返回结果异常，{str(e)}")
+            raise RuntimeError(f"轮询获取zip_url,MinerU服务器返回结果异常，{str(e)}") from e
 
-        # done和failed单独处理，其余状态继续轮询
-        if result_state == "done":
+        if result_state == MinerUExtractState.DONE:
             zip_url = result_dict.get("full_zip_url")
             if not zip_url:
-                logger.error(f"MinerU交互，获取zip_url失败，zip_url为空")
-                raise RuntimeError(f"MinerU交互，获取zip_url失败，zip_url为空")
+                logger.error(f"轮询获取zip_url,MinerU服务器返回结果异常，zip_url为空")
+                raise RuntimeError(f"轮询获取zip_url,MinerU服务器返回结果异常，zip_url为空")
             return zip_url
+        if result_state == MinerUExtractState.FAILED:
+            logger.error(f"轮询获取zip_url,MinerU服务器返回结果异常，解析失败")
+            raise RuntimeError(f"轮询获取zip_url,MinerU服务器返回结果异常，解析失败")
 
-        if result_state == "failed":
-            logger.error(f"MinerU交互，获取zip_url失败，文件解析失败，请检查！")
-            raise RuntimeError(f"MinerU交互，获取zip_url，文件解析失败，请检查！")
+        if is_running_state(result_state):
+            logger.warning(f"轮询获取zip_url,{pdf_path_obj.name}业务结果信息{result_state},正在解析中......")
+            time.sleep(interval_time)
+            continue
 
-        logger.warning(f"MinerU交互，获取zip_url，状态码为{result_state}，将会在等待后重试")
-        time.sleep(interval_time)
+        logger.error(f"轮询获取zip_url,MinerU服务器返回结果异常，无法处理的解析状态：{result_state}")
+        raise RuntimeError(f"轮询获取zip_url,MinerU服务器返回结果异常，无法处理的解析状态：{result_state}")
 
 @step_log()
 def download_and_extract_markdown(zip_url:Path, local_dir_obj: Path, stem: str):
