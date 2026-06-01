@@ -22,3 +22,4 @@ class MinioGateway:
 if __name__ == "__main__":
     minio_gateway = MinioGateway()
     print(minio_gateway.build_image_url("test","test.png"))
+    print(minio_gateway.client())
