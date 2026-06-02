@@ -18,6 +18,7 @@ class MinioGateway:
         protocol = "https" if infra_config.minio.minio_secure else "http"
         return f"{protocol}://{infra_config.minio.endpoint}/{self.bucket_name}/{self.image_dir}/{stem}/{object_name}"
 
+minio_gateway = MinioGateway()
 
 if __name__ == "__main__":
     minio_gateway = MinioGateway()

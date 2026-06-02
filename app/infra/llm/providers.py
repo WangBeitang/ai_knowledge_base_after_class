@@ -8,5 +8,12 @@ class LLMProvider:
 
     # 获取视觉模型
     def vision_chat(self, model_name:str=None):
-        model_name = model_name or infra_config.vision_model
+        model_name = model_name or infra_config.llm.lv_model
         return get_llm_client(model_name)
+
+llm_provider = LLMProvider()
+
+if __name__ == "__main__":
+    llm = LLMProvider()
+    print(llm.chat())
+    print(llm.vision_chat())
