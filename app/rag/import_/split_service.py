@@ -157,6 +157,83 @@ def _split_long_section(chunk, max_size):
     return sub_chunks
 
 
+# 子块重编号
+@step_log()
+def _renumber_chunks(chunks):
+    last_patent_title = None
+    current_index = 0
+    for chunk in chunks:
+        parent_title = chunk.get("parent_title")
+        if parent_title:
+            if parent_title == last_patent_title:
+                current_index += 1
+            else:
+                current_index = 1
+                last_patent_title = parent_title
+        else:
+            parent_title = chunk.get("title")
+            chunk["parent_title"] = parent_title
+            last_patent_title = None
+            current_index = 1
+
+        chunk["part"] = str(current_index)
+        chunk["title"] = f"{parent_title}_{current_index}"
+    return chunks
+
+
+def _merge_small_chunks(final_chunks, max_size, min_size):
+    # 1.声明合并后的列表结果
+    merged_chunks = []
+
+    # 2.记录第一个指针chunk的位置
+    start_chunk = None
+
+    # 3.遍历 chunks
+    for next_chunk in final_chunks:
+        # 第一次
+        if start_chunk is None:
+            start_chunk = next_chunk
+            continue
+
+        # 4.第二次及以后
+        is_lt_chunk = len(start_chunk.get("content")) < min_size
+        start_parent_title = start_chunk.get("parent_title")
+        next_parent_title = next_chunk.get("parent_title")
+        is_same_parent_title = start_parent_title and start_parent_title == next_parent_title
+
+        # 5.同一个父标题且长度小于600
+        if is_lt_chunk and is_same_parent_title:
+            # 6.清理next的标题内容
+            next_chunk_to_title = next_chunk.get("content")[len(next_chunk.get("parent_title")) + 2:]
+            start_content = start_chunk.get("content")
+
+            # 7.长度校验
+            merged_content = start_content + "\n" + next_chunk_to_title
+            if len(merged_content) <= max_size:
+                start_chunk["content"] = merged_content
+                logger.info(f"{file_title}文档合并成功，合并结果如下：{merged_content}")
+            else:
+                merged_chunks.append(start_chunk)
+                start_chunk = next_chunk
+                continue
+        else:
+            merged_chunks.append(start_chunk)
+            start_chunk = next_chunk
+    # 处理最后一个块
+    if start_chunk:
+        merged_chunks.append(start_chunk)
+    return _renumber_chunks(merged_chunks)
+
+
+
+
+
+
+
+
+
+
+
 @step_log("对超长文本做二次切分")
 def refine_chunks(chunks, file_title, max_size:int = CHUNK_MAX_SIZE, min_size:int = CHUNK_SIZE):
     # 1.判断content有没有超过max_size
@@ -164,6 +241,11 @@ def refine_chunks(chunks, file_title, max_size:int = CHUNK_MAX_SIZE, min_size:in
     for chunk in chunks:
         if len(chunk["content"]) > max_size:
             final_chunks.extend(_split_long_section(chunk, max_size))
+        else:
+            final_chunks.append(chunk)
+
+    # 2.判断content有没有小于min_size
+    final_merge_chunks = _merge_small_chunks(final_chunks, max_size, min_size)
 
 
 def split_document(state: ImportGraphState) -> ImportGraphState:
@@ -176,9 +258,11 @@ def split_document(state: ImportGraphState) -> ImportGraphState:
     """
     # 1.读取markdown内容
     md_content, file_title, md_path_obj = load_markdown_content(state)
+
     # 2.按标题层级做一级粗切
     chunks = split_by_titles(md_content, file_title)
 
     # 3.对超长文本做二次细切
     chunks = refine_chunks(chunks, file_title)
+
     return state
