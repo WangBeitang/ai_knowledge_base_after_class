@@ -76,6 +76,8 @@ def split_by_titles(md_content, file_title):
     for line in lines_list:
         # 5. 数据清洗 line.strip() 去掉空格
         line = line.strip()
+        if not line:
+            continue
 
         # 6. 判断是不是在代码块中 is_code_block
         if line.startswith("```") or line.startswith("~~~"):
