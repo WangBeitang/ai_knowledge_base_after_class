@@ -1,7 +1,10 @@
 import re
 from pathlib import Path
 
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 from app.process.import_.agent.state import ImportGraphState
+from app.rag.import_.config import CHUNK_MAX_SIZE, CHUNK_SIZE, CHUNK_OVERLAP
 from app.shared.runtime.logger import step_log,logger
 
 
@@ -120,7 +123,47 @@ def split_by_titles(md_content, file_title):
     return chunks
 
 
+@step_log()
+def _split_long_section(chunk, max_size):
+    # 1.content格式清理
+    title = chunk.get("title")
+    content = chunk.get("content")
+    body = content[len(title):]
 
+    # 2.定义固定前缀
+    prefix = f"{title}\n"
+    available_size = max_size - len(prefix)
+
+    # 3.定义递归切割器
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=available_size,
+        chunk_overlap=CHUNK_OVERLAP,
+        separators=["\n\n", "\n", "。", "！"]
+    )
+
+    sub_chunks = []
+
+    # 4.递归切割
+    for index,chunk_content in enumerate(splitter.split_text(body), start=1):
+        sub_chunks.append({
+            "file_title": f"{chunk.get('file_title')}",
+            "title": f"{chunk.get('title')}_{index}",
+            "content": f"{prefix}{chunk_content}",
+            "part": f"{index}",
+            "parent_title": f"{chunk.get('title')}"
+        })
+
+    # 5.返回结果
+    return sub_chunks
+
+
+@step_log("对超长文本做二次切分")
+def refine_chunks(chunks, file_title, max_size:int = CHUNK_MAX_SIZE, min_size:int = CHUNK_SIZE):
+    # 1.判断content有没有超过max_size
+    final_chunks = []
+    for chunk in chunks:
+        if len(chunk["content"]) > max_size:
+            final_chunks.extend(_split_long_section(chunk, max_size))
 
 
 def split_document(state: ImportGraphState) -> ImportGraphState:
@@ -135,5 +178,7 @@ def split_document(state: ImportGraphState) -> ImportGraphState:
     md_content, file_title, md_path_obj = load_markdown_content(state)
     # 2.按标题层级做一级粗切
     chunks = split_by_titles(md_content, file_title)
-    state["chunks"] = chunks
+
+    # 3.对超长文本做二次细切
+    chunks = refine_chunks(chunks, file_title)
     return state
