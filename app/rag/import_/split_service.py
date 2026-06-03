@@ -1,3 +1,4 @@
+import json
 import re
 from pathlib import Path
 
@@ -211,7 +212,7 @@ def _merge_small_chunks(final_chunks, max_size, min_size):
             merged_content = start_content + "\n" + next_chunk_to_title
             if len(merged_content) <= max_size:
                 start_chunk["content"] = merged_content
-                logger.info(f"{file_title}文档合并成功，合并结果如下：{merged_content}")
+                logger.info(f"{start_parent_title}文档合并成功，合并结果如下：{merged_content}")
             else:
                 merged_chunks.append(start_chunk)
                 start_chunk = next_chunk
@@ -223,16 +224,6 @@ def _merge_small_chunks(final_chunks, max_size, min_size):
     if start_chunk:
         merged_chunks.append(start_chunk)
     return _renumber_chunks(merged_chunks)
-
-
-
-
-
-
-
-
-
-
 
 @step_log("对超长文本做二次切分")
 def refine_chunks(chunks, file_title, max_size:int = CHUNK_MAX_SIZE, min_size:int = CHUNK_SIZE):
@@ -246,6 +237,23 @@ def refine_chunks(chunks, file_title, max_size:int = CHUNK_MAX_SIZE, min_size:in
 
     # 2.判断content有没有小于min_size
     final_merge_chunks = _merge_small_chunks(final_chunks, max_size, min_size)
+
+    # 3.判空赋值
+    for chunk in final_merge_chunks:
+        if "parent_title" not in chunk:
+            chunk["parent_title"] = chunk.get("title")
+        if "part" not in chunk:
+            chunk["part"] = "1"
+
+    return final_merge_chunks
+
+
+@step_log("备份chunks")
+def backup_chunks(chunks, md_path_obj):
+    # 1.获取path对象
+    json_path_obj = md_path_obj.parent / f"{md_path_obj.stem}_chunks.json"
+    # 2.写入json文件
+    json_path_obj.write_text(json.dumps(chunks, ensure_ascii=False, indent=4), encoding="utf-8")
 
 
 def split_document(state: ImportGraphState) -> ImportGraphState:
@@ -264,5 +272,11 @@ def split_document(state: ImportGraphState) -> ImportGraphState:
 
     # 3.对超长文本做二次细切
     chunks = refine_chunks(chunks, file_title)
+
+    # 4.备份chunks
+    backup_chunks(chunks, md_path_obj)
+
+    # 5.回写state
+    state["chunks"] = chunks
 
     return state
