@@ -1,11 +1,15 @@
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.output_parsers import StrOutputParser
+from pymilvus import DataType
 
 from app.infra.llm.providers import llm_provider
+from app.infra.vectorstore.milvus_gateway import milvus_gateway
 from app.process.import_.agent.state import ImportGraphState
-from app.rag.import_.config import ITEM_NAME_CONTEXT_CHUNK_K, ITEM_NAME_CONTEXT_TOTAL_MAX_CHARS
+from app.rag.import_.config import ITEM_NAME_CONTEXT_CHUNK_K, ITEM_NAME_CONTEXT_TOTAL_MAX_CHARS, \
+    MILVUS_DEFAULT_VARCHAR_MAX_LENGTH, MILVUS_VECTOR_DIM
 from app.shared.runtime.load_prompt import load_prompt
-from app.shared.runtime.logger import logger
+from app.shared.runtime.logger import logger, step_log
+from app.shared.utils.escape_milvus_string_utils import escape_milvus_string
 
 
 def validate_chunks_and_title(state):
@@ -62,6 +66,77 @@ def recognize_item_name(context, file_title):
     return result
 
 
+@step_log()
+def generate_embeddings(item_name):
+    vector_dict = llm_provider.embed_documents([item_name])
+    return vector_dict["dense"][0], vector_dict["sparse"][0]
+
+
+@step_log()
+def prepare_item_name_collection(state):
+    milvus_client = milvus_gateway.client
+    # 集合名称
+    collection_name = milvus_gateway.item_name_collection
+    # 判断集合是否存在
+    if milvus_client.has_collection(collection_name=collection_name):
+        return
+
+    # 创建schema
+    schema = milvus_client.create_schema(auto_id=True, enable_dynamic_field=True)
+    schema.add_field(field_name="pk", datatype=DataType.INT64, is_primary=True, auto_id=True)
+    schema.add_field(field_name="file_title", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    schema.add_field(field_name="item_name", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    schema.add_field(field_name="dense_vector", datatype=DataType.FLOAT_VECTOR, dim=MILVUS_VECTOR_DIM)
+    schema.add_field(field_name="sparse_vector", datatype=DataType.SPARSE_FLOAT_VECTOR)
+
+    # 准备索引参数
+    index_params = milvus_client.prepare_index_params()
+    # 为稠密向量创建索引
+    index_params.add_index(
+        field_name="dense_vector",
+        index_type="HNSW",
+        metric_type="COSINE",
+        params={"M": 64, "efConstruction": 100}
+    )
+    # 为稀疏向量创建索引
+    index_params.add_index(
+        field_name="sparse_vector",
+        index_type="SPARSE_INVERTED_INDEX",
+        metric_type="IP",
+        params={"inverted_index_algo": "DAAT_MAXSCORE"},
+    )
+
+    # 创建集合
+    milvus_client.create_collection(collection_name=collection_name, schema=schema, index_params=index_params)
+    logger.info(f"集合{collection_name}初始化成功！")
+
+
+@step_log()
+def insert_item_name(item_name, file_title, dense_vector, sparse_vector):
+    milvus_client = milvus_gateway.client
+    # 数据转义处理
+    item_name = escape_milvus_string(item_name)
+
+    # 1.删除已有记录
+    milvus_client.delete(
+        collection_name=milvus_gateway.item_name_collection,
+        filter=f"file_title=='{file_title}'"
+    )
+    # 2.插入数据
+    milvus_client.insert(
+        collection_name=milvus_gateway.item_name_collection,
+        data=[
+            {
+                "file_title": file_title,
+                "item_name": item_name,
+                "dense_vector": dense_vector,
+                "sparse_vector": sparse_vector
+            }
+        ]
+    )
+
+
+@step_log()
 def recognize_and_index_item_name(state: ImportGraphState) -> ImportGraphState:
     """
     主体识别服务：
@@ -78,6 +153,20 @@ def recognize_and_index_item_name(state: ImportGraphState) -> ImportGraphState:
 
     # 3.调用LLM识别item_name
     item_name = recognize_item_name(context, file_title)
-    logger.warning(f"识别结果：{item_name}")
+
+    # 4.将item_name回写到state和chunks
+    state["item_name"] = item_name
+    for chunk in chunks:
+        chunk["item_name"] = item_name
+    state["chunks"] = chunks
+
+    # 5.生成item的稠密向量和稀疏向量
+    dense_vector, sparse_vector = generate_embeddings(item_name)
+
+    # 6.构建集合
+    prepare_item_name_collection(state)
+
+    # 7.入库
+    insert_item_name(item_name, file_title, dense_vector, sparse_vector)
 
     return state

@@ -150,7 +150,7 @@ def _split_long_section(chunk, max_size):
             "file_title": f"{chunk.get('file_title')}",
             "title": f"{chunk.get('title')}_{index}",
             "content": f"{prefix}{chunk_content}",
-            "part": f"{index}",
+            "part": index,
             "parent_title": f"{chunk.get('title')}"
         })
 
@@ -177,7 +177,7 @@ def _renumber_chunks(chunks):
             last_patent_title = None
             current_index = 1
 
-        chunk["part"] = str(current_index)
+        chunk["part"] = current_index
         chunk["title"] = f"{parent_title}_{current_index}"
     return chunks
 

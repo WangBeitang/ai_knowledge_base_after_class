@@ -4,7 +4,7 @@ from app.shared.clients.milvus_utils import get_milvus_client
 class MilvusGateway:
 
     @property
-    def item_collection_name(self):
+    def item_name_collection(self):
         return infra_config.milvus.item_name_collection
 
     @property
