@@ -8,7 +8,9 @@ from fastapi.responses import FileResponse, StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
-from app.api.schema.query_schema import QueryRequestParam, QueryStreamResponse, QueryNotStreamResponse
+from app.api.schema.query_schema import QueryRequestParam, QueryStreamResponse, QueryNotStreamResponse, HistoryItem, \
+    HistoryResponse, ClearHistoryResponse
+from app.infra.persistence.history_repository import history_repository
 from app.shared.runtime.logger import PROJECT_ROOT, logger, step_log
 from app.infra.config.providers import settings
 from app.process.query.agent.main_graph import query_graph_app
@@ -64,7 +66,7 @@ def stream(session_id: str, request: Request):
 def query_graph_invoke(session_id: str, query: str, is_stream: bool):
     state = create_query_default_state(
         session_id=session_id,
-        query=query,
+        original_query=query,
         is_stream=is_stream
     )
 
@@ -135,6 +137,33 @@ def query(back_ground_tasks: BackgroundTasks, request_param: QueryRequestParam):
             image_urls=result.get("image_urls"),
             message=f"{session_id}查询结束"
         )
+
+@app.get("/history/{session_id}")
+def history(session_id: str, limit: int = 10):
+    message_list = history_repository.list_recent(session_id, limit)
+    message_list.reverse()
+    items = [
+        HistoryItem(
+            id=str(message.get("_id")),
+            session_id=message.get("session_id"),
+            role=message.get("role"),
+            text=message.get("text"),
+            rewritten_query=message.get("rewritten_query"),
+            item_names=message.get("item_names"),
+            image_urls=message.get("image_urls"),
+            ts=message.get("ts")
+        )
+        for message in message_list
+    ]
+    return HistoryResponse(session_id=session_id, items=items)
+
+@app.delete("/history/{session_id}")
+def clear_history(session_id: str):
+    delete_count = history_repository.clear_session(session_id)
+    return ClearHistoryResponse(
+        message=f"删除:{session_id}会话对应的聊天记录成功!!",
+        deleted_count=delete_count
+    )
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,3 +1,4 @@
+from app.infra.persistence.history_repository import history_repository
 from app.process.query.agent.state import QueryGraphState
 from app.shared.utils.task_utils import add_done_task,add_running_task,push_to_session
 from app.shared.utils.sse_utils import SSEEvent
@@ -31,6 +32,10 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
             time.sleep(0.06)
     else:
         final_text = base_answer
+
+    history_repository.save_message(session_id=state['session_id'], role="assistant",
+                                    text=final_text, rewritten_query=state['rewritten_query'],
+                                    item_names=state["item_names"], image_urls=state['image_urls'])
 
     add_done_task(state['session_id'], sys._getframe().f_code.co_name, state.get("is_stream"))
     print("---node_answer_output 节点处理结束---")
