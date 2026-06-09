@@ -12,9 +12,9 @@ class QueryGraphState(TypedDict):
     original_query: str  # 用户原始问题
 
     # 检索过程中的中间数据
-    embedding_chunks: list  # 普通向量检索回来的切片
-    hyde_embedding_chunks: list  # HyDE 检索回来的切片
-    web_search_docs: list  # 网络搜索回来的文档
+    embedding_chunks: list | None  # 普通向量检索回来的切片
+    hyde_embedding_chunks: list | None  # HyDE 检索回来的切片
+    web_search_docs: list | None  # 网络搜索回来的文档
 
     # 排序过程中的数据
     rrf_chunks: list  # RRF 融合排序后的切片
