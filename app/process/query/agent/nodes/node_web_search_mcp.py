@@ -13,5 +13,5 @@ def node_web_search_mcp(state):
     state = search_by_web(state)
     add_done_task(state["session_id"], sys._getframe().f_code.co_name, state["is_stream"])
     return {
-        "web_search_docs": []
+        "web_search_docs": state.get("web_search_docs")
     }

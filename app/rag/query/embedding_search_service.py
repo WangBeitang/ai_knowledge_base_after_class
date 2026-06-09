@@ -44,7 +44,7 @@ def query_chunk_by_milvus(item_names, rewritten_query):
     if hybrid_result[0] and len(hybrid_result[0]) > 0:
         return [
             {
-                "id": item.get("id") or item.get("entity", {}).get("chunk_id"),
+                "chunk_id": item.get("id") or item.get("entity", {}).get("chunk_id"),
                 "item_name": item.get("entity", {}).get("item_name"),
                 "content": item.get("entity", {}).get("content"),
                 "title": item.get("entity", {}).get("title"),
