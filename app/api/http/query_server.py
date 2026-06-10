@@ -80,18 +80,16 @@ def query_graph_invoke(session_id: str, query: str, is_stream: bool):
         logger.info(f"执行结束,执行结果为:{result_state}")
         update_task_status(session_id, TASK_STATUS_COMPLETED, is_stream)
 
-        image_urls = ["https://q1.itc.cn/images01/20260529/75a13a50d752432db9b9b751b846ecb6.jpeg"]
-        result_state["image_urls"] = image_urls
-
-        push_to_session(
-            session_id,
-            SSEEvent.FINAL,
-            {
-                "answer": result_state['answer'],
-                "status": "completed",
-                "image_urls": image_urls
-            }
-        )
+        if is_stream:
+            push_to_session(
+                session_id,
+                SSEEvent.FINAL,  # 显示图片
+                {
+                    "answer": result_state['answer'],
+                    "status": "completed",
+                    "image_urls": result_state.get("image_urls", [])
+                }
+            )
         # 同步执行返回结果
         return result_state
     except Exception as e:
@@ -134,7 +132,7 @@ def query(back_ground_tasks: BackgroundTasks, request_param: QueryRequestParam):
             session_id=session_id,
             answer=result.get("answer"),
             done_list=get_done_task_list(session_id),
-            image_urls=result.get("image_urls"),
+            image_urls=result.get("image_urls", []),
             message=f"{session_id}查询结束"
         )
 
@@ -148,9 +146,9 @@ def history(session_id: str, limit: int = 10):
             session_id=message.get("session_id"),
             role=message.get("role"),
             text=message.get("text"),
-            rewritten_query=message.get("rewritten_query"),
-            item_names=message.get("item_names"),
-            image_urls=message.get("image_urls"),
+            rewritten_query=message.get("rewritten_query", ""),
+            item_names=message.get("item_names", []),
+            image_urls=message.get("image_urls", []),
             ts=message.get("ts")
         )
         for message in message_list

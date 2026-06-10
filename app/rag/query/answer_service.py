@@ -1,10 +1,132 @@
-from app.infra.persistence.history_repository import history_repository
+import re
+from app.infra.llm.providers import llm_provider
 from app.process.query.agent.state import QueryGraphState
-from app.shared.utils.task_utils import add_done_task,add_running_task,push_to_session
+from app.shared.runtime.load_prompt import load_prompt
+from app.shared.utils.task_utils import push_to_session, set_task_result
 from app.shared.utils.sse_utils import SSEEvent
 from app.shared.runtime.logger import logger
-import time
-import sys
+from app.infra.persistence.history_repository import history_repository
+
+
+def try_return_existing_answer(state):
+    answer = state.get("answer")
+    is_stream = state.get("is_stream", False)
+    session_id = state.get("session_id")
+
+    if not answer:
+        return False
+
+    if is_stream:
+        for ch in answer:
+            push_to_session(session_id, SSEEvent.DELTA, {"delta": ch})
+    set_task_result(session_id, "answer", answer)
+    return True
+
+
+def check_params(state):
+    reranked_docs = state.get("reranked_docs") or []
+    item_names = state.get("item_names", [])
+    rewritten_query = state.get("rewritten_query", "")
+
+    if len(reranked_docs) == 0 or len(item_names) == 0 or not rewritten_query:
+        logger.error("reranked_docs或item_names或rewritten_query为空")
+        raise ValueError("reranked_docs或item_names或rewritten_query为空")
+
+    history = state.get("history", [])
+    return reranked_docs, item_names, rewritten_query, history
+
+
+def build_answer_prompt(reranked_docs, rewritten_query, item_names, history):
+    # 构建Prompt context history item_names question
+    # 1.拼接context
+    context = ""
+    for doc in reranked_docs:
+        context += (f"标题: {doc['title']},来源：{'联网查询' if doc['type'] == 'web' else '向量数据库'} ,"
+                    f"reranker模型评分：{doc['score']}，\n内容：{doc['text']}\n\n")
+
+    # 2.拼接history
+    history_text = ""
+    history = [item for item in history if item.get("item_names") and len(item.get("item_names")) > 0]
+    if len(history) > 0:
+        for index, item in enumerate(history, start=1):
+            history_text += (f"序号:{index},类型:{'提问' if item['role'] == 'user' else '回答'},"
+                             f"内容:{item['rewritten_query'] if item['role'] == 'user' else item['text']},"
+                             f"关联主体:{','.join(item['item_names'])}\n")
+    else:
+        history_text = "无历史对话记录"
+
+    # 3.拼接item_names
+    item_names_text = ",".join(item_names)
+
+    # 4.加载提示词
+    prompt_text = load_prompt("answer_out", context=context, history=history_text,
+                              item_names=item_names_text, question=rewritten_query)
+
+    return prompt_text
+
+
+def generate_final_answer(state, prompt):
+    final_answer = ""
+    # 1.获取模型对象
+    client = llm_provider.chat()
+
+    # 2.判断是否流式调用
+    is_stream = state.get("is_stream", False)
+    if is_stream:
+        stream = client.stream(prompt)
+        for chunk in stream:
+            logger.warning(f"大模型流式返回结果为：======={str(chunk)}")
+            current_content = chunk.content
+            push_to_session(
+                state.get("session_id"),
+                SSEEvent.DELTA,
+                {"delta": current_content}
+            )
+            final_answer += current_content
+    else:
+        result = client.invoke(prompt)
+        logger.warning(f"大模型invoke返回结果为：======={str(result)}")
+        final_answer = result.content
+
+    state["answer"] = final_answer
+
+
+def extract_image_urls(reranked_docs, state):
+    # 1.定义一个正则 匹配 markdown 图片正则
+    reg = re.compile(r"\!\[.*?\]\((.*?)\)")
+
+    # 2.定义存储数据的列表
+    image_urls: list[str] = []
+
+    # 3.循环
+    for doc in reranked_docs:
+        url = doc.get("url", "")
+        text = doc.get("text", "")
+
+        # 提取url
+        if url and url.endswith((".jpg", ".png", ".gif", ".jpeg", ".svg")) and url not in image_urls:
+            image_urls.append(url)
+
+        # 提取text
+        for url in reg.findall(text):
+            if url not in image_urls:
+                image_urls.append(url)
+
+    # 4.给state赋值
+    state["image_urls"] = image_urls
+    return state
+
+
+def save_assistant_message(state):
+    history_repository.save_message(
+        session_id=state.get("session_id"),
+        role="assistant",
+        text=state.get("answer"),
+        rewritten_query=state.get("rewritten_query"),
+        item_names=state.get("item_names", []),
+        image_urls=state.get("image_urls", [])
+    )
+
 
 def generate_answer(state: QueryGraphState) -> QueryGraphState:
     """
@@ -17,31 +139,17 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
     6. 回写 answer 和 image_urls
     """
     ""
-    print("---node_answer_output 节点处理开始---")
-    add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
+    # 1.如果已有答案，直接返回
+    if not try_return_existing_answer(state):
+        # 校验输入
+        reranked_docs, item_names, rewritten_query, history = check_params(state)
+        # 构建提示词
+        prompt = build_answer_prompt(reranked_docs, rewritten_query, item_names, history)
+        # 生成答案
+        generate_final_answer(state, prompt)
+        # 提取图片 URL
+        extract_image_urls(reranked_docs, state)
 
-    session_id = state["session_id"]
-    is_stream = state.get("is_stream", True)
-    base_answer = state.get("answer") or f"这是关于「{state.get('original_query', '当前问题')}」的测试回答，正在演示打字机流式输出效果。人生当中成功只是一时的，失败却是主旋律。但是如何面对失败，却把人分成了不同的样子。有的人会被击垮，有的人能够不断地爬起来继续向前……我想，真正的成熟，应该不是追求完美，而是直面自己的缺憾，这才是生活的本质"
-    final_text = ""
-
-    if is_stream:
-        for ch in base_answer:
-            final_text += ch
-            push_to_session(session_id, SSEEvent.DELTA, {"delta": ch})
-            time.sleep(0.06)
-    else:
-        final_text = base_answer
-
-    history_repository.save_message(session_id=state['session_id'], role="assistant",
-                                    text=final_text, rewritten_query=state['rewritten_query'],
-                                    item_names=state["item_names"], image_urls=state['image_urls'])
-
-    add_done_task(state['session_id'], sys._getframe().f_code.co_name, state.get("is_stream"))
-    print("---node_answer_output 节点处理结束---")
-    # 关键点：return 必须保留 session_id！
-    return {
-        "session_id": session_id,  # 必须带回去
-        "answer": final_text,
-        "is_stream": state.get("is_stream")
-    }
+    # 保存助手消息到历史
+    save_assistant_message(state)
+    return state
