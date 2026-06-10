@@ -1,5 +1,6 @@
 from app.infra.config.providers import infra_config
-from app.shared.model import get_llm_client,get_bge_m3_ef,generate_embeddings
+from app.shared.model import get_llm_client, get_bge_m3_ef, generate_embeddings, get_reranker_model
+
 
 class LLMProvider:
 
@@ -19,6 +20,9 @@ class LLMProvider:
     # 为文本列表生成稠密+稀疏混合向量嵌入
     def embed_documents(self,documents:list[str]):
         return generate_embeddings(documents)
+
+    def reranker_model(self):
+        return get_reranker_model()
 
 
 llm_provider = LLMProvider()
