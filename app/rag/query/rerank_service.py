@@ -13,7 +13,10 @@ def check_params(state):
     rrf_chunks = state.get("rrf_chunks") or []
     web_search_docs = state.get("web_search_docs") or []
     rewritten_query = state.get("rewritten_query")
-    if len(rrf_chunks) == 0 or len(web_search_docs) == 0 or not rewritten_query:
+    if not rewritten_query:
+        logger.error("请输入有效的查询")
+        raise ValueError("请输入有效的查询")
+    if len(rrf_chunks) == 0 and len(web_search_docs) == 0:
         logger.error("请输入有效的查询")
         raise ValueError("请输入有效的查询")
     return rrf_chunks, web_search_docs, rewritten_query

@@ -4,7 +4,7 @@ from app.shared.runtime.logger import logger,step_log
 def check_params(state):
     embedding_chunks = state.get("embedding_chunks", [])
     hyde_embedding_chunks = state.get("hyde_embedding_chunks", [])
-    if len(embedding_chunks) == 0 or len(hyde_embedding_chunks) == 0:
+    if len(embedding_chunks) == 0 and len(hyde_embedding_chunks) == 0:
         logger.error("向量检索结果为空，业务无法继续进行")
         raise ValueError("向量检索结果为空，业务无法继续进行")
     return embedding_chunks, hyde_embedding_chunks
@@ -45,11 +45,14 @@ def fuse_by_rrf(state: QueryGraphState) -> QueryGraphState:
     # 1.参数校验
     embedding_chunks, hyde_embedding_chunks = check_params(state)
 
-    # 2.封装带有权重的结构
-    chunks_list = [
-        (0.5, embedding_chunks),
-        (0.5, hyde_embedding_chunks)
+    # 2.封装带有权重的结构；阶段 1 允许单路召回，避免 HyDE 或普通召回为空时中断流程。
+    active_chunk_lists = [
+        chunks
+        for chunks in (embedding_chunks, hyde_embedding_chunks)
+        if chunks
     ]
+    weight = 1 / len(active_chunk_lists)
+    chunks_list = [(weight, chunks) for chunks in active_chunk_lists]
 
     # 3.使用RRF算法重构文档列表
     rrf_chunks = rrf_fuse(chunks_list, limit=5, k=60)
