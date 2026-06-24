@@ -147,7 +147,7 @@ def history(session_id: str, limit: int = 10):
             role=message.get("role"),
             text=message.get("text"),
             rewritten_query=message.get("rewritten_query", ""),
-            item_names=message.get("item_names", []),
+            subject_names=message.get("subject_names", []),
             image_urls=message.get("image_urls", []),
             ts=message.get("ts")
         )

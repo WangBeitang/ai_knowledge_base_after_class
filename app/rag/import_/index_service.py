@@ -44,7 +44,7 @@ def prepare_chunks_collection(state):
     # 分片顺序标记
     schema.add_field(field_name="part", datatype=DataType.INT8)
     # 所属主体名称
-    schema.add_field(field_name="item_name", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    schema.add_field(field_name="subject_name", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
     # 稠密向量
     schema.add_field(field_name="dense_vector",datatype=DataType.FLOAT_VECTOR, dim=1024)
     # 稀疏向量
@@ -103,7 +103,7 @@ def insert_chunks(chunks):
         collection_name=milvus_gateway.chunk_collection_name,
         data=chunks,
     )
-    logger.info(f"向集合 {milvus_gateway.chunk_collection_name} 中插入了 {result.get("insert_count", 0)} 条数据")
+    logger.info(f"向集合 {milvus_gateway.chunk_collection_name} 中插入了 {result.get('insert_count', 0)} 条数据")
 
     # 回写 chunk_id
     ids = result.get("ids", [])

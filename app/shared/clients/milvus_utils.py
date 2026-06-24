@@ -85,7 +85,7 @@ def hybrid_search(client, collection_name, reqs, ranker_weights=(0.5, 0.5), norm
     :param ranker_weights: 加权融合权重，默认(0.5,0.5)，依次对应稠密/稀疏向量
     :param norm_score: 是否归一化评分后再融合，避免评分量级差异导致权重失效
     :param limit: 混合搜索最终返回结果数量，默认5
-    :param output_fields: 需要返回的字段列表，默认返回item_name
+    :param output_fields: 需要返回的字段列表，默认返回subject_name
     :param search_params: 搜索参数，如ef/topk等，默认None
     :return: 混合搜索结果列表，搜索失败返回None
     """
@@ -96,7 +96,7 @@ def hybrid_search(client, collection_name, reqs, ranker_weights=(0.5, 0.5), norm
 
         # 默认返回字段：文档标识字段
         if output_fields is None:
-            output_fields = ["item_name"]
+            output_fields = ["subject_name"]
 
         # 执行混合搜索：融合稠密+稀疏向量结果，按权重重新排序
         res = client.hybrid_search(
@@ -107,7 +107,7 @@ def hybrid_search(client, collection_name, reqs, ranker_weights=(0.5, 0.5), norm
             output_fields=output_fields,
             search_params=search_params
         )
-        # res [[{id:111,distance:0.9,entity:{item_name:烫金机}},{},{},{},{}]]  || data = [1,2,3] => [[],[],[]]
+        # res [[{id:111,distance:0.9,entity:{subject_name:烫金机}},{},{},{},{}]]  || data = [1,2,3] => [[],[],[]]
         logger.info(f"Milvus混合搜索完成，集合[{collection_name}]共检索到{len(res[0])}条结果")
         return res
     except Exception as e:

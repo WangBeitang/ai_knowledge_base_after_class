@@ -1,36 +1,34 @@
 from app.shared.runtime.logger import node_log
 from app.shared.utils.task_utils import add_done_task, add_running_task
 from app.process.import_.agent.state import ImportGraphState
-from app.rag.import_.item_name_service import recognize_and_index_item_name
+from app.rag.import_.subject_name_service import recognize_and_index_subject_name
 
-@node_log("node_item_name_recognition")
-def node_item_name_recognition(state: ImportGraphState) -> ImportGraphState:
+@node_log("node_subject_name_recognition")
+def node_subject_name_recognition(state: ImportGraphState) -> ImportGraphState:
     """
-    节点: 主体识别 (node_item_name_recognition)
-    为什么叫这个名字: 识别文档核心描述的物品/商品名称 (Item Name)。
+    节点: 主体识别 (node_subject_name_recognition)
+    为什么叫这个名字: 识别文档核心描述的主体名称。
     """
-    add_running_task(state["task_id"], "node_item_name_recognition")
-    state = recognize_and_index_item_name(state)
-    add_done_task(state["task_id"], "node_item_name_recognition")
+    add_running_task(state["task_id"], "node_subject_name_recognition")
+    state = recognize_and_index_subject_name(state)
+    add_done_task(state["task_id"], "node_subject_name_recognition")
     return state
 
 
 
 # ===================== 本地测试方法（直接运行调试，无需启动LangGraph） =====================
-def test_node_item_name_recognition():
+def test_node_subject_name_recognition():
     from app.shared.runtime.logger import logger
     """
-    商品名称识别节点本地测试方法
-    功能：模拟LangGraph流程输入，独立测试node_item_name_recognition节点全链路逻辑
+    主体名称识别节点本地测试方法
+    功能：模拟LangGraph流程输入，独立测试node_subject_name_recognition节点全链路逻辑
     适用场景：本地开发、调试、单节点功能验证，无需启动整个LangGraph流程
     测试前准备：
-        1. 确保项目环境变量配置完成（MILVUS_URL/ITEM_NAME_COLLECTION等）
+        1. 确保项目环境变量配置完成（MILVUS_URL/SUBJECT_NAME_COLLECTION等）
         2. 确保大模型、Milvus、BGE-M3服务均可正常访问
-        3. 确保prompt模板（item_name_recognition/product_recognition_system）已存在
-    使用方法：
-        直接运行该函数：if __name__ == "__main__": test_node_item_name_recognition()
+        3. 确保prompt模板（subject_name_recognition/product_recognition_system）已存在
     """
-    logger.info("=== 开始执行商品名称识别节点本地测试 ===")
+    logger.info("=== 开始执行主体名称识别节点本地测试 ===")
     try:
         # 1. 构造模拟的ImportGraphState状态（模拟上游节点产出数据）
         mock_state = ImportGraphState({
@@ -57,21 +55,21 @@ def test_node_item_name_recognition():
             ]
         })
 
-        # 2. 调用商品名称识别核心节点
-        result_state = node_item_name_recognition(mock_state)
+        # 2. 调用主体名称识别核心节点
+        result_state = node_subject_name_recognition(mock_state)
 
         # 3. 打印测试结果（调试用）
-        logger.info("=== 商品名称识别节点本地测试完成 ===")
+        logger.info("=== 主体名称识别节点本地测试完成 ===")
         logger.info(f"测试任务ID：{result_state.get('task_id')}")
-        logger.info(f"最终识别商品名称：{result_state.get('item_name')}")
+        logger.info(f"最终识别主体名称：{result_state.get('subject_name')}")
         logger.info(f"切片数量：{len(result_state.get('chunks', []))}")
-        logger.info(f"第一个切片商品名称：{result_state.get('chunks', [{}])[0].get('item_name')}")
+        logger.info(f"第一个切片主体名称：{result_state.get('chunks', [{}])[0].get('subject_name')}")
 
     except Exception as e:
-        logger.error(f"商品名称识别节点本地测试失败，原因：{str(e)}", exc_info=True)
+        logger.error(f"主体名称识别节点本地测试失败，原因：{str(e)}", exc_info=True)
 
 
 # 测试方法运行入口：直接执行该文件即可触发测试
 if __name__ == "__main__":
     # 执行本地测试
-    test_node_item_name_recognition()
+    test_node_subject_name_recognition()

@@ -1,0 +1,44 @@
+目前最明显的短板
+1.生产闭环还不如 RAGFlow 完整
+RAGFlow 有完整 dataset、文档状态、解析状态、chunk 可视化、API、权限、模型配置。你的项目有雏形，但还需要把“导入后可稳定查询、可删除、可重建、可评估”做实。
+
+2.文档解析能力差距大
+你的 MinerU + Markdown 路线是对的，但 RAGFlow 的强点是复杂 PDF、表格、扫描件、多 parser、多 chunk 模板。你不用追平它，面试时说“我聚焦设备手册/SOP”更合理。
+
+3.检索工程还需要补评测
+你的 HyDE、RRF、rerank 思路比普通 RAG 项目强，但最好补一套评测：recall@k、MRR、引用准确率、拒答率。这个比继续堆功能更加分。
+
+4.数据模型还不够“制造业”
+现在的 item_name 可以升级成：equipment_model、alarm_code、part_name、sop_type、safety_level、maintenance_stage。这样项目就从“知识库”变成“设备运维 RAG Agent”。
+
+5.和 RAGFlow 最大的差距是稳定性细节
+例如任务失败重试、批量导入幂等、索引版本、文档删除同步、外部服务超时、缓存失效策略、权限隔离、审计日志。
+
+
+
+推荐修改路线
+先做项目基线
+补齐测试依赖，比如 pytest。
+让 uv run python -m pytest 成为唯一测试入口。
+清理会在 import 阶段直接执行流程的测试。
+加两个 smoke test：导入图能 compile，查询图能 compile。
+
+统一状态契约
+先整理 [ImportGraphState](/Users/beitang/PycharmProjects/ai_knowledge_base_after_class/app/process/import_/agent/state.py) 和 [QueryGraphState](/Users/beitang/PycharmProjects/ai_knowledge_base_after_class/app/process/query/agent/state.py)。
+明确每个字段属于哪一阶段：输入、解析、切片、主体识别、向量化、入库、检索、生成。
+修掉字段命名不一致。
+约定 LangGraph 节点统一返回 partial state，还是统一返回完整 state。建议节点返回 partial，service 层不要随意塞未知字段。
+
+再重构导入链路
+保持主流程：entry -> document_to_md -> image_enrich -> split -> subject_recognition -> embedding -> index。
+把 item_name 改成更通用的 subject_name，后续制造业再扩展成 equipment_model、alarm_code、sop_type。
+先让 Markdown 导入闭环稳定，再接 PDF/MinerU。
+
+再重构查询链路
+保持主流程：subject_confirm -> standard search / HyDE / web -> RRF -> rerank -> answer。
+先把知识库检索、引用、答案生成跑通。
+Web search 先作为可选 fallback，不要默认掺进核心路径。
+
+最后加制造业包装
+在基础稳定后再加设备手册字段：设备型号、报警码、维护阶段、安全等级、备件名称、SOP 类型。
+做一套 demo 数据和 10-20 个评测问题。

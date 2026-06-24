@@ -2,7 +2,7 @@ from app.shared.clients.mongo_history_utils import (
     clear_history,
     get_recent_messages,
     save_chat_message,
-    update_message_item_names
+    update_message_subject_names
 )
 
 class HistoryRepository:
@@ -16,7 +16,7 @@ class HistoryRepository:
         role: str,
         text: str,
         rewritten_query: str = "",
-        item_names: list[str] | None = None,
+        subject_names: list[str] | None = None,
         image_urls: list[str] | None = None,
         message_id: str | None = None,
     ) -> str:
@@ -25,7 +25,7 @@ class HistoryRepository:
             role=role,
             text=text,
             rewritten_query=rewritten_query,
-            item_names=item_names,
+            subject_names=subject_names,
             image_urls=image_urls,
             message_id=message_id,
         )
@@ -33,8 +33,8 @@ class HistoryRepository:
     def clear_session(self, session_id: str) -> int:
         return clear_history(session_id)
 
-    def update_item_names(self, ids: list[str], item_names: list[str]) -> int:
-        return update_message_item_names(ids, item_names)
+    def update_subject_names(self, ids: list[str], subject_names: list[str]) -> int:
+        return update_message_subject_names(ids, subject_names)
 
 
 history_repository = HistoryRepository()

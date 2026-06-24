@@ -23,7 +23,7 @@ if __name__ == "__main__":
         "session_id": "test_hyde_session_001",
         "original_query": "HAK 180 烫金机怎么操作？",
         "rewritten_query": "HAK 180 烫金机的具体操作步骤是什么？",
-        "item_names": ["HAK 180 烫金机"],
+        "subject_names": ["HAK 180 烫金机"],
         "is_stream": False,
     }
     result = node_search_embedding_hyde(mock_state)

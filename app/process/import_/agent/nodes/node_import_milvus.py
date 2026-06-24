@@ -31,13 +31,13 @@ if __name__ == '__main__':
     dim = 1024
     test_state = {
         "task_id": "test_milvus_task",
-        "item_name":"测试项目_Milvus",
+        "subject_name":"测试项目_Milvus",
         "file_title":"文件名.md",
         "chunks": [
             {
                 "content": "Milvus 测试文本 1",
                 "title": "测试标题",
-                "item_name": "测试项目_Milvus",  # 必须有 item_name，用于幂等清理
+                "subject_name": "测试项目_Milvus",
                 "parent_title":"test.pdf",
                 "part":1,
                 "file_title": "test.pdf",
@@ -48,7 +48,7 @@ if __name__ == '__main__':
             {
                 "content": "Milvus 测试文本 2",
                 "title": "测试标题2",
-                "item_name": "测试项目_Milvus2",  # 必须有 item_name，用于幂等清理
+                "subject_name": "测试项目_Milvus2",
                 "parent_title": "test.pdf2",
                 "part": 1,
                 "file_title": "test.pdf2",

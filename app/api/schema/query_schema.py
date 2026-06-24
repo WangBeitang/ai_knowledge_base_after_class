@@ -29,7 +29,7 @@ class HistoryItem(BaseModel):
     role: str
     text: str
     rewritten_query: str
-    item_names: list[str]
+    subject_names: list[str]
     image_urls: list[str]
     ts: Any
 

@@ -12,7 +12,7 @@ from app.shared.clients.mongo_history_utils import (
     get_history_mongo_tool,
     get_recent_messages,
     save_chat_message,
-    update_message_item_names,
+    update_message_subject_names,
 )
 
 __all__ = [
@@ -24,5 +24,5 @@ __all__ = [
     "get_history_mongo_tool",
     "get_recent_messages",
     "save_chat_message",
-    "update_message_item_names",
+    "update_message_subject_names",
 ]

@@ -28,17 +28,17 @@ if __name__ == '__main__':
     # 构造模拟测试状态：模拟上游节点输出的chunks数据，贴合真实业务场景
     test_state = ImportGraphState({
         "task_id": "test_task_embedding_001",  # 测试任务ID
-        "chunks": [  # 模拟带item_name的文本切片（上游商品名称识别节点产出）
+        "chunks": [  # 模拟带subject_name的文本切片（上游主体名称识别节点产出）
             {
                 "content": "这是一个测试文档的内容，用于验证向量化是否成功。",
                 "title": "测试文档标题",
-                "item_name": "测试项目",
+                "subject_name": "测试项目",
                 "file_title": "测试文件.pdf"
             },
             {
                 "content": "这是第二个测试文档的内容，用于验证批量处理逻辑。",
                 "title": "测试文档标题2",
-                "item_name": "测试项目",
+                "subject_name": "测试项目",
                 "file_title": "测试文件.pdf"
             }
         ]

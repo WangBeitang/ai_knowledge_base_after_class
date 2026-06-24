@@ -3,33 +3,31 @@ from typing import List
 import copy
 
 class QueryGraphState(TypedDict):
-    """
-    QueryGraphState 定义了整个查询流程中流转的数据结构。
-    TypedDict 让我们在代码中能有自动补全和类型检查。
-    使用字典式访问（如 state["session_id"]、state.get("answer")）。
-    """
-    session_id: str  # 会话唯一标识
+    # 请求输入：由 API 或调用方传入，作为一次查询流程的原始上下文
+    session_id: str  # 会话唯一标识，用于历史记录、SSE、任务状态
     original_query: str  # 用户原始问题
+    is_stream: bool  # 是否使用流式输出
 
-    # 检索过程中的中间数据
-    embedding_chunks: list | None  # 普通向量检索回来的切片
-    hyde_embedding_chunks: list | None  # HyDE 检索回来的切片
-    web_search_docs: list | None  # 网络搜索回来的文档
+    # 主体确认：从问题和历史中识别用户要问的主体
+    rewritten_query: str  # 结合历史改写后的独立问题
+    subject_names: list[str]  # 已确认的主体名称列表
+    history: list  # 当前会话历史记录，用于改写问题和构造答案上下文
 
-    # 排序过程中的数据
-    rrf_chunks: list  # RRF 融合排序后的切片
-    reranked_docs: list  # 重排序后的最终 Top-K 文档
+    # 多路召回：不同检索路径的原始召回结果
+    embedding_chunks: list | None  # 标准向量检索召回的知识库切片
+    hyde_embedding_chunks: list | None  # HyDE 检索召回的知识库切片
+    web_search_docs: list | None  # 联网搜索结果，后续阶段会改为 fallback
 
-    # 生成过程中的数据
-    prompt: str  # 组装好的 Prompt
-    answer: str  # 最终生成的答案
+    # 召回融合：将多路召回结果合并成统一候选集
+    rrf_chunks: list  # RRF 融合后的知识库候选切片
 
-    # 辅助信息
-    item_names: List[str]  # 提取出的商品名称
-    rewritten_query: str  # 改写后的问题
-    history: list  # 历史对话记录
-    is_stream: bool  # 是否流式输出标记
-    image_urls: List[str]  # 答案中引用的图片链接
+    # 重排序：对候选文档做 rerank 后的最终上下文
+    reranked_docs: list  # 重排序后的 Top-K 文档，供答案生成使用
+
+    # 答案生成：最终 prompt、答案和可展示引用资源
+    prompt: str  # 组装后的最终 Prompt
+    answer: str  # 最终回答；也可用于主体不明确时的追问/拒答
+    image_urls: list[str]  # 答案引用到的图片链接
 
 
 # ========================
@@ -38,6 +36,10 @@ class QueryGraphState(TypedDict):
 query_graph_default_state: QueryGraphState = {
     "session_id": "",
     "original_query": "",
+    "is_stream": False,
+    "rewritten_query": "",
+    "subject_names": [],
+    "history": [],
     "embedding_chunks": [],
     "hyde_embedding_chunks": [],
     "web_search_docs": [],
@@ -45,11 +47,7 @@ query_graph_default_state: QueryGraphState = {
     "reranked_docs": [],
     "prompt": "",
     "answer": "",
-    "item_names": [],
-    "rewritten_query": "",
-    "history": [],
-    "is_stream": False,
-    "image_urls": []
+    "image_urls": [],
 }
 
 

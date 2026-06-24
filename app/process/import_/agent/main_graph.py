@@ -6,7 +6,7 @@ from app.process.import_.agent.nodes.node_entry import node_entry
 from app.process.import_.agent.nodes.node_pdf_to_md import node_pdf_to_md
 from app.process.import_.agent.nodes.node_md_img import node_md_img
 from app.process.import_.agent.nodes.node_document_split import node_document_split
-from app.process.import_.agent.nodes.node_item_name_recognition import node_item_name_recognition
+from app.process.import_.agent.nodes.node_subject_name_recognition import node_subject_name_recognition
 from app.process.import_.agent.nodes.node_bge_embedding import node_bge_embedding
 from app.process.import_.agent.nodes.node_import_milvus import node_import_milvus
 from app.shared.runtime.logger import logger
@@ -21,7 +21,7 @@ main_graph_builder.add_node("node_entry", node_entry)
 main_graph_builder.add_node("node_pdf_to_md", node_pdf_to_md)
 main_graph_builder.add_node("node_md_img", node_md_img)
 main_graph_builder.add_node("node_document_split", node_document_split)
-main_graph_builder.add_node("node_item_name_recognition", node_item_name_recognition)
+main_graph_builder.add_node("node_subject_name_recognition", node_subject_name_recognition)
 main_graph_builder.add_node("node_bge_embedding", node_bge_embedding)
 main_graph_builder.add_node("node_import_milvus", node_import_milvus)
 
@@ -52,8 +52,8 @@ main_graph_builder.add_conditional_edges("node_entry",
 # 4.添加普通边
 main_graph_builder.add_edge("node_pdf_to_md", "node_md_img")
 main_graph_builder.add_edge("node_md_img", "node_document_split")
-main_graph_builder.add_edge("node_document_split", "node_item_name_recognition")
-main_graph_builder.add_edge("node_item_name_recognition", "node_bge_embedding")
+main_graph_builder.add_edge("node_document_split", "node_subject_name_recognition")
+main_graph_builder.add_edge("node_subject_name_recognition", "node_bge_embedding")
 main_graph_builder.add_edge("node_bge_embedding", "node_import_milvus")
 
 # 5.编译
@@ -91,7 +91,7 @@ if __name__ == "__main__":
         try:
             logger.info(f"测试任务启动，PDF文件路径：{test_pdf_path}")
             logger.info(f"中间文件输出目录：{test_output_dir}")
-            logger.info("开始执行全流程节点，依次执行：entry→pdf2md→md_img→split→item_name→embedding→milvus")
+            logger.info("开始执行全流程节点，依次执行：entry→pdf2md→md_img→split→subject_name→embedding→milvus")
 
             # 5. 执行LangGraph全流程（流式执行，打印节点执行进度）
             final_state = None
@@ -110,13 +110,13 @@ if __name__ == "__main__":
                 chunks = final_state.get("chunks", [])
                 chunk_count = len(chunks)
                 md_content = final_state.get("md_content", "")[:150]  # MD内容前150字符
-                item_name = final_state.get("item_name", "未识别")  # 主体名称
+                subject_name = final_state.get("subject_name", "未识别")  # 主体名称
                 has_embedding = all("dense_vector" in c and "sparse_vector" in c for c in chunks) if chunks else False
                 has_chunk_id = all("chunk_id" in c for c in chunks) if chunks else False
 
                 # 打印核心指标
                 logger.info(f"📄 PDF转MD内容预览（前150字符）：{md_content}...")
-                logger.info(f"🏷️  识别的主体名称：{item_name}")
+                logger.info(f"🏷️  识别的主体名称：{subject_name}")
                 logger.info(f"📝 文档切分总切片数：{chunk_count}")
                 logger.info(f"🔍 所有切片是否完成向量化：{'是' if has_embedding else '否'}")
                 logger.info(f"🗄️  所有切片是否完成Milvus入库（含chunk_id）：{'是' if has_chunk_id else '否'}")

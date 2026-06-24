@@ -40,3 +40,8 @@ dependencies = [
 name = "tsinghua"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

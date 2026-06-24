@@ -32,7 +32,7 @@ _NODE_NAME_TO_CN: Dict[str, str] = {
     "node_entry": "检查文件",
     "node_pdf_to_md": "PDF转Markdown",
     "node_md_img": "Markdown图片处理",
-    "node_item_name_recognition": "主体名称识别",
+    "node_subject_name_recognition": "主体名称识别",
     "node_document_split": "文档切分",
     "node_bge_embedding": "向量生成",
     "node_import_kg": "导入知识图谱",
@@ -40,7 +40,7 @@ _NODE_NAME_TO_CN: Dict[str, str] = {
     "__end__": "处理完成",
     "END": "处理完成",
     # --- Query 流程节点（kb/process/query/main_graph.py）---
-    "node_item_name_confirm": "确认问题产品",
+    "node_subject_name_confirm": "确认问题主体",
     "node_answer_output": "生成答案",
     "node_rerank": "重排序",
     "node_rrf": "倒排融合",
