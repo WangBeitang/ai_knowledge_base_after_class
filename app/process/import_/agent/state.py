@@ -23,8 +23,19 @@ class ImportGraphState(TypedDict):
     md_content: str  # Markdown 完整正文内容
     file_title: str  # 文件标题，通常来自文件名 stem，作为主体识别兜底
 
-    # 主体识别结果：阶段 1 引入 subject 概念，后续可扩展为标准主题和别名体系
-    subject_name: str  # 文档对应的通用主体名称，后续可升级为标准主题
+    # 主体识别结果：阶段 2 引入标准主题体系，subject_name 暂时作为旧流程兼容字段
+    subject_name: str  # 兼容字段：文档对应的主体名称，默认与 standard_subject_name 保持一致
+    subject_id: str  # 标准主题唯一标识，用于 chunk 关联和查询过滤
+    standard_subject_name: str  # 标准主题名称，用于统一管理知识体系
+    subject_aliases: list[str]  # 标准主题别名列表，用于导入和查询时的主体识别
+
+    # 轻量领域字段：设备运维场景下的可选结构化标签
+    equipment_model: str  # 设备型号
+    alarm_code: str  # 报警码或故障码
+    part_name: str  # 部件名称
+    sop_type: str  # SOP 类型，如开机、停机、点检、维护
+    safety_level: str  # 安全等级或风险级别
+    maintenance_stage: str  # 维护阶段，如日常点检、故障排查、定期保养
 
     # 切片结果：由 split 节点生成，后续主体识别、向量化、入库都围绕 chunks 增量补字段
     chunks: list  # 文档切片列表，每个 chunk 至少包含 content/title/file_title 等字段
@@ -46,6 +57,15 @@ default_state: ImportGraphState = {
     "md_content": "",
     "file_title": "",
     "subject_name": "",
+    "subject_id": "",
+    "standard_subject_name": "",
+    "subject_aliases": [],
+    "equipment_model": "",
+    "alarm_code": "",
+    "part_name": "",
+    "sop_type": "",
+    "safety_level": "",
+    "maintenance_stage": "",
     "chunks": [],
     "embedding_content": [],
 }
@@ -64,4 +84,3 @@ if __name__ == "__main__":
 
     state1 = get_default_state()
     logger.info(f"测试state实例化方法：\n {json.dumps(state1,ensure_ascii=False, indent=4)}")
-

@@ -4,15 +4,21 @@ from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.entry_service import resolve_input_file
 
 @node_log()
-def node_entry(state: ImportGraphState) -> ImportGraphState:
+def node_entry(state: ImportGraphState) -> dict:
     """
     节点: 入口节点 (node_entry)
     为什么叫这个名字: 作为图的 Entry Point，负责接收外部输入并决定流程走向。
     """
     add_running_task(state["task_id"], "node_entry")
-    state = resolve_input_file(state)
+    result_state = resolve_input_file(state)
     add_done_task(state["task_id"], "node_entry")
-    return state
+    return {
+        "is_md_read_enabled": result_state.get("is_md_read_enabled", False),
+        "is_pdf_read_enabled": result_state.get("is_pdf_read_enabled", False),
+        "md_path": result_state.get("md_path", ""),
+        "pdf_path": result_state.get("pdf_path", ""),
+        "file_title": result_state.get("file_title", ""),
+    }
 
 
 if __name__ == '__main__':

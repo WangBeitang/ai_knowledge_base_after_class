@@ -10,6 +10,9 @@ def node_answer_output(state):
     节点功能：生成最终回答并交付给用户（支持流式/非流式）。
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state["is_stream"])
-    state = generate_answer(state)
+    result_state = generate_answer(state)
     add_done_task(state['session_id'], sys._getframe().f_code.co_name, state["is_stream"])
-    return state
+    return {
+        "answer": result_state.get("answer", ""),
+        "image_urls": result_state.get("image_urls", []),
+    }

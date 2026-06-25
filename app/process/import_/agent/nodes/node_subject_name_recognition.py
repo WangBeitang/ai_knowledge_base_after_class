@@ -4,15 +4,18 @@ from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.subject_name_service import recognize_and_index_subject_name
 
 @node_log("node_subject_name_recognition")
-def node_subject_name_recognition(state: ImportGraphState) -> ImportGraphState:
+def node_subject_name_recognition(state: ImportGraphState) -> dict:
     """
     节点: 主体识别 (node_subject_name_recognition)
     为什么叫这个名字: 识别文档核心描述的主体名称。
     """
     add_running_task(state["task_id"], "node_subject_name_recognition")
-    state = recognize_and_index_subject_name(state)
+    result_state = recognize_and_index_subject_name(state)
     add_done_task(state["task_id"], "node_subject_name_recognition")
-    return state
+    return {
+        "subject_name": result_state.get("subject_name", ""),
+        "chunks": result_state.get("chunks", []),
+    }
 
 
 

@@ -6,15 +6,17 @@ from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.embedding_service import generate_chunk_embeddings
 
 @node_log("node_bge_embedding")
-def node_bge_embedding(state: ImportGraphState) -> ImportGraphState:
+def node_bge_embedding(state: ImportGraphState) -> dict:
     """
     节点: 向量化 (node_bge_embedding)
     为什么叫这个名字: 使用 BGE-M3 模型将文本转换为向量 (Embedding)。
     """
     add_running_task(state["task_id"], "node_bge_embedding")
-    state = generate_chunk_embeddings(state)
+    result_state = generate_chunk_embeddings(state)
     add_done_task(state["task_id"], "node_bge_embedding")
-    return state
+    return {
+        "chunks": result_state.get("chunks", []),
+    }
 
 if __name__ == '__main__':
     # 加载环境变量：定位项目根目录下的.env，读取模型路径/设备等配置

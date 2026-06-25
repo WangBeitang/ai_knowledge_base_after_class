@@ -4,15 +4,18 @@ from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.enrich_markdown_images import enrich_markdown_images
 
 @node_log("node_md_img")
-def node_md_img(state: ImportGraphState) -> ImportGraphState:
+def node_md_img(state: ImportGraphState) -> dict:
     """
     节点: 图片处理 (node_md_img)
     为什么叫这个名字: 处理 Markdown 中的图片资源 (Image)。
     """
     add_running_task(state["task_id"], "node_md_img")
-    state = enrich_markdown_images(state)
+    result_state = enrich_markdown_images(state)
     add_done_task(state["task_id"], "node_md_img")
-    return state
+    return {
+        "md_path": result_state.get("md_path", ""),
+        "md_content": result_state.get("md_content", ""),
+    }
 
 
 if __name__ == "__main__":

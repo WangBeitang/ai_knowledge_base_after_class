@@ -11,9 +11,11 @@ def node_rrf(state):
     将多路召回的结果（向量、HyDE、Web）进行加权融合排序。
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
-    state = fuse_by_rrf(state)
+    result_state = fuse_by_rrf(state)
     add_done_task(state['session_id'], sys._getframe().f_code.co_name, state.get("is_stream"))
-    return state
+    return {
+        "rrf_chunks": result_state.get("rrf_chunks", []),
+    }
 
 if __name__ == "__main__":
     mock_state = {

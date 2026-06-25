@@ -4,15 +4,17 @@ from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.index_service import index_chunks
 
 @node_log("node_import_milvus")
-def node_import_milvus(state: ImportGraphState) -> ImportGraphState:
+def node_import_milvus(state: ImportGraphState) -> dict:
     """
     节点: 导入向量库 (node_import_milvus)
     为什么叫这个名字: 将处理好的向量数据写入 Milvus 数据库。
     """
     add_running_task(state["task_id"], "node_import_milvus")
-    state = index_chunks(state)
+    result_state = index_chunks(state)
     add_done_task(state["task_id"], "node_import_milvus")
-    return state
+    return {
+        "chunks": result_state.get("chunks", []),
+    }
 
 if __name__ == '__main__':
     # --- 单元测试 ---

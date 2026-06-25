@@ -10,9 +10,11 @@ def node_rerank(state):
     节点功能：使用 Cross-Encoder 模型对 RRF 后的结果进行精确打分重排。
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
-    state = rerank_documents(state)
+    result_state = rerank_documents(state)
     add_done_task(state['session_id'], sys._getframe().f_code.co_name, state.get("is_stream"))
-    return state
+    return {
+        "reranked_docs": result_state.get("reranked_docs", []),
+    }
 
 if __name__ == "__main__":
     mock_rrf_chunks = [
