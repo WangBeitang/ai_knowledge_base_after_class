@@ -1,8 +1,6 @@
 import asyncio
 import json
 
-from agents.mcp import MCPServerStreamableHttp
-
 from app.infra.config.providers import infra_config
 from app.process.query.agent.state import QueryGraphState
 from app.rag.query.config import RETRIEVAL_DEFAULT_LIMIT
@@ -17,6 +15,10 @@ def check_params(state):
 
 
 async def web_search_func(rewritten_query):
+    # MCP/OpenAI Agents 依赖较重，并且只有联网搜索 fallback 真正执行时才需要。
+    # 放在函数内懒加载，避免查询图 import/compile 阶段为未执行的 Web Search 付出启动成本。
+    from agents.mcp import MCPServerStreamableHttp
+
     # 1.mcp_server初始化
     mcp_server = MCPServerStreamableHttp(
         name="web_search_mcp",

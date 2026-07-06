@@ -12,8 +12,15 @@ def node_subject_name_recognition(state: ImportGraphState) -> dict:
     add_running_task(state["task_id"], "node_subject_name_recognition")
     result_state = recognize_and_index_subject_name(state)
     add_done_task(state["task_id"], "node_subject_name_recognition")
+    # LangGraph 节点统一返回 partial state。
+    # 这里既返回阶段 2 新增的标准主题字段，也继续返回 subject_name 兼容旧流程。
+    # chunks 已经在 service 层完成 subject_id / standard_subject_name 回填，
+    # 后续 embedding 和 Milvus 入库节点只需要继续透传 chunks 即可。
     return {
         "subject_name": result_state.get("subject_name", ""),
+        "subject_id": result_state.get("subject_id", ""),
+        "standard_subject_name": result_state.get("standard_subject_name", ""),
+        "subject_aliases": result_state.get("subject_aliases", []),
         "chunks": result_state.get("chunks", []),
     }
 

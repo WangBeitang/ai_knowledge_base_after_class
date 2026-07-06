@@ -1,6 +1,3 @@
-from langchain_core.messages import HumanMessage
-from langchain_core.output_parsers import StrOutputParser
-
 from app.infra.llm.providers import llm_provider
 from app.infra.vectorstore.milvus_gateway import milvus_gateway
 from app.process.query.agent.state import QueryGraphState
@@ -65,6 +62,9 @@ def query_chunk_by_milvus(subject_names, rewritten_query, hyde_answer):
 
 
 def generate_hyde_answer(rewritten_query):
+    from langchain_core.messages import HumanMessage
+    from langchain_core.output_parsers import StrOutputParser
+
     llm_client = llm_provider.chat()
     prompt = load_prompt("hyde_prompt",rewritten_query=rewritten_query)
     messages = [

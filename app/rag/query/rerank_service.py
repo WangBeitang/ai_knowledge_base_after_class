@@ -1,6 +1,3 @@
-from langchain_core.messages import HumanMessage
-from langchain_core.output_parsers import StrOutputParser
-
 from app.infra.llm.providers import llm_provider
 from app.process.query.agent.state import QueryGraphState
 from app.rag.query.config import RERANK_MAX_INPUT_TOKENS, RERANK_MIN_SUMMARY_CHARS, RERANK_SUMMARY_CHAR_RATIO, \
@@ -50,6 +47,9 @@ def fuse_documents(rrf_chunks, web_search_docs):
 
 
 def refine_long_answer(rewritten_query, long_answer, limit):
+    from langchain_core.messages import HumanMessage
+    from langchain_core.output_parsers import StrOutputParser
+
     # 利用llm压缩超长的回答
     llm_client = llm_provider.chat()
     prompt = load_prompt("rerank_text_refine",question=rewritten_query,answer=long_answer,limit=limit)

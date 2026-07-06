@@ -1,6 +1,3 @@
-from langchain_core.messages import HumanMessage
-from langchain_core.output_parsers import JsonOutputParser
-
 from app.infra.llm.providers import llm_provider
 from app.infra.persistence.history_repository import history_repository
 from app.infra.vectorstore.milvus_gateway import milvus_gateway
@@ -46,6 +43,9 @@ def build_history_text(history_messages):
 
 
 def query_rewrite_and_subject_name_recognition(original_query, history_text):
+    from langchain_core.messages import HumanMessage
+    from langchain_core.output_parsers import JsonOutputParser
+
     result_dict = {}
 
     # 1.获取llm客户端

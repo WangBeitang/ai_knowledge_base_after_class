@@ -11,6 +11,14 @@ class MilvusGateway:
         return infra_config.milvus.subject_name_collection
 
     @property
+    def standard_subject_collection(self):
+        return infra_config.milvus.standard_subject_collection
+
+    @property
+    def subject_alias_collection(self):
+        return infra_config.milvus.subject_alias_collection
+
+    @property
     def chunk_collection_name(self):
         return infra_config.milvus.chunks_collection
 

@@ -53,7 +53,21 @@ def test_import_processing_nodes_return_partial_state(monkeypatch):
     monkeypatch.setattr(
         import_subject_node,
         "recognize_and_index_subject_name",
-        lambda state: {**state, "subject_name": "HAK 180", "chunks": [{"subject_name": "HAK 180"}], "extra": "ignored"},
+        lambda state: {
+            **state,
+            "subject_name": "HAK 180 烫金机",
+            "subject_id": "subject_hak_180",
+            "standard_subject_name": "HAK 180 烫金机",
+            "subject_aliases": ["HAK 180 烫金机", "HAK180"],
+            "chunks": [
+                {
+                    "subject_id": "subject_hak_180",
+                    "standard_subject_name": "HAK 180 烫金机",
+                    "subject_name": "HAK 180 烫金机",
+                }
+            ],
+            "extra": "ignored",
+        },
     )
     monkeypatch.setattr(
         import_embedding_node,
@@ -71,7 +85,13 @@ def test_import_processing_nodes_return_partial_state(monkeypatch):
     assert set(import_pdf_node.node_pdf_to_md(base_state)) == {"md_path", "md_content"}
     assert set(import_md_img_node.node_md_img(base_state)) == {"md_path", "md_content"}
     assert set(import_split_node.node_document_split(base_state)) == {"chunks"}
-    assert set(import_subject_node.node_subject_name_recognition(base_state)) == {"subject_name", "chunks"}
+    assert set(import_subject_node.node_subject_name_recognition(base_state)) == {
+        "subject_name",
+        "subject_id",
+        "standard_subject_name",
+        "subject_aliases",
+        "chunks",
+    }
     assert set(import_embedding_node.node_bge_embedding(base_state)) == {"chunks"}
     assert set(import_milvus_node.node_import_milvus(base_state)) == {"chunks"}
 
