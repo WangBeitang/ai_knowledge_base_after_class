@@ -5,6 +5,18 @@ from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.config import MILVUS_DEFAULT_VARCHAR_MAX_LENGTH
 from app.shared.runtime.logger import logger,step_log
 
+CHUNK_SUBJECT_FIELDS = (
+    "subject_id",
+    "standard_subject_name",
+    "equipment_model",
+    "alarm_code",
+    "part_name",
+    "sop_type",
+    "safety_level",
+    "maintenance_stage",
+)
+
+
 @step_log()
 def params_check(state):
     chunks = state.get("chunks")
@@ -45,6 +57,21 @@ def prepare_chunks_collection(state):
     schema.add_field(field_name="part", datatype=DataType.INT8)
     # 所属主体名称
     schema.add_field(field_name="subject_name", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    # 标准主题ID。阶段2后查询优先用这个字段过滤，避免主题展示名变化导致检索失效。
+    schema.add_field(field_name="subject_id", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    # 标准主题名称。保留可读名称，便于日志、引用展示和调试。
+    schema.add_field(
+        field_name="standard_subject_name",
+        datatype=DataType.VARCHAR,
+        max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH,
+    )
+    # 轻量领域字段。当前只做元数据入库，后续可用于报警码、部件、SOP类型等精确过滤。
+    schema.add_field(field_name="equipment_model", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    schema.add_field(field_name="alarm_code", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    schema.add_field(field_name="part_name", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    schema.add_field(field_name="sop_type", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    schema.add_field(field_name="safety_level", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    schema.add_field(field_name="maintenance_stage", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
     # 稠密向量
     schema.add_field(field_name="dense_vector",datatype=DataType.FLOAT_VECTOR, dim=1024)
     # 稀疏向量
@@ -87,6 +114,26 @@ def prepare_chunks_collection(state):
     client.load_collection(collection_name=collection_name)
 
 
+def normalize_chunk_subject_fields(chunks):
+    """
+    插入 Milvus 前补齐阶段2新增的 chunk 主体字段。
+
+    主体识别节点已经会写入 subject_id / standard_subject_name / 领域字段，
+    但为了兼容旧导入数据、测试桩或手动调用，这里仍做一次兜底：
+    - subject_name 保留旧查询链路可用。
+    - standard_subject_name 缺失时用 subject_name 兜底。
+    - subject_id 和轻量领域字段缺失时使用空字符串，避免显式 schema 插入时报字段缺失。
+    """
+    for chunk in chunks:
+        subject_name = chunk.get("subject_name", "")
+        standard_subject_name = chunk.get("standard_subject_name") or subject_name
+        chunk["subject_name"] = subject_name or standard_subject_name
+        chunk["standard_subject_name"] = standard_subject_name
+        for field_name in CHUNK_SUBJECT_FIELDS:
+            chunk.setdefault(field_name, "")
+    return chunks
+
+
 @step_log()
 def remove_old_chunks(file_title):
     client = milvus_gateway.client
@@ -99,6 +146,7 @@ def remove_old_chunks(file_title):
 @step_log()
 def insert_chunks(chunks):
     client = milvus_gateway.client
+    chunks = normalize_chunk_subject_fields(chunks)
     result = client.insert(
         collection_name=milvus_gateway.chunk_collection_name,
         data=chunks,

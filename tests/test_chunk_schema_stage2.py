@@ -1,0 +1,119 @@
+from app.rag.import_ import index_service
+from app.rag.query.chunk_retrieval_utils import build_subject_filter_expr, format_chunk_search_item
+
+
+def test_prepare_chunks_collection_includes_stage2_subject_fields(monkeypatch):
+    class FakeSchema:
+        def __init__(self):
+            self.field_names = []
+
+        def add_field(self, *, field_name, **kwargs):
+            self.field_names.append(field_name)
+
+    class FakeIndexParams:
+        def add_index(self, **kwargs):
+            pass
+
+    class FakeClient:
+        def __init__(self):
+            self.schema = FakeSchema()
+            self.created_collection = None
+            self.loaded_collection = None
+
+        def has_collection(self, collection_name):
+            return False
+
+        def create_schema(self, **kwargs):
+            return self.schema
+
+        def prepare_index_params(self):
+            return FakeIndexParams()
+
+        def create_collection(self, **kwargs):
+            self.created_collection = kwargs["collection_name"]
+
+        def load_collection(self, collection_name):
+            self.loaded_collection = collection_name
+
+    class FakeGateway:
+        def __init__(self):
+            self.client = FakeClient()
+            self.chunk_collection_name = "chunks"
+
+    fake_gateway = FakeGateway()
+    monkeypatch.setattr(index_service, "milvus_gateway", fake_gateway)
+
+    index_service.prepare_chunks_collection({})
+
+    assert fake_gateway.client.created_collection == "chunks"
+    assert fake_gateway.client.loaded_collection == "chunks"
+    assert {
+        "subject_id",
+        "standard_subject_name",
+        "equipment_model",
+        "alarm_code",
+        "part_name",
+        "sop_type",
+        "safety_level",
+        "maintenance_stage",
+    }.issubset(set(fake_gateway.client.schema.field_names))
+
+
+def test_normalize_chunk_subject_fields_backfills_stage2_fields():
+    chunks = [
+        {
+            "subject_name": "HAK 180 烫金机",
+            "content": "开机前检查急停按钮。",
+        }
+    ]
+
+    result = index_service.normalize_chunk_subject_fields(chunks)
+
+    assert result[0]["subject_name"] == "HAK 180 烫金机"
+    assert result[0]["standard_subject_name"] == "HAK 180 烫金机"
+    assert result[0]["subject_id"] == ""
+    assert result[0]["equipment_model"] == ""
+    assert result[0]["maintenance_stage"] == ""
+
+
+def test_subject_filter_prefers_subject_id_and_falls_back_to_subject_name():
+    assert (
+        build_subject_filter_expr(
+            subject_ids=["subject_hak_180"],
+            subject_names=["HAK 180 烫金机"],
+        )
+        == 'subject_id in ["subject_hak_180"]'
+    )
+
+    assert (
+        build_subject_filter_expr(
+            subject_ids=[],
+            subject_names=["HAK 180 烫金机"],
+        )
+        == 'subject_name in ["HAK 180 烫金机"]'
+    )
+
+
+def test_format_chunk_search_item_preserves_stage2_fields():
+    item = {
+        "id": 1,
+        "distance": 0.87,
+        "entity": {
+            "subject_id": "subject_hak_180",
+            "standard_subject_name": "HAK 180 烫金机",
+            "subject_name": "HAK 180 烫金机",
+            "equipment_model": "HAK 180",
+            "alarm_code": "E101",
+            "content": "报警 E101 表示温度异常。",
+            "title": "报警说明",
+        },
+    }
+
+    result = format_chunk_search_item(item, source_type="milvus")
+
+    assert result["chunk_id"] == 1
+    assert result["subject_id"] == "subject_hak_180"
+    assert result["standard_subject_name"] == "HAK 180 烫金机"
+    assert result["equipment_model"] == "HAK 180"
+    assert result["alarm_code"] == "E101"
+    assert result["type"] == "milvus"
