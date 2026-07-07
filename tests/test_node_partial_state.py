@@ -102,7 +102,9 @@ def test_query_nodes_return_partial_state(monkeypatch):
         "confirm_subject_name",
         lambda state: {
             **state,
-            "subject_names": ["HAK 180"],
+            "subject_ids": ["subject_hak_180"],
+            "standard_subject_names": ["HAK 180 烫金机"],
+            "subject_names": ["HAK 180 烫金机"],
             "rewritten_query": "HAK 180 怎么操作？",
             "history": [],
             "answer": "",
@@ -128,6 +130,8 @@ def test_query_nodes_return_partial_state(monkeypatch):
     base_state = {"session_id": "session-1", "is_stream": False}
 
     assert set(query_subject_node.node_subject_name_confirm(base_state)) == {
+        "subject_ids",
+        "standard_subject_names",
         "subject_names",
         "rewritten_query",
         "history",

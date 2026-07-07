@@ -18,6 +18,8 @@ def node_subject_name_confirm(state):
     # 识别完成后写入完成列表，方便前端展示当前节点已结束。
     add_done_task(state["session_id"], sys._getframe().f_code.co_name, state["is_stream"])
     return {
+        "subject_ids": result_state.get("subject_ids", []),
+        "standard_subject_names": result_state.get("standard_subject_names", []),
         "subject_names": result_state.get("subject_names", []),
         "rewritten_query": result_state.get("rewritten_query", ""),
         "history": result_state.get("history", []),
