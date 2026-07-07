@@ -2,6 +2,7 @@ from app.shared.runtime.logger import node_log
 from app.shared.utils.task_utils import add_done_task, add_running_task
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.enrich_markdown_images import enrich_markdown_images
+from app.infra.persistence.import_metadata_repository import STATUS_COMPLETED, safe_update_document
 
 @node_log("node_md_img")
 def node_md_img(state: ImportGraphState) -> dict:
@@ -11,6 +12,11 @@ def node_md_img(state: ImportGraphState) -> dict:
     """
     add_running_task(state["task_id"], "node_md_img")
     result_state = enrich_markdown_images(state)
+    safe_update_document(
+        state.get("document_id", ""),
+        parse_status=STATUS_COMPLETED,
+        md_path=result_state.get("md_path", ""),
+    )
     add_done_task(state["task_id"], "node_md_img")
     return {
         "md_path": result_state.get("md_path", ""),

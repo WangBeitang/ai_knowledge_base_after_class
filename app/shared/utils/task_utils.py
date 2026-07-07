@@ -2,6 +2,10 @@
 工具模块，负责提供 task 相关的辅助能力。
 """
 from typing import Dict, List
+from app.infra.persistence.import_metadata_repository import (
+    safe_update_task_nodes,
+    safe_update_task_status,
+)
 from .sse_utils import push_to_session
 
 # ---------------------------
@@ -19,6 +23,10 @@ _tasks_status: Dict[str, str] = {}
 # key: task_id
 # value: 任务结果（例如 query 的 answer）
 _tasks_result: Dict[str, Dict[str, str]] = {}
+
+# key: task_id
+# value: 持久化任务元数据。只有导入任务注册后才会同步 Mongo，查询 session 不写入。
+_persistent_task_metadata: Dict[str, Dict[str, str]] = {}
 
 TASK_STATUS_PENDING = "pending"
 TASK_STATUS_PROCESSING = "processing"
@@ -68,6 +76,38 @@ def _to_cn(node_name: str) -> str:
     return _NODE_NAME_TO_CN.get(node_name, node_name)
 
 
+def to_display_node_list(node_names: List[str]) -> List[str]:
+    return [_to_cn(n) for n in node_names]
+
+
+def register_persistent_task(task_id: str, document_id: str, dataset_id: str) -> None:
+    """
+    注册需要同步到 Mongo 的导入任务。
+
+    查询链路也复用 task_utils 做 SSE 进度，但查询 session 不属于导入任务，
+    因此只有显式注册过的 task_id 才会写入导入元数据表。
+    """
+    _ensure_task(task_id)
+    _persistent_task_metadata[task_id] = {
+        "document_id": document_id,
+        "dataset_id": dataset_id,
+    }
+
+
+def get_persistent_task_metadata(task_id: str) -> Dict[str, str]:
+    return _persistent_task_metadata.get(task_id, {})
+
+
+def _sync_persistent_task_nodes(task_id: str) -> None:
+    if task_id not in _persistent_task_metadata:
+        return
+    safe_update_task_nodes(
+        task_id=task_id,
+        running_nodes=list(_tasks_running_list.get(task_id, [])),
+        done_nodes=list(_tasks_done_list.get(task_id, [])),
+    )
+
+
 def add_running_task(task_id: str, node_name: str, is_stream: bool = False) -> None:
     """
     添加“正在运行”的节点任务。
@@ -81,6 +121,8 @@ def add_running_task(task_id: str, node_name: str, is_stream: bool = False) -> N
     # 避免重复追加
     if node_name not in running:
         running.append(node_name)
+
+    _sync_persistent_task_nodes(task_id)
 
     if is_stream:
         task_push_queue(task_id)
@@ -106,6 +148,8 @@ def add_done_task(task_id: str, node_name: str, is_stream: bool = False) -> None
     done = _tasks_done_list[task_id]
     if node_name not in done:
         done.append(node_name)
+
+    _sync_persistent_task_nodes(task_id)
 
     if is_stream:
         task_push_queue(task_id)
@@ -148,7 +192,7 @@ def get_done_task_list(task_id: str) -> List[str]:
     """
     _ensure_task(task_id)
     done = _tasks_done_list.get(task_id, [])
-    return [_to_cn(n) for n in done]
+    return to_display_node_list(done)
 
 
 def get_running_task_list(task_id: str) -> List[str]:
@@ -158,7 +202,24 @@ def get_running_task_list(task_id: str) -> List[str]:
     """
     _ensure_task(task_id)
     running = _tasks_running_list.get(task_id, [])
-    return [_to_cn(n) for n in running]
+    return to_display_node_list(running)
+
+
+def get_done_task_node_names(task_id: str) -> List[str]:
+    _ensure_task(task_id)
+    return list(_tasks_done_list.get(task_id, []))
+
+
+def get_running_task_node_names(task_id: str) -> List[str]:
+    _ensure_task(task_id)
+    return list(_tasks_running_list.get(task_id, []))
+
+
+def get_last_running_task_node_name(task_id: str) -> str:
+    running = get_running_task_node_names(task_id)
+    if not running:
+        return ""
+    return running[-1]
 
 
 def update_task_status(task_id: str, status_name: str, push_queue: bool = False) -> None:
@@ -170,6 +231,8 @@ def update_task_status(task_id: str, status_name: str, push_queue: bool = False)
     - status_name: 状态名称（字符串）
     """
     _tasks_status[task_id] = status_name
+    if task_id in _persistent_task_metadata:
+        safe_update_task_status(task_id, status_name)
     if push_queue:
         task_push_queue(task_id)
 
@@ -188,3 +251,4 @@ def clear_task(task_id: str):
     _tasks_done_list.pop(task_id, None)
     _tasks_status.pop(task_id, None)
     _tasks_result.pop(task_id, None)
+    _persistent_task_metadata.pop(task_id, None)

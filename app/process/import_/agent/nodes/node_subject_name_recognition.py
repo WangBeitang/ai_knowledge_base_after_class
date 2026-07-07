@@ -2,6 +2,7 @@ from app.shared.runtime.logger import node_log
 from app.shared.utils.task_utils import add_done_task, add_running_task
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.subject_name_service import recognize_and_index_subject_name
+from app.infra.persistence.import_metadata_repository import safe_update_document
 
 @node_log("node_subject_name_recognition")
 def node_subject_name_recognition(state: ImportGraphState) -> dict:
@@ -11,6 +12,11 @@ def node_subject_name_recognition(state: ImportGraphState) -> dict:
     """
     add_running_task(state["task_id"], "node_subject_name_recognition")
     result_state = recognize_and_index_subject_name(state)
+    safe_update_document(
+        state.get("document_id", ""),
+        subject_id=result_state.get("subject_id", ""),
+        standard_subject_name=result_state.get("standard_subject_name", ""),
+    )
     add_done_task(state["task_id"], "node_subject_name_recognition")
     # LangGraph 节点统一返回 partial state。
     # 这里只返回标准主题字段。chunks 已经在 service 层完成

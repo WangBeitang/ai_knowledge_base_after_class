@@ -2,6 +2,7 @@ from app.shared.runtime.logger import node_log
 from app.shared.utils.task_utils import add_done_task, add_running_task
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.split_service import split_document
+from app.infra.persistence.import_metadata_repository import STATUS_PROCESSING, safe_update_document
 
 @node_log("node_document_split")
 def node_document_split(state: ImportGraphState) -> dict:
@@ -11,6 +12,11 @@ def node_document_split(state: ImportGraphState) -> dict:
     """
     add_running_task(state["task_id"], "node_document_split")
     result_state = split_document(state)
+    safe_update_document(
+        state.get("document_id", ""),
+        chunk_count=len(result_state.get("chunks", [])),
+        index_status=STATUS_PROCESSING,
+    )
     add_done_task(state["task_id"], "node_document_split")
     return {
         "chunks": result_state.get("chunks", []),

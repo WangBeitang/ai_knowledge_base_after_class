@@ -2,6 +2,7 @@ from app.shared.runtime.logger import node_log
 from app.shared.utils.task_utils import add_done_task, add_running_task
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.index_service import index_chunks
+from app.infra.persistence.import_metadata_repository import STATUS_COMPLETED, safe_update_document
 
 @node_log("node_import_milvus")
 def node_import_milvus(state: ImportGraphState) -> dict:
@@ -11,6 +12,12 @@ def node_import_milvus(state: ImportGraphState) -> dict:
     """
     add_running_task(state["task_id"], "node_import_milvus")
     result_state = index_chunks(state)
+    safe_update_document(
+        state.get("document_id", ""),
+        status=STATUS_COMPLETED,
+        index_status=STATUS_COMPLETED,
+        chunk_count=len(result_state.get("chunks", [])),
+    )
     add_done_task(state["task_id"], "node_import_milvus")
     return {
         "chunks": result_state.get("chunks", []),

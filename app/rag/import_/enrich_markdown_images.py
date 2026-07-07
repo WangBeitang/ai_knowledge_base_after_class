@@ -196,15 +196,24 @@ def enrich_markdown_images(state: ImportGraphState) -> ImportGraphState:
     """
     # 1. 获取操作参数
     md_content, md_path_obj, image_path_obj = load_markdown_and_image_dir(state)
+    state["md_content"] = md_content
+    state["md_path"] = str(md_path_obj)
 
-    # 2. 判断image_path_obj是否存在内容
+    # 2. 判断 images 目录是否存在、是否有文件。
+    # 纯 Markdown 上传、或 MinerU 解析结果不包含图片时，通常不会生成 images 目录。
+    # 这类文档仍然应该继续进入切分和入库流程，不能因为缺少图片目录而中断导入。
+    if not image_path_obj.exists():
+        logger.warning(f"图片目录不存在：{image_path_obj}，跳过图片增强，正常进入下一个节点")
+        return state
     if not any(image_path_obj.iterdir()):
-        logger.warning(f"当前{md_content}没有图片,无需图片处理!正常进入下一个节点!!")
+        logger.warning(f"图片目录为空：{image_path_obj}，跳过图片增强，正常进入下一个节点")
         return state
 
     # 3. 获取图片的上下文
     images_context: list[tuple[str, str, tuple[str, str]]] = scan_images(md_content, image_path_obj)
-    print("图片识别结果：", images_context)
+    if not images_context:
+        logger.warning(f"图片目录中没有可处理且被 Markdown 引用的图片：{image_path_obj}，跳过图片增强")
+        return state
 
     # 4. 使用视觉模型获取图片说明
     # 格式 {xx.jpg:描述}

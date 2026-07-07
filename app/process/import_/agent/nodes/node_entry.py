@@ -2,6 +2,7 @@ from app.shared.runtime.logger import node_log
 from app.shared.utils.task_utils import add_done_task, add_running_task
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.entry_service import resolve_input_file
+from app.infra.persistence.import_metadata_repository import STATUS_PROCESSING, safe_update_document
 
 @node_log()
 def node_entry(state: ImportGraphState) -> dict:
@@ -11,6 +12,12 @@ def node_entry(state: ImportGraphState) -> dict:
     """
     add_running_task(state["task_id"], "node_entry")
     result_state = resolve_input_file(state)
+    safe_update_document(
+        state.get("document_id", ""),
+        status=STATUS_PROCESSING,
+        parse_status=STATUS_PROCESSING,
+        file_title=result_state.get("file_title", ""),
+    )
     add_done_task(state["task_id"], "node_entry")
     return {
         "is_md_read_enabled": result_state.get("is_md_read_enabled", False),

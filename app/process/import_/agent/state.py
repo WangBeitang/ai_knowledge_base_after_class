@@ -8,6 +8,10 @@ from app.shared.runtime.logger import logger
 class ImportGraphState(TypedDict):
     # 任务标识：贯穿一次导入流程，用于日志、任务状态和前端进度查询
     task_id: str
+    # 知识库标识：阶段 3 引入的 dataset/document/task 管理元数据关联字段
+    dataset_id: str
+    # 文档标识：一个 document 可关联多次 task，当前导入任务写入 latest_task_id
+    document_id: str
 
     # 输入参数：由 API 或调用方传入，不应由后续节点随意改写
     local_file_path: str  # 原始上传文件路径，支持 .pdf / .md
@@ -47,6 +51,8 @@ class ImportGraphState(TypedDict):
 # 模板
 default_state: ImportGraphState = {
     "task_id": "",
+    "dataset_id": "",
+    "document_id": "",
     "local_file_path": "",
     "local_dir": "",
     "is_md_read_enabled": False,
