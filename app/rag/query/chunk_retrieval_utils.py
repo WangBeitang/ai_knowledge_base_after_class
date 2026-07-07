@@ -51,6 +51,26 @@ def build_subject_filter_expr(subject_ids=None, subject_names=None):
     return f"subject_name in {_milvus_string_list(subject_names)}"
 
 
+def build_subject_filter_expr_candidates(subject_ids=None, subject_names=None):
+    """
+    构建检索过滤表达式候选列表，顺序代表查询优先级。
+
+    阶段2新数据应该走 subject_id 精确过滤；但旧 chunk 数据可能还没有 subject_id 字段
+    或 subject_id 为空。为了让旧 item_name/subject_name 逻辑平滑迁移，这里在存在
+    subject_names 时追加一条 subject_name 兜底表达式。
+
+    调用方应按顺序执行：第一条有召回就停止；第一条无召回才尝试后续 fallback。
+    """
+    expr_candidates = []
+    if subject_ids:
+        expr_candidates.append(f"subject_id in {_milvus_string_list(subject_ids)}")
+    if subject_names:
+        fallback_expr = f"subject_name in {_milvus_string_list(subject_names)}"
+        if fallback_expr not in expr_candidates:
+            expr_candidates.append(fallback_expr)
+    return expr_candidates
+
+
 def resolve_subject_filter_values(state):
     """
     从查询 state 中取检索主体。

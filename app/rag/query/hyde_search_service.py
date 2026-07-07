@@ -3,7 +3,7 @@ from app.infra.vectorstore.milvus_gateway import milvus_gateway
 from app.process.query.agent.state import QueryGraphState
 from app.rag.query.chunk_retrieval_utils import (
     CHUNK_OUTPUT_FIELDS,
-    build_subject_filter_expr,
+    build_subject_filter_expr_candidates,
     format_chunk_search_item,
     resolve_subject_filter_values,
 )
@@ -31,28 +31,33 @@ def query_chunk_by_milvus(subject_ids, subject_names, rewritten_query, hyde_answ
     dense_vector = embedding_result["dense"][0]
     sparse_vector = embedding_result["sparse"][0]
 
-    # 2.reqs
-    reqs = milvus_gateway.create_requests(
-        dense_vector=dense_vector,
-        sparse_vector=sparse_vector,
-        expr=build_subject_filter_expr(subject_ids=subject_ids, subject_names=subject_names),
-    )
+    # 2.按优先级构造过滤表达式：
+    #    新数据优先 subject_id，旧数据无召回时再 fallback 到 subject_name。
+    filter_exprs = build_subject_filter_expr_candidates(subject_ids=subject_ids, subject_names=subject_names)
 
-    # 3.执行混合搜索
-    hybrid_result = milvus_gateway.hybrid_search(
-        collection_name=milvus_gateway.chunk_collection_name,
-        reqs=reqs,
-        ranker_weights=RETRIEVAL_RANKER_WEIGHTS,
-        limit=RETRIEVAL_DEFAULT_LIMIT,
-        output_fields=CHUNK_OUTPUT_FIELDS,
-    )
+    # 3.执行混合搜索。有 subject_id 结果时直接返回；只有空召回才尝试旧字段兜底。
+    for index, filter_expr in enumerate(filter_exprs):
+        reqs = milvus_gateway.create_requests(
+            dense_vector=dense_vector,
+            sparse_vector=sparse_vector,
+            expr=filter_expr,
+        )
+        hybrid_result = milvus_gateway.hybrid_search(
+            collection_name=milvus_gateway.chunk_collection_name,
+            reqs=reqs,
+            ranker_weights=RETRIEVAL_RANKER_WEIGHTS,
+            limit=RETRIEVAL_DEFAULT_LIMIT,
+            output_fields=CHUNK_OUTPUT_FIELDS,
+        )
 
-    # 4.格式化结果
-    if hybrid_result[0] and len(hybrid_result[0]) > 0:
-        return [
-            format_chunk_search_item(item, source_type="hyde")
-            for item in hybrid_result[0]
-        ]
+        if hybrid_result and hybrid_result[0] and len(hybrid_result[0]) > 0:
+            return [
+                format_chunk_search_item(item, source_type="hyde")
+                for item in hybrid_result[0]
+            ]
+
+        if index == 0 and len(filter_exprs) > 1:
+            logger.info(f"subject_id过滤无召回，fallback到旧subject_name过滤。当前表达式：{filter_expr}")
     return []
 
 

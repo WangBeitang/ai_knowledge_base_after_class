@@ -1,5 +1,9 @@
 from app.rag.import_ import index_service
-from app.rag.query.chunk_retrieval_utils import build_subject_filter_expr, format_chunk_search_item
+from app.rag.query.chunk_retrieval_utils import (
+    build_subject_filter_expr,
+    build_subject_filter_expr_candidates,
+    format_chunk_search_item,
+)
 
 
 def test_prepare_chunks_collection_includes_stage2_subject_fields(monkeypatch):
@@ -92,6 +96,21 @@ def test_subject_filter_prefers_subject_id_and_falls_back_to_subject_name():
         )
         == 'subject_name in ["HAK 180 烫金机"]'
     )
+
+
+def test_subject_filter_candidates_include_legacy_subject_name_fallback():
+    assert build_subject_filter_expr_candidates(
+        subject_ids=["subject_hak_180"],
+        subject_names=["HAK 180 烫金机"],
+    ) == [
+        'subject_id in ["subject_hak_180"]',
+        'subject_name in ["HAK 180 烫金机"]',
+    ]
+
+    assert build_subject_filter_expr_candidates(
+        subject_ids=[],
+        subject_names=["HAK 180 烫金机"],
+    ) == ['subject_name in ["HAK 180 烫金机"]']
 
 
 def test_format_chunk_search_item_preserves_stage2_fields():
