@@ -1,7 +1,7 @@
 from app.rag.import_ import index_service
 from app.rag.query.chunk_retrieval_utils import (
+    CHUNK_OUTPUT_FIELDS,
     build_subject_filter_expr,
-    build_subject_filter_expr_candidates,
     format_chunk_search_item,
 )
 
@@ -10,9 +10,11 @@ def test_prepare_chunks_collection_includes_stage2_subject_fields(monkeypatch):
     class FakeSchema:
         def __init__(self):
             self.field_names = []
+            self.field_descriptions = {}
 
         def add_field(self, *, field_name, **kwargs):
             self.field_names.append(field_name)
+            self.field_descriptions[field_name] = kwargs.get("description", "")
 
     class FakeIndexParams:
         def add_index(self, **kwargs):
@@ -61,67 +63,48 @@ def test_prepare_chunks_collection_includes_stage2_subject_fields(monkeypatch):
         "safety_level",
         "maintenance_stage",
     }.issubset(set(fake_gateway.client.schema.field_names))
+    assert "subject_name" not in fake_gateway.client.schema.field_names
+    assert "subject_name" not in CHUNK_OUTPUT_FIELDS
+    assert "标准主题稳定业务 ID" in fake_gateway.client.schema.field_descriptions["subject_id"]
+    assert "设备型号" in fake_gateway.client.schema.field_descriptions["equipment_model"]
+    assert "报警码或故障码" in fake_gateway.client.schema.field_descriptions["alarm_code"]
+    assert "部件名称" in fake_gateway.client.schema.field_descriptions["part_name"]
+    assert "SOP 类型" in fake_gateway.client.schema.field_descriptions["sop_type"]
+    assert "安全等级或风险级别" in fake_gateway.client.schema.field_descriptions["safety_level"]
+    assert "维护阶段" in fake_gateway.client.schema.field_descriptions["maintenance_stage"]
 
 
 def test_normalize_chunk_subject_fields_backfills_stage2_fields():
     chunks = [
         {
-            "subject_name": "HAK 180 烫金机",
             "content": "开机前检查急停按钮。",
         }
     ]
 
     result = index_service.normalize_chunk_subject_fields(chunks)
 
-    assert result[0]["subject_name"] == "HAK 180 烫金机"
-    assert result[0]["standard_subject_name"] == "HAK 180 烫金机"
+    assert result[0]["standard_subject_name"] == ""
     assert result[0]["subject_id"] == ""
     assert result[0]["equipment_model"] == ""
     assert result[0]["maintenance_stage"] == ""
 
 
-def test_subject_filter_prefers_subject_id_and_falls_back_to_subject_name():
+def test_subject_filter_uses_subject_id_only():
     assert (
         build_subject_filter_expr(
-            subject_ids=["subject_hak_180"],
-            subject_names=["HAK 180 烫金机"],
+            ["subject_hak_180"],
         )
         == 'subject_id in ["subject_hak_180"]'
     )
-
-    assert (
-        build_subject_filter_expr(
-            subject_ids=[],
-            subject_names=["HAK 180 烫金机"],
-        )
-        == 'subject_name in ["HAK 180 烫金机"]'
-    )
-
-
-def test_subject_filter_candidates_include_legacy_subject_name_fallback():
-    assert build_subject_filter_expr_candidates(
-        subject_ids=["subject_hak_180"],
-        subject_names=["HAK 180 烫金机"],
-    ) == [
-        'subject_id in ["subject_hak_180"]',
-        'subject_name in ["HAK 180 烫金机"]',
-    ]
-
-    assert build_subject_filter_expr_candidates(
-        subject_ids=[],
-        subject_names=["HAK 180 烫金机"],
-    ) == ['subject_name in ["HAK 180 烫金机"]']
-
 
 def test_format_chunk_search_item_preserves_stage2_fields():
     item = {
         "id": 1,
         "distance": 0.87,
-        "entity": {
-            "subject_id": "subject_hak_180",
-            "standard_subject_name": "HAK 180 烫金机",
-            "subject_name": "HAK 180 烫金机",
-            "equipment_model": "HAK 180",
+            "entity": {
+                "subject_id": "subject_hak_180",
+                "standard_subject_name": "HAK 180 烫金机",
+                "equipment_model": "HAK 180",
             "alarm_code": "E101",
             "content": "报警 E101 表示温度异常。",
             "title": "报警说明",

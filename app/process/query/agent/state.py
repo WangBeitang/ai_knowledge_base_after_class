@@ -9,7 +9,6 @@ class QueryGraphState(TypedDict):
 
     # 主体确认：从问题和历史中识别用户要问的主体
     rewritten_query: str  # 结合历史改写后的独立问题
-    subject_names: list[str]  # 兼容字段：已确认的主体名称列表，默认与 standard_subject_names 保持一致
     subject_ids: list[str]  # 已确认的标准主题 ID 列表，用于查询过滤
     standard_subject_names: list[str]  # 已确认的标准主题名称列表，用于展示、日志和 Prompt
     history: list  # 当前会话历史记录，用于改写问题和构造答案上下文
@@ -39,7 +38,6 @@ query_graph_default_state: QueryGraphState = {
     "original_query": "",
     "is_stream": False,
     "rewritten_query": "",
-    "subject_names": [],
     "subject_ids": [],
     "standard_subject_names": [],
     "history": [],

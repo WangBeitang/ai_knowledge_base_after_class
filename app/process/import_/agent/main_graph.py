@@ -91,7 +91,7 @@ if __name__ == "__main__":
         try:
             logger.info(f"测试任务启动，PDF文件路径：{test_pdf_path}")
             logger.info(f"中间文件输出目录：{test_output_dir}")
-            logger.info("开始执行全流程节点，依次执行：entry→pdf2md→md_img→split→subject_name→embedding→milvus")
+            logger.info("开始执行全流程节点，依次执行：entry→pdf2md→md_img→split→standard_subject→embedding→milvus")
 
             # 5. 执行LangGraph全流程（流式执行，打印节点执行进度）
             final_state = None
@@ -110,13 +110,13 @@ if __name__ == "__main__":
                 chunks = final_state.get("chunks", [])
                 chunk_count = len(chunks)
                 md_content = final_state.get("md_content", "")[:150]  # MD内容前150字符
-                subject_name = final_state.get("subject_name", "未识别")  # 主体名称
+                standard_subject_name = final_state.get("standard_subject_name", "未识别")  # 标准主题名称
                 has_embedding = all("dense_vector" in c and "sparse_vector" in c for c in chunks) if chunks else False
                 has_chunk_id = all("chunk_id" in c for c in chunks) if chunks else False
 
                 # 打印核心指标
                 logger.info(f"📄 PDF转MD内容预览（前150字符）：{md_content}...")
-                logger.info(f"🏷️  识别的主体名称：{subject_name}")
+                logger.info(f"🏷️  识别的标准主题名称：{standard_subject_name}")
                 logger.info(f"📝 文档切分总切片数：{chunk_count}")
                 logger.info(f"🔍 所有切片是否完成向量化：{'是' if has_embedding else '否'}")
                 logger.info(f"🗄️  所有切片是否完成Milvus入库（含chunk_id）：{'是' if has_chunk_id else '否'}")

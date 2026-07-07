@@ -12,7 +12,6 @@ class MilvusConfig:
     milvus_token: str
     chunks_collection: str
     entity_name_collection: str
-    subject_name_collection: str
     standard_subject_collection: str
     subject_alias_collection: str
 
@@ -21,7 +20,6 @@ milvus_config = MilvusConfig(
     milvus_token=env_str("MILVUS_TOKEN"),
     chunks_collection=env_str("CHUNKS_COLLECTION"),
     entity_name_collection=env_str("ENTITY_NAME_COLLECTION"),
-    subject_name_collection=env_str("SUBJECT_NAME_COLLECTION"),
     standard_subject_collection=env_str("STANDARD_SUBJECT_COLLECTION"),
     subject_alias_collection=env_str("SUBJECT_ALIAS_COLLECTION"),
 )

@@ -13,11 +13,9 @@ def node_subject_name_recognition(state: ImportGraphState) -> dict:
     result_state = recognize_and_index_subject_name(state)
     add_done_task(state["task_id"], "node_subject_name_recognition")
     # LangGraph 节点统一返回 partial state。
-    # 这里既返回阶段 2 新增的标准主题字段，也继续返回 subject_name 兼容旧流程。
-    # chunks 已经在 service 层完成 subject_id / standard_subject_name 回填，
-    # 后续 embedding 和 Milvus 入库节点只需要继续透传 chunks 即可。
+    # 这里只返回标准主题字段。chunks 已经在 service 层完成
+    # subject_id / standard_subject_name 回填，后续 embedding 和 Milvus 入库节点透传即可。
     return {
-        "subject_name": result_state.get("subject_name", ""),
         "subject_id": result_state.get("subject_id", ""),
         "standard_subject_name": result_state.get("standard_subject_name", ""),
         "subject_aliases": result_state.get("subject_aliases", []),
@@ -34,7 +32,7 @@ def test_node_subject_name_recognition():
     功能：模拟LangGraph流程输入，独立测试node_subject_name_recognition节点全链路逻辑
     适用场景：本地开发、调试、单节点功能验证，无需启动整个LangGraph流程
     测试前准备：
-        1. 确保项目环境变量配置完成（MILVUS_URL/SUBJECT_NAME_COLLECTION等）
+        1. 确保项目环境变量配置完成（MILVUS_URL/STANDARD_SUBJECT_COLLECTION/SUBJECT_ALIAS_COLLECTION等）
         2. 确保大模型、Milvus、BGE-M3服务均可正常访问
         3. 确保prompt模板（subject_name_recognition/product_recognition_system）已存在
     """
@@ -71,9 +69,9 @@ def test_node_subject_name_recognition():
         # 3. 打印测试结果（调试用）
         logger.info("=== 主体名称识别节点本地测试完成 ===")
         logger.info(f"测试任务ID：{result_state.get('task_id')}")
-        logger.info(f"最终识别主体名称：{result_state.get('subject_name')}")
+        logger.info(f"最终识别标准主题名称：{result_state.get('standard_subject_name')}")
         logger.info(f"切片数量：{len(result_state.get('chunks', []))}")
-        logger.info(f"第一个切片主体名称：{result_state.get('chunks', [{}])[0].get('subject_name')}")
+        logger.info(f"第一个切片标准主题名称：{result_state.get('chunks', [{}])[0].get('standard_subject_name')}")
 
     except Exception as e:
         logger.error(f"主体名称识别节点本地测试失败，原因：{str(e)}", exc_info=True)

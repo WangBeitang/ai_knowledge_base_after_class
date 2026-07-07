@@ -15,7 +15,6 @@ def test_import_default_state_fields_are_complete():
         "md_path",
         "md_content",
         "file_title",
-        "subject_name",
         "subject_id",
         "standard_subject_name",
         "subject_aliases",
@@ -56,7 +55,6 @@ def test_query_default_state_fields_are_complete():
         "original_query",
         "is_stream",
         "rewritten_query",
-        "subject_names",
         "subject_ids",
         "standard_subject_names",
         "history",
@@ -70,7 +68,6 @@ def test_query_default_state_fields_are_complete():
         "image_urls",
     }
     assert state["is_stream"] is False
-    assert isinstance(state["subject_names"], list)
     assert isinstance(state["subject_ids"], list)
     assert isinstance(state["standard_subject_names"], list)
     assert isinstance(state["history"], list)
@@ -82,7 +79,6 @@ def test_query_default_state_fields_are_complete():
 
 def test_query_default_state_supports_overrides_and_deepcopy():
     state = create_query_default_state(session_id="session-1")
-    state["subject_names"].append("HAK 180")
     state["subject_ids"].append("subject_hak_180")
     state["standard_subject_names"].append("HAK 180 烫金机")
 
@@ -90,6 +86,5 @@ def test_query_default_state_supports_overrides_and_deepcopy():
 
     assert state["session_id"] == "session-1"
     assert fresh_state["session_id"] == ""
-    assert fresh_state["subject_names"] == []
     assert fresh_state["subject_ids"] == []
     assert fresh_state["standard_subject_names"] == []

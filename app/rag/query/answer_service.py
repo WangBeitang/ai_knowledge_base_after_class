@@ -25,19 +25,19 @@ def try_return_existing_answer(state):
 
 def check_params(state):
     reranked_docs = state.get("reranked_docs") or []
-    subject_names = state.get("subject_names", [])
+    standard_subject_names = state.get("standard_subject_names", [])
     rewritten_query = state.get("rewritten_query", "")
 
-    if len(reranked_docs) == 0 or len(subject_names) == 0 or not rewritten_query:
-        logger.error("reranked_docs或subject_names或rewritten_query为空")
-        raise ValueError("reranked_docs或subject_names或rewritten_query为空")
+    if len(reranked_docs) == 0 or len(standard_subject_names) == 0 or not rewritten_query:
+        logger.error("reranked_docs或standard_subject_names或rewritten_query为空")
+        raise ValueError("reranked_docs或standard_subject_names或rewritten_query为空")
 
     history = state.get("history", [])
-    return reranked_docs, subject_names, rewritten_query, history
+    return reranked_docs, standard_subject_names, rewritten_query, history
 
 
-def build_answer_prompt(reranked_docs, rewritten_query, subject_names, history):
-    # 构建Prompt context history subject_names question
+def build_answer_prompt(reranked_docs, rewritten_query, standard_subject_names, history):
+    # 构建Prompt context history standard_subject_names question
     # 1.拼接context
     context = ""
     for doc in reranked_docs:
@@ -46,21 +46,21 @@ def build_answer_prompt(reranked_docs, rewritten_query, subject_names, history):
 
     # 2.拼接history
     history_text = ""
-    history = [item for item in history if item.get("subject_names")]
     if len(history) > 0:
         for index, item in enumerate(history, start=1):
+            standard_names = ",".join(item.get("standard_subject_names") or [])
             history_text += (f"序号:{index},类型:{'提问' if item['role'] == 'user' else '回答'},"
                              f"内容:{item['rewritten_query'] if item['role'] == 'user' else item['text']},"
-                             f"关联主体:{','.join(item['subject_names'])}\n")
+                             f"关联标准主题:{standard_names or '未记录'}\n")
     else:
         history_text = "无历史对话记录"
 
-    # 3.拼接subject_names
-    subject_names_text = ",".join(subject_names)
+    # 3.拼接标准主题名
+    standard_subject_names_text = ",".join(standard_subject_names)
 
     # 4.加载提示词
     prompt_text = load_prompt("answer_out", context=context, history=history_text,
-                              subject_names=subject_names_text, question=rewritten_query)
+                              standard_subject_names=standard_subject_names_text, question=rewritten_query)
 
     return prompt_text
 
@@ -123,7 +123,7 @@ def save_assistant_message(state):
         role="assistant",
         text=state.get("answer"),
         rewritten_query=state.get("rewritten_query"),
-        subject_names=state.get("subject_names", []),
+        standard_subject_names=state.get("standard_subject_names", []),
         image_urls=state.get("image_urls", [])
     )
 
@@ -142,9 +142,9 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
     # 1.如果已有答案，直接返回
     if not try_return_existing_answer(state):
         # 校验输入
-        reranked_docs, subject_names, rewritten_query, history = check_params(state)
+        reranked_docs, standard_subject_names, rewritten_query, history = check_params(state)
         # 构建提示词
-        prompt = build_answer_prompt(reranked_docs, rewritten_query, subject_names, history)
+        prompt = build_answer_prompt(reranked_docs, rewritten_query, standard_subject_names, history)
         # 生成答案
         generate_final_answer(state, prompt)
         # 提取图片 URL

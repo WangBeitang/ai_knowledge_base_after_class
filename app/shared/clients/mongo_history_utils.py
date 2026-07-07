@@ -107,7 +107,7 @@ def save_chat_message(
         role: str,
         text: str,
         rewritten_query: str = "",
-        subject_names: list[str] | None = None,
+        standard_subject_names: list[str] | None = None,
         image_urls: list[str] | None = None,
         message_id: str | None = None
 ) -> str:
@@ -118,7 +118,7 @@ def save_chat_message(
     :param role: 消息角色，固定值：user（用户）/assistant（助手）
     :param text: 对话核心内容，用户的提问或助手的回答
     :param rewritten_query: 重写后的查询语句（可选，用于检索增强等场景，默认空字符串）
-    :param subject_names: 关联的主体名称列表（可选，支持多主体，默认None）
+    :param standard_subject_names: 关联的标准主题名称列表（可选，支持多主体，默认None）
     :param image_urls: 关联的图片URL列表（可选，默认None）
     :param message_id: 记录主键ID（可选，有值则更新，无值则新增）
     :return: 插入/更新的记录唯一标识（新增返回ObjectId字符串，更新返回传入的message_id）
@@ -132,7 +132,7 @@ def save_chat_message(
         "role": role,  # 消息角色
         "text": text,  # 消息内容
         "rewritten_query": rewritten_query or "",  # 重写查询，空值处理为空字符串
-        "subject_names": subject_names,  # 关联主体名称列表
+        "standard_subject_names": standard_subject_names,  # 关联标准主题名称列表
         "image_urls": image_urls,  # 关联图片URL列表
         "ts": ts  # 时间戳，排序和时间筛选维度
     }
@@ -155,11 +155,11 @@ def save_chat_message(
         return str(result.inserted_id)
 
 
-def update_message_subject_names(ids: list[str], subject_names: list[str]) -> int:
+def update_message_standard_subject_names(ids: list[str], standard_subject_names: list[str]) -> int:
     """
-    批量更新历史会话记录的关联主体名称
+    批量更新历史会话记录的关联标准主题名称
     :param ids: 要更新的记录主键ID列表（字符串类型）
-    :param subject_names: 要设置的新主体名称列表
+    :param standard_subject_names: 要设置的新标准主题名称列表
     :return: 实际更新的文档数量，更新失败返回0
     """
     # 获取全局的HistoryMongoTool实例，使用单例模式
@@ -173,15 +173,15 @@ def update_message_subject_names(ids: list[str], subject_names: list[str]) -> in
             {
                 "_id": {"$in": object_ids}# 主键在指定的ID列表中（批量筛选）
             },
-            {"$set": {"subject_names": subject_names}}  # 更新操作：设置新的主体名称列表
+            {"$set": {"standard_subject_names": standard_subject_names}}  # 更新操作：设置新的标准主题名称列表
         )
         # 记录更新成功日志，包含更新数量和新的主体名称
-        logger.info(f"Updated {result.modified_count} records to subject_names: {subject_names}")
+        logger.info(f"Updated {result.modified_count} records to standard_subject_names: {standard_subject_names}")
         # 返回实际更新的数量（modified_count：真正被修改的文档数，区别于matched_count）
         return result.modified_count
     except Exception as e:
         # 捕获批量更新异常，记录错误日志
-        logger.error(f"Error updating history subject_names: {e}")
+        logger.error(f"Error updating history standard_subject_names: {e}")
         # 异常时返回0，标识更新失败
         return 0
 
@@ -225,8 +225,8 @@ if __name__ == "__main__":
     save_chat_message(sid, "user", "你好 (Hybrid)")
     # 2. 写入助手回复（手动指定ts=1001，按时间顺序紧跟用户消息）
     save_chat_message(sid, "assistant", "你好！我是基于原生 Mongo + LangChain 对象的助手。")
-    # 3. 写入带关联主体的用户消息（测试subject_names字段）
-    save_chat_message(sid, "user", "这个万用表怎么换电池？", subject_names=["混合万用表"])
+    # 3. 写入带关联标准主题的用户消息
+    save_chat_message(sid, "user", "这个万用表怎么换电池？", standard_subject_names=["混合万用表"])
 
     # 4. 查询指定会话的最近5条记录，验证查询功能
     print("--- 查询 LangChain 对象记录 ---")

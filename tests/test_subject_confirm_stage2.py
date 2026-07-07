@@ -55,7 +55,7 @@ def test_classify_subject_aliases_returns_candidates(monkeypatch):
     assert candidate_names == ["HAK 180 烫金机", "HAK 180A 烫金机"]
 
 
-def test_confirm_subject_name_writes_subject_ids_and_compatible_names(monkeypatch):
+def test_confirm_subject_name_writes_subject_ids_and_standard_names(monkeypatch):
     monkeypatch.setattr(service, "params_check", lambda state: ("HAK180怎么开机？", "session-1"))
     monkeypatch.setattr(service, "load_history", lambda session_id: [])
     monkeypatch.setattr(
@@ -66,7 +66,7 @@ def test_confirm_subject_name_writes_subject_ids_and_compatible_names(monkeypatc
     monkeypatch.setattr(
         service,
         "search_subject_alias_in_milvus",
-        lambda subject_names: {
+        lambda subject_mentions: {
             "HAK180": [
                 {
                     "alias": "HAK180",
@@ -101,7 +101,6 @@ def test_confirm_subject_name_writes_subject_ids_and_compatible_names(monkeypatc
 
     assert result["subject_ids"] == ["subject_hak_180"]
     assert result["standard_subject_names"] == ["HAK 180 烫金机"]
-    assert result["subject_names"] == ["HAK 180 烫金机"]
     assert result["rewritten_query"] == "HAK180 怎么开机？"
 
 

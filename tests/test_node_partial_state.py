@@ -55,7 +55,6 @@ def test_import_processing_nodes_return_partial_state(monkeypatch):
         "recognize_and_index_subject_name",
         lambda state: {
             **state,
-            "subject_name": "HAK 180 烫金机",
             "subject_id": "subject_hak_180",
             "standard_subject_name": "HAK 180 烫金机",
             "subject_aliases": ["HAK 180 烫金机", "HAK180"],
@@ -63,7 +62,6 @@ def test_import_processing_nodes_return_partial_state(monkeypatch):
                 {
                     "subject_id": "subject_hak_180",
                     "standard_subject_name": "HAK 180 烫金机",
-                    "subject_name": "HAK 180 烫金机",
                 }
             ],
             "extra": "ignored",
@@ -86,7 +84,6 @@ def test_import_processing_nodes_return_partial_state(monkeypatch):
     assert set(import_md_img_node.node_md_img(base_state)) == {"md_path", "md_content"}
     assert set(import_split_node.node_document_split(base_state)) == {"chunks"}
     assert set(import_subject_node.node_subject_name_recognition(base_state)) == {
-        "subject_name",
         "subject_id",
         "standard_subject_name",
         "subject_aliases",
@@ -104,7 +101,6 @@ def test_query_nodes_return_partial_state(monkeypatch):
             **state,
             "subject_ids": ["subject_hak_180"],
             "standard_subject_names": ["HAK 180 烫金机"],
-            "subject_names": ["HAK 180 烫金机"],
             "rewritten_query": "HAK 180 怎么操作？",
             "history": [],
             "answer": "",
@@ -132,7 +128,6 @@ def test_query_nodes_return_partial_state(monkeypatch):
     assert set(query_subject_node.node_subject_name_confirm(base_state)) == {
         "subject_ids",
         "standard_subject_names",
-        "subject_names",
         "rewritten_query",
         "history",
         "answer",

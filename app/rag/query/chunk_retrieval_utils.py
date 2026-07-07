@@ -5,7 +5,6 @@ CHUNK_OUTPUT_FIELDS = [
     "chunk_id",
     "subject_id",
     "standard_subject_name",
-    "subject_name",
     "content",
     "title",
     "parent_title",
@@ -38,47 +37,24 @@ def _milvus_string_list(values):
     return "[" + ",".join(f'"{escape_milvus_string(value)}"' for value in normalized_values) + "]"
 
 
-def build_subject_filter_expr(subject_ids=None, subject_names=None):
+def build_subject_filter_expr(subject_ids):
     """
     构建 chunk collection 的主体过滤表达式。
 
-    阶段2开始查询应该优先使用 subject_id，因为它是稳定主键，不会因为标准主题展示名
-    调整而失效。subject_names 只作为旧数据/旧链路兜底，等查询侧主体确认完全切到
-    alias -> subject_id 后，可以逐步减少对 subject_name 的依赖。
+    阶段 2 之后只使用 subject_id 过滤。subject_id 是稳定主键，
+    不依赖标准主题展示名，避免主题重命名影响检索。
     """
-    if subject_ids:
-        return f"subject_id in {_milvus_string_list(subject_ids)}"
-    return f"subject_name in {_milvus_string_list(subject_names)}"
-
-
-def build_subject_filter_expr_candidates(subject_ids=None, subject_names=None):
-    """
-    构建检索过滤表达式候选列表，顺序代表查询优先级。
-
-    阶段2新数据应该走 subject_id 精确过滤；但旧 chunk 数据可能还没有 subject_id 字段
-    或 subject_id 为空。为了让旧 item_name/subject_name 逻辑平滑迁移，这里在存在
-    subject_names 时追加一条 subject_name 兜底表达式。
-
-    调用方应按顺序执行：第一条有召回就停止；第一条无召回才尝试后续 fallback。
-    """
-    expr_candidates = []
-    if subject_ids:
-        expr_candidates.append(f"subject_id in {_milvus_string_list(subject_ids)}")
-    if subject_names:
-        fallback_expr = f"subject_name in {_milvus_string_list(subject_names)}"
-        if fallback_expr not in expr_candidates:
-            expr_candidates.append(fallback_expr)
-    return expr_candidates
+    return f"subject_id in {_milvus_string_list(subject_ids)}"
 
 
 def resolve_subject_filter_values(state):
     """
     从查询 state 中取检索主体。
 
-    返回 subject_ids、subject_names 两组值，调用方可以先校验是否至少有一组可用。
-    当前保留 subject_names 是为了兼容旧主体确认服务还没有完全迁移到标准主题体系。
+    返回 subject_ids。查询侧主体确认必须先通过 alias collection 得到标准主题 ID，
+    然后检索链路只按 subject_id 过滤 chunk。
     """
-    return state.get("subject_ids") or [], state.get("subject_names") or []
+    return state.get("subject_ids") or []
 
 
 def format_chunk_search_item(item, source_type):
@@ -87,7 +63,6 @@ def format_chunk_search_item(item, source_type):
         "chunk_id": item.get("id") or entity.get("chunk_id"),
         "subject_id": entity.get("subject_id"),
         "standard_subject_name": entity.get("standard_subject_name"),
-        "subject_name": entity.get("subject_name"),
         "content": entity.get("content"),
         "title": entity.get("title"),
         "parent_title": entity.get("parent_title"),

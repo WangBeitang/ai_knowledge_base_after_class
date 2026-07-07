@@ -3,6 +3,7 @@ from pymilvus import DataType
 from app.infra.vectorstore.milvus_gateway import milvus_gateway
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.config import MILVUS_DEFAULT_VARCHAR_MAX_LENGTH
+from app.rag.import_.subject_name_service import SUBJECT_DOMAIN_FIELD_DESCRIPTIONS
 from app.shared.runtime.logger import logger,step_log
 
 CHUNK_SUBJECT_FIELDS = (
@@ -15,6 +16,15 @@ CHUNK_SUBJECT_FIELDS = (
     "safety_level",
     "maintenance_stage",
 )
+
+
+def _add_varchar_field(schema, field_name, description, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH):
+    schema.add_field(
+        field_name=field_name,
+        datatype=DataType.VARCHAR,
+        max_length=max_length,
+        description=description,
+    )
 
 
 @step_log()
@@ -42,40 +52,65 @@ def prepare_chunks_collection(state):
         return
 
     # 3.schema构建
-    schema = client.create_schema(auto_id=True, enable_dynamic_field=True)
+    schema = client.create_schema(
+        auto_id=True,
+        enable_dynamic_field=True,
+        description="知识切片集合：存储问答检索用的 chunk 文本、标准主题关联、领域标签和混合检索向量。",
+    )
     # 主键
-    schema.add_field(field_name="chunk_id", datatype=DataType.INT64, is_primary=True, auto_id=True)
+    schema.add_field(
+        field_name="chunk_id",
+        datatype=DataType.INT64,
+        is_primary=True,
+        auto_id=True,
+        description="Milvus 自动生成的 chunk 主键。用于返回检索命中的切片标识，不作为业务幂等键。",
+    )
     # 内容
-    schema.add_field(field_name="content", datatype=DataType.VARCHAR, max_length=65535)
+    _add_varchar_field(schema, "content", "切片正文内容。答案生成阶段主要依据该字段组织回答。", max_length=65535)
     # 原始文件标题
-    schema.add_field(field_name="file_title", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    _add_varchar_field(schema, "file_title", "来源文件标题。导入时按该字段清理同一文件的旧 chunk，引用展示时也会使用。")
     # 标题
-    schema.add_field(field_name="title", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    _add_varchar_field(schema, "title", "当前切片标题。通常来自 Markdown 标题，用于答案引用和上下文定位。")
     # 父标题
-    schema.add_field(field_name="parent_title", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    _add_varchar_field(schema, "parent_title", "当前切片的父级标题。用于保留章节层级，帮助定位切片所属上下文。")
     # 分片顺序标记
-    schema.add_field(field_name="part", datatype=DataType.INT8)
-    # 所属主体名称
-    schema.add_field(field_name="subject_name", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    schema.add_field(
+        field_name="part",
+        datatype=DataType.INT8,
+        description="切片顺序标记。表示该 chunk 在拆分结果或章节中的顺序，便于后续恢复邻近上下文。",
+    )
     # 标准主题ID。阶段2后查询优先用这个字段过滤，避免主题展示名变化导致检索失效。
-    schema.add_field(field_name="subject_id", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    _add_varchar_field(schema, "subject_id", "标准主题稳定业务 ID。查询阶段先通过 alias collection 确认该 ID，再用它过滤 chunk。")
     # 标准主题名称。保留可读名称，便于日志、引用展示和调试。
     schema.add_field(
         field_name="standard_subject_name",
         datatype=DataType.VARCHAR,
         max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH,
+        description="标准主题名称。可读展示字段，用于日志、答案 Prompt 和引用展示；检索过滤不依赖该字段。",
     )
     # 轻量领域字段。当前只做元数据入库，后续可用于报警码、部件、SOP类型等精确过滤。
-    schema.add_field(field_name="equipment_model", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
-    schema.add_field(field_name="alarm_code", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
-    schema.add_field(field_name="part_name", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
-    schema.add_field(field_name="sop_type", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
-    schema.add_field(field_name="safety_level", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
-    schema.add_field(field_name="maintenance_stage", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    for field_name in (
+        "equipment_model",
+        "alarm_code",
+        "part_name",
+        "sop_type",
+        "safety_level",
+        "maintenance_stage",
+    ):
+        _add_varchar_field(schema, field_name, SUBJECT_DOMAIN_FIELD_DESCRIPTIONS[field_name])
     # 稠密向量
-    schema.add_field(field_name="dense_vector",datatype=DataType.FLOAT_VECTOR, dim=1024)
+    schema.add_field(
+        field_name="dense_vector",
+        datatype=DataType.FLOAT_VECTOR,
+        dim=1024,
+        description="chunk 检索文本的稠密向量。用于语义相似度召回。",
+    )
     # 稀疏向量
-    schema.add_field(field_name="sparse_vector", datatype=DataType.SPARSE_FLOAT_VECTOR)
+    schema.add_field(
+        field_name="sparse_vector",
+        datatype=DataType.SPARSE_FLOAT_VECTOR,
+        description="chunk 检索文本的稀疏向量。用于型号、报警码、关键词等字面匹配召回。",
+    )
 
     # 4.索引构建
     index_params = client.prepare_index_params()
@@ -118,17 +153,13 @@ def normalize_chunk_subject_fields(chunks):
     """
     插入 Milvus 前补齐阶段2新增的 chunk 主体字段。
 
-    主体识别节点已经会写入 subject_id / standard_subject_name / 领域字段，
-    但为了兼容旧导入数据、测试桩或手动调用，这里仍做一次兜底：
-    - subject_name 保留旧查询链路可用。
-    - standard_subject_name 缺失时用 subject_name 兜底。
-    - subject_id 和轻量领域字段缺失时使用空字符串，避免显式 schema 插入时报字段缺失。
+    主体识别节点已经会写入 subject_id / standard_subject_name / 领域字段。
+    这里再做一次兜底，是为了让测试桩或手动调用也能满足新 schema：
+    - subject_id 缺失时置为空字符串，后续查询不会命中这类未确认主题的数据。
+    - standard_subject_name 缺失时置为空字符串，只作为可读展示字段。
+    - 轻量领域字段缺失时置为空字符串，避免显式 schema 插入时报字段缺失。
     """
     for chunk in chunks:
-        subject_name = chunk.get("subject_name", "")
-        standard_subject_name = chunk.get("standard_subject_name") or subject_name
-        chunk["subject_name"] = subject_name or standard_subject_name
-        chunk["standard_subject_name"] = standard_subject_name
         for field_name in CHUNK_SUBJECT_FIELDS:
             chunk.setdefault(field_name, "")
     return chunks

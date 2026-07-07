@@ -23,8 +23,7 @@ class ImportGraphState(TypedDict):
     md_content: str  # Markdown 完整正文内容
     file_title: str  # 文件标题，通常来自文件名 stem，作为主体识别兜底
 
-    # 主体识别结果：阶段 2 引入标准主题体系，subject_name 暂时作为旧流程兼容字段
-    subject_name: str  # 兼容字段：文档对应的主体名称，默认与 standard_subject_name 保持一致
+    # 主体识别结果：阶段 2 引入标准主题体系，统一用标准主题字段贯穿导入和查询
     subject_id: str  # 标准主题唯一标识，用于 chunk 关联和查询过滤
     standard_subject_name: str  # 标准主题名称，用于统一管理知识体系
     subject_aliases: list[str]  # 标准主题别名列表，用于导入和查询时的主体识别
@@ -56,7 +55,6 @@ default_state: ImportGraphState = {
     "md_path": "",
     "md_content": "",
     "file_title": "",
-    "subject_name": "",
     "subject_id": "",
     "standard_subject_name": "",
     "subject_aliases": [],

@@ -7,10 +7,6 @@ from app.shared.clients.milvus_utils import get_milvus_client, create_hybrid_sea
 class MilvusGateway:
 
     @property
-    def subject_name_collection(self):
-        return infra_config.milvus.subject_name_collection
-
-    @property
     def standard_subject_collection(self):
         return infra_config.milvus.standard_subject_collection
 

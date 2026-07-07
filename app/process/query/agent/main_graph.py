@@ -28,7 +28,7 @@ def after_node_subject_name_confirm(state: QueryGraphState):
         logger.info("本次没有明确的主体名称，结束流程，待用户确定")
         return "node_answer_output"
     else:
-        logger.info(f"有明确的主体名称{state.get('subject_names')}，开始向知识图谱检索")
+        logger.info(f"有明确的标准主题{state.get('standard_subject_names')}，开始向知识图谱检索")
         return "node_search_embedding","node_search_embedding_hyde","node_web_search_mcp"
 # 添加条件边
 query_graph_builder.add_conditional_edges(

@@ -23,7 +23,8 @@ if __name__ == "__main__":
         "is_stream": False,
         "original_query": "HAK 180 烫金机怎么操作？",
         "rewritten_query": "HAK 180 烫金机的具体操作步骤是什么？",
-        "subject_names": ["HAK 180 烫金机"],
+        "subject_ids": ["subject_hak_180"],
+        "standard_subject_names": ["HAK 180 烫金机"],
     }
 
     from app.process.query.agent.nodes.node_search_embedding import node_search_embedding

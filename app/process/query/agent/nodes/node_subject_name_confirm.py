@@ -9,7 +9,7 @@ def node_subject_name_confirm(state):
     """
     节点功能：确认用户问题中的核心主体名称。
     输入：state['original_query']
-    输出：更新 state['subject_names']
+    输出：更新 state['subject_ids'] 和 state['standard_subject_names']
     """
     # 先登记节点开始，前端进度区可以立即感知"主体确认"已启动。
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state["is_stream"])
@@ -20,7 +20,6 @@ def node_subject_name_confirm(state):
     return {
         "subject_ids": result_state.get("subject_ids", []),
         "standard_subject_names": result_state.get("standard_subject_names", []),
-        "subject_names": result_state.get("subject_names", []),
         "rewritten_query": result_state.get("rewritten_query", ""),
         "history": result_state.get("history", []),
         "answer": result_state.get("answer", ""),

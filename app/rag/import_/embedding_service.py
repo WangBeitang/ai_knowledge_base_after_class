@@ -22,7 +22,7 @@ def generate_embeddings(chunks,step:int=EMBEDDING_BATCH_SIZE):
 
         # 组装生成向量的字符串列表
         batch_embedding_list = [
-            f"主体名称：{chunk.get('subject_name')},内容：{chunk.get('content')}"
+            f"标准主题名称：{chunk.get('standard_subject_name')},内容：{chunk.get('content')}"
             for chunk in chunk_batch
         ]
 

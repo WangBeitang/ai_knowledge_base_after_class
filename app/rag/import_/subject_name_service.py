@@ -26,6 +26,33 @@ SUBJECT_DOMAIN_FIELDS = (
     "maintenance_stage",
 )
 
+SUBJECT_DOMAIN_FIELD_DESCRIPTIONS = {
+    "equipment_model": (
+        "设备型号。记录文档或切片对应的具体设备、机型、产线型号或产品型号，"
+        "例如 HAK 180。后续查询可用它在同一标准主题下进一步限定具体机型。"
+    ),
+    "alarm_code": (
+        "报警码或故障码。记录设备报警编号、故障代码、错误码或诊断码，"
+        "例如 E101。后续可用于故障排查、维修 SOP、报警说明等场景的精确过滤。"
+    ),
+    "part_name": (
+        "部件名称。记录知识内容关联的设备部件、模块或耗材名称，"
+        "例如急停按钮、烫金版、传感器。后续可用于按部件聚合或过滤知识。"
+    ),
+    "sop_type": (
+        "SOP 类型。记录知识内容所属的操作规程类型，"
+        "例如开机、停机、点检、保养、维修、故障排查。后续可用于区分不同操作场景。"
+    ),
+    "safety_level": (
+        "安全等级或风险级别。记录知识内容涉及的安全风险、操作危险程度或防护要求，"
+        "例如高风险、需断电、需佩戴防护用品。后续可用于答案生成时强调安全约束。"
+    ),
+    "maintenance_stage": (
+        "维护阶段。记录知识内容对应的设备生命周期或维护流程阶段，"
+        "例如日常点检、定期保养、故障定位、维修更换、复机确认。后续可用于按维护流程检索。"
+    ),
+}
+
 
 def validate_chunks_and_title(state):
     # 1.参数获取
@@ -81,7 +108,7 @@ def recognize_subject_name(context, file_title):
     return result
 
 
-def normalize_subject_name(subject_name, fallback=""):
+def normalize_subject_name(raw_name, fallback=""):
     """
     归一化主题名称。
 
@@ -89,9 +116,9 @@ def normalize_subject_name(subject_name, fallback=""):
     这里不做复杂同义词替换，避免在导入阶段误把两个不同设备合并。
     fallback 用于 LLM 没有识别出主题时兜底，例如使用文件名。
     """
-    subject_name = re.sub(r"\s+", " ", str(subject_name or "")).strip()
-    if subject_name:
-        return subject_name
+    normalized_name = re.sub(r"\s+", " ", str(raw_name or "")).strip()
+    if normalized_name:
+        return normalized_name
     return re.sub(r"\s+", " ", str(fallback or "")).strip()
 
 
@@ -142,7 +169,7 @@ def recognize_standard_subject_name(context, file_title):
     """
     识别标准主题名。
 
-    目前仍复用原来的 subject_name prompt 和 LLM 调用，先把模型输出作为标准名。
+    目前仍复用原来的主体识别 prompt 和 LLM 调用，先把模型输出作为标准名。
     后续如果增加人工主题库或标准化规则，可以在这里接入：
     - 先用 LLM 提取候选主体。
     - 再和标准主题 collection 做相似匹配。
@@ -179,6 +206,15 @@ def _build_hybrid_index_params(milvus_client):
     return index_params
 
 
+def _add_varchar_field(schema, field_name, description, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH):
+    schema.add_field(
+        field_name=field_name,
+        datatype=DataType.VARCHAR,
+        max_length=max_length,
+        description=description,
+    )
+
+
 def _require_collection_name(collection_name, config_name):
     """
     校验 Milvus collection 配置是否存在。
@@ -192,8 +228,8 @@ def _require_collection_name(collection_name, config_name):
 
 
 @step_log()
-def generate_embeddings(subject_name):
-    vector_dict = llm_provider.embed_documents([subject_name])
+def generate_embeddings(standard_subject_name):
+    vector_dict = llm_provider.embed_documents([standard_subject_name])
     return vector_dict["dense"][0], vector_dict["sparse"][0]
 
 
@@ -221,31 +257,6 @@ def generate_batch_embeddings(text_list):
 
 
 @step_log()
-def prepare_subject_name_collection(state):
-    milvus_client = milvus_gateway.client
-    # 集合名称
-    collection_name = milvus_gateway.subject_name_collection
-    # 判断集合是否存在
-    if milvus_client.has_collection(collection_name=collection_name):
-        return
-
-    # 创建schema
-    schema = milvus_client.create_schema(auto_id=True, enable_dynamic_field=True)
-    schema.add_field(field_name="pk", datatype=DataType.INT64, is_primary=True, auto_id=True)
-    schema.add_field(field_name="file_title", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
-    schema.add_field(field_name="subject_name", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
-    schema.add_field(field_name="dense_vector", datatype=DataType.FLOAT_VECTOR, dim=MILVUS_VECTOR_DIM)
-    schema.add_field(field_name="sparse_vector", datatype=DataType.SPARSE_FLOAT_VECTOR)
-
-    # 准备索引参数
-    index_params = _build_hybrid_index_params(milvus_client)
-
-    # 创建集合
-    milvus_client.create_collection(collection_name=collection_name, schema=schema, index_params=index_params)
-    logger.info(f"集合{collection_name}初始化成功！")
-
-
-@step_log()
 def prepare_standard_subject_collection(state):
     """
     准备标准主题 collection。
@@ -265,21 +276,49 @@ def prepare_standard_subject_collection(state):
     if milvus_client.has_collection(collection_name=collection_name):
         return
 
-    schema = milvus_client.create_schema(auto_id=True, enable_dynamic_field=True)
-    schema.add_field(field_name="pk", datatype=DataType.INT64, is_primary=True, auto_id=True)
-    schema.add_field(field_name="subject_id", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    schema = milvus_client.create_schema(
+        auto_id=True,
+        enable_dynamic_field=True,
+        description="标准主题主表：一条标准主题一条记录，用于管理 subject_id、标准名称、别名快照和领域标签。",
+    )
+    schema.add_field(
+        field_name="pk",
+        datatype=DataType.INT64,
+        is_primary=True,
+        auto_id=True,
+        description="Milvus 自动生成的内部主键，仅用于存储层唯一标识，不参与业务关联。",
+    )
+    _add_varchar_field(
+        schema,
+        "subject_id",
+        "标准主题稳定业务 ID。chunk 和 alias 都通过该字段关联标准主题，查询过滤优先使用它。",
+    )
     schema.add_field(
         field_name="standard_subject_name",
         datatype=DataType.VARCHAR,
         max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH,
+        description="标准主题名称。对外展示、答案 Prompt 和人工排查使用的统一主题名。",
     )
-    schema.add_field(field_name="subject_name", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
-    schema.add_field(field_name="subject_aliases_text", datatype=DataType.VARCHAR, max_length=4096)
-    schema.add_field(field_name="file_title", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    _add_varchar_field(
+        schema,
+        "subject_aliases_text",
+        "别名快照文本。用竖线拼接当前标准主题的别名列表，主要用于排查和展示，不作为 alias 检索主索引。",
+        max_length=4096,
+    )
+    _add_varchar_field(schema, "file_title", "来源文件标题。记录产生或更新该标准主题的文档标题，便于追踪来源。")
     for field_name in SUBJECT_DOMAIN_FIELDS:
-        schema.add_field(field_name=field_name, datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
-    schema.add_field(field_name="dense_vector", datatype=DataType.FLOAT_VECTOR, dim=MILVUS_VECTOR_DIM)
-    schema.add_field(field_name="sparse_vector", datatype=DataType.SPARSE_FLOAT_VECTOR)
+        _add_varchar_field(schema, field_name, SUBJECT_DOMAIN_FIELD_DESCRIPTIONS[field_name])
+    schema.add_field(
+        field_name="dense_vector",
+        datatype=DataType.FLOAT_VECTOR,
+        dim=MILVUS_VECTOR_DIM,
+        description="标准主题文本的稠密向量。用于语义相似度检索，后续可支持导入时匹配已有标准主题。",
+    )
+    schema.add_field(
+        field_name="sparse_vector",
+        datatype=DataType.SPARSE_FLOAT_VECTOR,
+        description="标准主题文本的稀疏向量。用于型号、编号、关键词等字面匹配能力。",
+    )
 
     index_params = _build_hybrid_index_params(milvus_client)
     milvus_client.create_collection(collection_name=collection_name, schema=schema, index_params=index_params)
@@ -305,48 +344,52 @@ def prepare_subject_alias_collection(state):
     if milvus_client.has_collection(collection_name=collection_name):
         return
 
-    schema = milvus_client.create_schema(auto_id=True, enable_dynamic_field=True)
-    schema.add_field(field_name="pk", datatype=DataType.INT64, is_primary=True, auto_id=True)
-    schema.add_field(field_name="alias", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
-    schema.add_field(field_name="alias_type", datatype=DataType.VARCHAR, max_length=64)
-    schema.add_field(field_name="subject_id", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
+    schema = milvus_client.create_schema(
+        auto_id=True,
+        enable_dynamic_field=True,
+        description="标准主题别名索引：一条别名一条记录，用于把用户输入、文件标题或模型识别名映射到标准主题。",
+    )
+    schema.add_field(
+        field_name="pk",
+        datatype=DataType.INT64,
+        is_primary=True,
+        auto_id=True,
+        description="Milvus 自动生成的内部主键，仅用于存储层唯一标识，不参与业务关联。",
+    )
+    _add_varchar_field(schema, "alias", "主体别名文本。用户可能输入的设备名、型号、简称、文件标题或模型原始识别名。")
+    _add_varchar_field(
+        schema,
+        "alias_type",
+        "别名来源类型。常见值包括 standard、file_title、llm、generated，用于排查别名来源。",
+        max_length=64,
+    )
+    _add_varchar_field(schema, "subject_id", "该别名映射到的标准主题 ID。查询命中别名后，用它过滤 chunk collection。")
     schema.add_field(
         field_name="standard_subject_name",
         datatype=DataType.VARCHAR,
         max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH,
+        description="该别名映射到的标准主题名称。用于展示、日志和答案 Prompt。",
     )
-    schema.add_field(field_name="file_title", datatype=DataType.VARCHAR, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH)
-    schema.add_field(field_name="dense_vector", datatype=DataType.FLOAT_VECTOR, dim=MILVUS_VECTOR_DIM)
-    schema.add_field(field_name="sparse_vector", datatype=DataType.SPARSE_FLOAT_VECTOR)
+    _add_varchar_field(
+        schema,
+        "file_title",
+        "别名来源文件标题。用于区分同一标准主题在不同文档导入时产生的别名记录。",
+    )
+    schema.add_field(
+        field_name="dense_vector",
+        datatype=DataType.FLOAT_VECTOR,
+        dim=MILVUS_VECTOR_DIM,
+        description="别名文本的稠密向量。查询侧将用户主体提及向量化后在该字段上做语义召回。",
+    )
+    schema.add_field(
+        field_name="sparse_vector",
+        datatype=DataType.SPARSE_FLOAT_VECTOR,
+        description="别名文本的稀疏向量。用于型号、缩写、编号等字面匹配召回。",
+    )
 
     index_params = _build_hybrid_index_params(milvus_client)
     milvus_client.create_collection(collection_name=collection_name, schema=schema, index_params=index_params)
     logger.info(f"集合{collection_name}初始化成功！")
-
-
-@step_log()
-def insert_subject_name(subject_name, file_title, dense_vector, sparse_vector):
-    milvus_client = milvus_gateway.client
-    # 数据转义处理
-    subject_name = escape_milvus_string(subject_name)
-
-    # 1.删除已有记录
-    milvus_client.delete(
-        collection_name=milvus_gateway.subject_name_collection,
-        filter=f"file_title=='{file_title}'"
-    )
-    # 2.插入数据
-    milvus_client.insert(
-        collection_name=milvus_gateway.subject_name_collection,
-        data=[
-            {
-                "file_title": file_title,
-                "subject_name": subject_name,
-                "dense_vector": dense_vector,
-                "sparse_vector": sparse_vector
-            }
-        ]
-    )
 
 
 def _domain_field_payload(state):
@@ -388,7 +431,6 @@ def insert_standard_subject(
             {
                 "subject_id": subject_id,
                 "standard_subject_name": standard_subject_name,
-                "subject_name": standard_subject_name,
                 "subject_aliases_text": "|".join(subject_aliases),
                 "file_title": file_title,
                 **_domain_field_payload(state),
@@ -468,13 +510,12 @@ def apply_subject_to_chunks(state, chunks, subject_id, standard_subject_name):
     把标准主题信息回填到每个 chunk。
 
     查询链路最终检索的是 chunk collection，因此 chunk 必须直接携带 subject_id。
-    后续查询可以优先用 subject_id 过滤，而不是用容易变化的 subject_name 文本过滤。
-    同时保留 subject_name，是为了兼容旧查询链路和已有测试。
+    后续查询只用 subject_id 过滤，而不是用容易变化的展示名文本过滤。
+    standard_subject_name 只保留可读标准名，供日志、引用展示和 Prompt 使用。
     """
     for chunk in chunks:
         chunk["subject_id"] = subject_id
         chunk["standard_subject_name"] = standard_subject_name
-        chunk["subject_name"] = standard_subject_name
         for field_name in SUBJECT_DOMAIN_FIELDS:
             chunk[field_name] = state.get(field_name, "")
     return chunks
@@ -487,13 +528,12 @@ def recognize_and_index_subject_name(state: ImportGraphState) -> ImportGraphStat
     1. 基于 chunks 构造上下文
     2. 调用 LLM 识别标准主题名
     3. 生成稳定 subject_id 和别名列表
-    4. 写入标准主题集合、别名集合，并保留旧主体集合写入
-    5. 将 subject_id / standard_subject_name / subject_name 回填到 state 和 chunks
+    4. 写入标准主题集合、别名集合
+    5. 将 subject_id / standard_subject_name 回填到 state 和 chunks
 
-    这一版仍然沿用原来的图节点名称和旧字段 subject_name：
-    - 对外新增标准主题体系字段，供阶段 2 后续查询侧改造使用。
-    - 对内保留 subject_name_collection 写入，保证旧查询逻辑还能工作。
-    - chunk 同时写入新旧字段，支持平滑迁移。
+    这一版仍然沿用原来的图节点名称，但数据契约已经切到标准主题体系：
+    - subject_id 是查询过滤和跨集合关联的稳定主键。
+    - standard_subject_name 是可读标准名，不再额外写旧主体名称字段。
     """
     # 1.参数校验
     chunks, file_title = validate_chunks_and_title(state)
@@ -506,10 +546,10 @@ def recognize_and_index_subject_name(state: ImportGraphState) -> ImportGraphStat
     subject_id = build_subject_id(standard_subject_name)
     subject_aliases = build_subject_aliases(standard_subject_name, file_title, llm_subject_name)
 
-    # 4.将标准主题回写到state和chunks，subject_name作为旧流程兼容字段保留
+    # 4.将标准主题回写到 state 和 chunks。这里不再写旧主体名称字段，
+    # 避免新建 chunk collection 继续携带已废弃的主体名称列。
     state["subject_id"] = subject_id
     state["standard_subject_name"] = standard_subject_name
-    state["subject_name"] = standard_subject_name
     state["subject_aliases"] = subject_aliases
     chunks = apply_subject_to_chunks(state, chunks, subject_id, standard_subject_name)
     state["chunks"] = chunks
@@ -520,9 +560,8 @@ def recognize_and_index_subject_name(state: ImportGraphState) -> ImportGraphStat
     # 6.构建集合
     prepare_standard_subject_collection(state)
     prepare_subject_alias_collection(state)
-    prepare_subject_name_collection(state)
 
-    # 7.入库：新主题体系 + 旧主体集合兼容写入
+    # 7.入库：标准主题 + 别名索引
     insert_standard_subject(
         subject_id=subject_id,
         standard_subject_name=standard_subject_name,
@@ -533,6 +572,5 @@ def recognize_and_index_subject_name(state: ImportGraphState) -> ImportGraphStat
         state=state,
     )
     insert_subject_aliases(subject_id, standard_subject_name, subject_aliases, file_title, llm_subject_name)
-    insert_subject_name(standard_subject_name, file_title, dense_vector, sparse_vector)
 
     return state

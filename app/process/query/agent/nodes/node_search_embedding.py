@@ -20,7 +20,8 @@ if __name__ == "__main__":
     test_state = {
         "session_id": "test_search_embedding_001",
         "rewritten_query": "HAK 180 烫金机使用说明",
-        "subject_names": ["HAK 180 烫金机"],
+        "subject_ids": ["subject_hak_180"],
+        "standard_subject_names": ["HAK 180 烫金机"],
         "is_stream": False,
     }
     result = node_search_embedding(test_state)
