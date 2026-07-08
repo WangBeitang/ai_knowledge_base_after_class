@@ -31,6 +31,9 @@ STATUS_PROCESSING = "processing"
 STATUS_COMPLETED = "completed"
 STATUS_FAILED = "failed"
 
+# 失败时用节点名判断失败阶段：这些节点属于“解析阶段”，其它后续节点默认归为
+# “索引阶段”。这样 document.status 负责表达整体成功/失败，parse_status 和
+# index_status 负责表达失败落在哪个阶段，便于列表筛选和问题排查。
 PARSE_NODE_NAMES = {"upload_file", "node_entry", "node_pdf_to_md", "node_md_img"}
 
 
@@ -101,6 +104,23 @@ class ImportMetadataRepository:
         dataset = self.datasets.find_one({"dataset_id": dataset_id})
         return _without_mongo_id(dataset) or {}
 
+    def resolve_dataset_for_import(self, dataset_id: str | None = None) -> dict[str, Any]:
+        """
+        解析导入目标 dataset。
+
+        当前单知识库版本允许不传 dataset_id，此时使用并确保默认 dataset 存在。
+        多知识库版本中，上传应该指定已有 dataset_id；导入流程不负责创建非默认 dataset，
+        避免每次上传文件时误创建新的知识库容器。
+        """
+        target_dataset_id = (dataset_id or DEFAULT_DATASET_ID).strip() or DEFAULT_DATASET_ID
+        if target_dataset_id == DEFAULT_DATASET_ID:
+            return self.ensure_default_dataset()
+
+        dataset = self.get_dataset(target_dataset_id)
+        if not dataset:
+            raise ValueError(f"dataset_id={target_dataset_id} 不存在，请先创建 dataset")
+        return dataset
+
     def create_import_metadata(
         self,
         *,
@@ -117,7 +137,8 @@ class ImportMetadataRepository:
         document 是长期对象，task 是一次执行记录。document 只保存 latest_task_id，
         历史任务通过 tasks.document_id 反查。
         """
-        self.ensure_default_dataset()
+        dataset = self.resolve_dataset_for_import(dataset_id)
+        dataset_id = dataset["dataset_id"]
         now = _now_iso()
 
         document = {
@@ -222,6 +243,12 @@ class ImportMetadataRepository:
         self.tasks.update_one({"task_id": task_id}, {"$set": payload})
 
     def update_task_nodes(self, task_id: str, running_nodes: list[str], done_nodes: list[str]) -> None:
+        """
+        更新一次导入任务的节点进度快照。
+
+        task_utils 仍然是实时进度的内存来源；这里保存的是同一份 running/done
+        快照，目的是让服务重启后仍能通过 task_id 或 document_id 查看历史进度。
+        """
         self.tasks.update_one(
             {"task_id": task_id},
             {
@@ -292,6 +319,8 @@ class ImportMetadataRepository:
             "error_message": error_message,
             "updated_at": now,
         }
+        # 文档整体失败时，还需要区分失败阶段：解析失败通常说明文件读取、PDF 转 MD
+        # 或图片处理有问题；索引失败通常说明切分、向量化或 Milvus 入库链路有问题。
         if failed_node in PARSE_NODE_NAMES:
             document_payload["parse_status"] = STATUS_FAILED
         else:

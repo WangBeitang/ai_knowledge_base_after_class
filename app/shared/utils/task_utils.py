@@ -1,5 +1,9 @@
 """
 工具模块，负责提供 task 相关的辅助能力。
+
+这里仍然保留原来的进程内任务状态，用于前端 SSE/轮询快速展示实时进度。
+阶段 3 只是在导入任务上增加一层 Mongo 同步：已经注册过 document_id/dataset_id
+的导入 task 会把状态快照写入 Mongo，查询链路复用 task_utils 时不会写入导入元数据表。
 """
 from typing import Dict, List
 from app.infra.persistence.import_metadata_repository import (
@@ -25,7 +29,12 @@ _tasks_status: Dict[str, str] = {}
 _tasks_result: Dict[str, Dict[str, str]] = {}
 
 # key: task_id
-# value: 持久化任务元数据。只有导入任务注册后才会同步 Mongo，查询 session 不写入。
+# value: 持久化任务元数据。
+#
+# “注册”的含义是：这个 task_id 已经在 upload 阶段创建过对应的
+# document_id/dataset_id/task 元数据，可以安全同步到 Mongo 的 tasks 表。
+# 查询流程也会用 task_utils 记录临时进度，但它没有 document/dataset 归属，
+# 因此不会注册，也就不会把查询 session 写入导入任务历史。
 _persistent_task_metadata: Dict[str, Dict[str, str]] = {}
 
 TASK_STATUS_PENDING = "pending"
@@ -84,6 +93,11 @@ def register_persistent_task(task_id: str, document_id: str, dataset_id: str) ->
     """
     注册需要同步到 Mongo 的导入任务。
 
+    upload 接口会先在 Mongo 里创建 document/task 记录，再调用这里建立
+    task_id -> document_id/dataset_id 的内存映射。后续 add_running_task、
+    add_done_task、update_task_status 仍然维护原来的内存状态，但会额外把
+    已注册导入任务的最新快照同步到 Mongo。
+
     查询链路也复用 task_utils 做 SSE 进度，但查询 session 不属于导入任务，
     因此只有显式注册过的 task_id 才会写入导入元数据表。
     """
@@ -99,6 +113,13 @@ def get_persistent_task_metadata(task_id: str) -> Dict[str, str]:
 
 
 def _sync_persistent_task_nodes(task_id: str) -> None:
+    """
+    将已注册导入任务的节点进度同步到 Mongo。
+
+    这里故意只同步 registered task：task_utils 是通用工具，查询 session、
+    临时调试 task 都可能调用 add_running_task/add_done_task。如果不做注册判断，
+    Mongo 的 tasks 表会混入不属于导入流程的临时进度记录。
+    """
     if task_id not in _persistent_task_metadata:
         return
     safe_update_task_nodes(
@@ -122,6 +143,8 @@ def add_running_task(task_id: str, node_name: str, is_stream: bool = False) -> N
     if node_name not in running:
         running.append(node_name)
 
+    # 保持原来的内存态进度作为实时状态源；如果是 upload 阶段注册过的导入任务，
+    # 再把当前 running/done 快照同步到 Mongo，用于服务重启后的历史状态查询。
     _sync_persistent_task_nodes(task_id)
 
     if is_stream:
@@ -149,6 +172,8 @@ def add_done_task(task_id: str, node_name: str, is_stream: bool = False) -> None
     if node_name not in done:
         done.append(node_name)
 
+    # 同步的是完整快照而不是增量事件，这样 Mongo 中的 running_nodes/done_nodes
+    # 始终能直接表达当前任务进度，不需要回放历史事件。
     _sync_persistent_task_nodes(task_id)
 
     if is_stream:
@@ -231,6 +256,8 @@ def update_task_status(task_id: str, status_name: str, push_queue: bool = False)
     - status_name: 状态名称（字符串）
     """
     _tasks_status[task_id] = status_name
+    # 只有导入任务会被注册并同步到 Mongo；查询任务仍然只保留内存态状态，
+    # 避免把用户问答 session 误当作文件导入历史。
     if task_id in _persistent_task_metadata:
         safe_update_task_status(task_id, status_name)
     if push_queue:

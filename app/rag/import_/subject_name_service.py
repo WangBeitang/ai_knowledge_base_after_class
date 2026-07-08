@@ -53,6 +53,8 @@ SUBJECT_DOMAIN_FIELD_DESCRIPTIONS = {
     ),
 }
 
+MODEL_CODE_PATTERN = re.compile(r"(?<![A-Za-z0-9])([A-Za-z]{2,})[\s\-_]*([0-9]{2,}[A-Za-z0-9]*)(?![A-Za-z0-9])")
+
 
 def validate_chunks_and_title(state):
     # 1.参数获取
@@ -139,12 +141,43 @@ def build_subject_id(standard_subject_name):
     return f"subject_{digest}"
 
 
+def build_model_code_aliases(*sources):
+    """
+    从标准名、文件名、LLM 原始识别名中派生设备型号别名。
+
+    这类别名不适合完全交给 LLM，因为型号写法通常有明确规则：
+    - HAK 180：带空格的常见展示写法。
+    - HAK180：用户查询时经常省略空格。
+    - HAK-180：手册或铭牌里也可能用连字符。
+
+    规则只抽取“字母前缀 + 数字编号”的短型号，不把整句标题当作型号。
+    这样导入“HAK 180 烫金机操作手册”时，可以稳定生成“HAK 180”等别名。
+    """
+    aliases = []
+    seen = set()
+
+    for source in sources:
+        for match in MODEL_CODE_PATTERN.finditer(str(source or "")):
+            prefix = match.group(1).upper()
+            number = match.group(2).upper()
+            for alias in (f"{prefix} {number}", f"{prefix}{number}", f"{prefix}-{number}"):
+                normalized_alias = normalize_subject_name(alias)
+                alias_key = normalized_alias.lower()
+                if alias_key in seen:
+                    continue
+                aliases.append(normalized_alias)
+                seen.add(alias_key)
+
+    return aliases
+
+
 def build_subject_aliases(standard_subject_name, file_title, llm_subject_name):
     """
     构造标准主题的别名列表。
 
-    第一版只使用三个稳定来源：
+    使用稳定来源 + 规则派生型号别名：
     - standard_subject_name：系统最终采用的标准名。
+    - model_code_aliases：从标准名、文件名、LLM 原始识别名中抽取型号短名。
     - file_title：文件名经常包含设备型号、手册名称，是很强的别名来源。
     - llm_subject_name：保留模型原始识别结果，便于兼容模型输出和标准名不完全一致的情况。
 
@@ -153,7 +186,8 @@ def build_subject_aliases(standard_subject_name, file_title, llm_subject_name):
     """
     aliases = []
     seen = set()
-    for alias in (standard_subject_name, file_title, llm_subject_name):
+    model_code_aliases = build_model_code_aliases(standard_subject_name, file_title, llm_subject_name)
+    for alias in (standard_subject_name, *model_code_aliases, file_title, llm_subject_name):
         normalized_alias = normalize_subject_name(alias)
         if not normalized_alias:
             continue

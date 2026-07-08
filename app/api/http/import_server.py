@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from starlette.middleware.cors import CORSMiddleware
 
@@ -182,22 +182,29 @@ def invoke_graph(
 
 # 上传文件
 @app.post("/upload")
-def upload(background_tasks: BackgroundTasks, files: UploadFile = File(...)):
+def upload(
+        background_tasks: BackgroundTasks,
+        files: UploadFile = File(...),
+        dataset_id: str = Form(DEFAULT_DATASET_ID),
+):
     # 1.相关参数
     task_id = str(uuid.uuid4())
     document_id = f"doc_{uuid.uuid4().hex}"
-    dataset_id = DEFAULT_DATASET_ID
     local_dir_path_obj = PROJECT_ROOT / "output" / datetime.now().strftime("%Y%m%d") / task_id
     file_path_obj = local_dir_path_obj / files.filename
     repo = get_import_metadata_repository()
-    repo.create_import_metadata(
-        dataset_id=dataset_id,
-        document_id=document_id,
-        task_id=task_id,
-        file_name=files.filename,
-        file_path=str(file_path_obj),
-        local_dir=str(local_dir_path_obj),
-    )
+    try:
+        document, _task = repo.create_import_metadata(
+            dataset_id=dataset_id,
+            document_id=document_id,
+            task_id=task_id,
+            file_name=files.filename,
+            file_path=str(file_path_obj),
+            local_dir=str(local_dir_path_obj),
+        )
+        dataset_id = document["dataset_id"]
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     register_persistent_task(task_id, document_id, dataset_id)
     add_running_task(task_id, "upload_file")
 

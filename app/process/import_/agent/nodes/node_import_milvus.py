@@ -12,6 +12,9 @@ def node_import_milvus(state: ImportGraphState) -> dict:
     """
     add_running_task(state["task_id"], "node_import_milvus")
     result_state = index_chunks(state)
+    # Milvus 入库是当前导入链路的最后一个索引动作；走到这里才把 document 的
+    # index_status 和整体 status 标记为 completed。失败场景由 invoke_graph 的
+    # safe_mark_import_failed 统一收口，避免节点内部吞掉异常。
     safe_update_document(
         state.get("document_id", ""),
         status=STATUS_COMPLETED,

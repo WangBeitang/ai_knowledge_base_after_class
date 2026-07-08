@@ -12,6 +12,8 @@ def node_subject_name_recognition(state: ImportGraphState) -> dict:
     """
     add_running_task(state["task_id"], "node_subject_name_recognition")
     result_state = recognize_and_index_subject_name(state)
+    # 主体识别结果既要继续随 state 传给 embedding/Milvus，也要落到 document
+    # 元数据中，方便后续从文档列表知道这个文件归属到哪个标准主题。
     safe_update_document(
         state.get("document_id", ""),
         subject_id=result_state.get("subject_id", ""),

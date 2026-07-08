@@ -35,6 +35,11 @@ def test_import_entry_returns_only_route_file_fields():
 
 
 def test_import_processing_nodes_return_partial_state(monkeypatch):
+    document_updates = []
+
+    def record_document_update(document_id, **fields):
+        document_updates.append((document_id, fields))
+
     monkeypatch.setattr(
         import_pdf_node,
         "parse_pdf_to_markdown",
@@ -77,8 +82,16 @@ def test_import_processing_nodes_return_partial_state(monkeypatch):
         "index_chunks",
         lambda state: {**state, "chunks": [{"chunk_id": 1}], "extra": "ignored"},
     )
+    for node_module in [
+        import_pdf_node,
+        import_md_img_node,
+        import_split_node,
+        import_subject_node,
+        import_milvus_node,
+    ]:
+        monkeypatch.setattr(node_module, "safe_update_document", record_document_update)
 
-    base_state = {"task_id": "task-1"}
+    base_state = {"task_id": "task-1", "document_id": "doc-1"}
 
     assert set(import_pdf_node.node_pdf_to_md(base_state)) == {"md_path", "md_content"}
     assert set(import_md_img_node.node_md_img(base_state)) == {"md_path", "md_content"}
@@ -91,6 +104,26 @@ def test_import_processing_nodes_return_partial_state(monkeypatch):
     }
     assert set(import_embedding_node.node_bge_embedding(base_state)) == {"chunks"}
     assert set(import_milvus_node.node_import_milvus(base_state)) == {"chunks"}
+    assert document_updates == [
+        ("doc-1", {"md_path": "demo.md"}),
+        ("doc-1", {"parse_status": "completed", "md_path": "demo_new.md"}),
+        ("doc-1", {"chunk_count": 1, "index_status": "processing"}),
+        (
+            "doc-1",
+            {
+                "subject_id": "subject_hak_180",
+                "standard_subject_name": "HAK 180 烫金机",
+            },
+        ),
+        (
+            "doc-1",
+            {
+                "status": "completed",
+                "index_status": "completed",
+                "chunk_count": 1,
+            },
+        ),
+    ]
 
 
 def test_query_nodes_return_partial_state(monkeypatch):

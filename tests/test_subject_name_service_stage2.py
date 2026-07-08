@@ -46,7 +46,11 @@ def test_build_subject_id_is_stable_and_aliases_are_deduped():
         llm_subject_name=" HAK 180 烫金机 ",
     )
 
-    assert aliases == ["HAK 180 烫金机", "HAK180 操作手册"]
+    assert aliases == ["HAK 180 烫金机", "HAK 180", "HAK180", "HAK-180", "HAK180 操作手册"]
+
+
+def test_build_model_code_aliases_extracts_common_model_spellings():
+    assert service.build_model_code_aliases("HAK 180 烫金机操作手册") == ["HAK 180", "HAK180", "HAK-180"]
 
 
 def test_prepare_standard_subject_collection_adds_field_descriptions(monkeypatch):
@@ -125,7 +129,13 @@ def test_recognize_and_index_subject_name_backfills_standard_subject(monkeypatch
 
     assert result["standard_subject_name"] == "HAK 180 烫金机"
     assert result["subject_id"] == service.build_subject_id("HAK 180 烫金机")
-    assert result["subject_aliases"] == ["HAK 180 烫金机", "HAK180 操作手册", "HAK180"]
+    assert result["subject_aliases"] == [
+        "HAK 180 烫金机",
+        "HAK 180",
+        "HAK180",
+        "HAK-180",
+        "HAK180 操作手册",
+    ]
 
     chunk = result["chunks"][0]
     assert chunk["subject_id"] == result["subject_id"]

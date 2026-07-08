@@ -111,6 +111,47 @@ def test_create_import_metadata_creates_default_dataset_document_and_task():
     assert task["task_type"] == repo_module.TASK_TYPE_IMPORT
 
 
+def test_create_import_metadata_uses_existing_custom_dataset_without_creating_default():
+    repo = build_fake_repository()
+    repo.datasets.insert_one(
+        {
+            "dataset_id": "dataset_after_sales",
+            "name": "售后维修知识库",
+        }
+    )
+
+    document, task = repo.create_import_metadata(
+        dataset_id="dataset_after_sales",
+        document_id="doc_1",
+        task_id="task_1",
+        file_name="HAK180维修手册.pdf",
+        file_path="/tmp/HAK180维修手册.pdf",
+        local_dir="/tmp/task_1",
+    )
+
+    assert document["dataset_id"] == "dataset_after_sales"
+    assert task["dataset_id"] == "dataset_after_sales"
+    assert repo.get_dataset(repo_module.DEFAULT_DATASET_ID) == {}
+
+
+def test_create_import_metadata_rejects_unknown_custom_dataset():
+    repo = build_fake_repository()
+
+    try:
+        repo.create_import_metadata(
+            dataset_id="dataset_missing",
+            document_id="doc_1",
+            task_id="task_1",
+            file_name="HAK180维修手册.pdf",
+            file_path="/tmp/HAK180维修手册.pdf",
+            local_dir="/tmp/task_1",
+        )
+    except ValueError as e:
+        assert "dataset_id=dataset_missing 不存在" in str(e)
+    else:
+        raise AssertionError("未知 dataset_id 应该拒绝导入")
+
+
 def test_mark_import_failed_records_failed_node_and_document_stage():
     repo = build_fake_repository()
     repo.create_import_metadata(
@@ -133,6 +174,35 @@ def test_mark_import_failed_records_failed_node_and_document_stage():
     assert document["status"] == repo_module.STATUS_FAILED
     assert document["parse_status"] == repo_module.STATUS_FAILED
     assert document["index_status"] == repo_module.STATUS_PENDING
+
+
+def test_mark_import_failed_records_index_stage_for_non_parse_node():
+    repo = build_fake_repository()
+    repo.create_import_metadata(
+        dataset_id=repo_module.DEFAULT_DATASET_ID,
+        document_id="doc_1",
+        task_id="task_1",
+        file_name="HAK180说明书.pdf",
+        file_path="/tmp/HAK180说明书.pdf",
+        local_dir="/tmp/task_1",
+    )
+    repo.update_document(
+        "doc_1",
+        parse_status=repo_module.STATUS_COMPLETED,
+        index_status=repo_module.STATUS_PROCESSING,
+    )
+
+    repo.mark_import_failed("task_1", "node_import_milvus", "Milvus 入库失败")
+
+    task = repo.get_task("task_1")
+    document = repo.get_document("doc_1")
+
+    assert task["status"] == repo_module.STATUS_FAILED
+    assert task["failed_node"] == "node_import_milvus"
+    assert task["error_message"] == "Milvus 入库失败"
+    assert document["status"] == repo_module.STATUS_FAILED
+    assert document["parse_status"] == repo_module.STATUS_COMPLETED
+    assert document["index_status"] == repo_module.STATUS_FAILED
 
 
 def test_mark_import_completed_updates_task_and_document():

@@ -66,3 +66,37 @@ def test_unregistered_query_session_does_not_sync_to_mongo(monkeypatch):
     assert status_calls == []
 
     task_utils.clear_task(session_id)
+
+
+def test_clear_task_removes_persistent_registration(monkeypatch):
+    task_id = "task_stage3_clear_registration"
+    task_utils.clear_task(task_id)
+    node_calls = []
+    status_calls = []
+
+    monkeypatch.setattr(
+        task_utils,
+        "safe_update_task_nodes",
+        lambda **kwargs: node_calls.append(kwargs),
+    )
+    monkeypatch.setattr(
+        task_utils,
+        "safe_update_task_status",
+        lambda task_id, status: status_calls.append((task_id, status)),
+    )
+
+    task_utils.register_persistent_task(
+        task_id=task_id,
+        document_id="doc_1",
+        dataset_id="dataset_default_equipment_ops",
+    )
+    task_utils.clear_task(task_id)
+
+    task_utils.add_running_task(task_id, "node_entry")
+    task_utils.update_task_status(task_id, task_utils.TASK_STATUS_PROCESSING)
+
+    assert task_utils.get_persistent_task_metadata(task_id) == {}
+    assert node_calls == []
+    assert status_calls == []
+
+    task_utils.clear_task(task_id)

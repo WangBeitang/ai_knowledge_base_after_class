@@ -12,6 +12,8 @@ def node_document_split(state: ImportGraphState) -> dict:
     """
     add_running_task(state["task_id"], "node_document_split")
     result_state = split_document(state)
+    # chunk_count 不放进 LangGraph state 里继续传递，因为后续节点真正依赖的是 chunks。
+    # 这里直接回写 document 元数据，供文档列表展示和失败排查使用。
     safe_update_document(
         state.get("document_id", ""),
         chunk_count=len(result_state.get("chunks", [])),
