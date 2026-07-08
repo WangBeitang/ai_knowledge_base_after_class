@@ -20,6 +20,17 @@ class FakeImportMetadataRepository:
         return self.documents.get(document_id, {})
 
 
+class FailingImportApp:
+    def __init__(self, task_id, failed_node, error_message):
+        self.task_id = task_id
+        self.failed_node = failed_node
+        self.error_message = error_message
+
+    def invoke(self, state):
+        task_utils.add_running_task(self.task_id, self.failed_node)
+        raise RuntimeError(self.error_message)
+
+
 def test_import_schemas_include_stage3_fields():
     upload = UploadSchema(
         message="上传成功，正在处理中...",
@@ -156,3 +167,48 @@ def test_document_status_returns_404_for_missing_document(monkeypatch):
 
     assert response.status_code == 404
     assert "document_id=doc_missing 不存在" in response.json()["detail"]
+
+
+def test_invoke_graph_marks_failed_task_with_current_running_node(monkeypatch, tmp_path):
+    task_id = "task_invoke_failed"
+    task_utils.clear_task(task_id)
+    failure_calls = []
+    monkeypatch.setattr(
+        import_server,
+        "kb_import_app",
+        FailingImportApp(
+            task_id=task_id,
+            failed_node="node_import_milvus",
+            error_message="Milvus 入库失败",
+        ),
+    )
+    monkeypatch.setattr(
+        import_server,
+        "safe_mark_import_failed",
+        lambda task_id, failed_node, error_message: failure_calls.append(
+            {
+                "task_id": task_id,
+                "failed_node": failed_node,
+                "error_message": error_message,
+            }
+        ),
+    )
+
+    import_server.invoke_graph(
+        task_id=task_id,
+        dataset_id="dataset_default_equipment_ops",
+        document_id="doc_1",
+        local_file_path_obj=tmp_path / "demo.pdf",
+        local_dir_path_obj=tmp_path,
+    )
+
+    assert task_utils.get_task_status(task_id) == task_utils.TASK_STATUS_FAILED
+    assert failure_calls == [
+        {
+            "task_id": task_id,
+            "failed_node": "node_import_milvus",
+            "error_message": "Milvus 入库失败",
+        }
+    ]
+
+    task_utils.clear_task(task_id)

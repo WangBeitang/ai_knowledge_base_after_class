@@ -1,3 +1,5 @@
+import pytest
+
 from app.infra.persistence import import_metadata_repository as repo_module
 
 
@@ -152,7 +154,11 @@ def test_create_import_metadata_rejects_unknown_custom_dataset():
         raise AssertionError("未知 dataset_id 应该拒绝导入")
 
 
-def test_mark_import_failed_records_failed_node_and_document_stage():
+@pytest.mark.parametrize(
+    "failed_node",
+    ["upload_file", "node_entry", "node_pdf_to_md", "node_md_img"],
+)
+def test_mark_import_failed_records_parse_stage_for_parse_nodes(failed_node):
     repo = build_fake_repository()
     repo.create_import_metadata(
         dataset_id=repo_module.DEFAULT_DATASET_ID,
@@ -163,20 +169,25 @@ def test_mark_import_failed_records_failed_node_and_document_stage():
         local_dir="/tmp/task_1",
     )
 
-    repo.mark_import_failed("task_1", "node_pdf_to_md", "MinerU 解析失败")
+    repo.mark_import_failed("task_1", failed_node, "解析阶段失败")
 
     task = repo.get_task("task_1")
     document = repo.get_document("doc_1")
 
     assert task["status"] == repo_module.STATUS_FAILED
-    assert task["failed_node"] == "node_pdf_to_md"
-    assert task["error_message"] == "MinerU 解析失败"
+    assert task["running_nodes"] == []
+    assert task["failed_node"] == failed_node
+    assert task["error_message"] == "解析阶段失败"
     assert document["status"] == repo_module.STATUS_FAILED
     assert document["parse_status"] == repo_module.STATUS_FAILED
     assert document["index_status"] == repo_module.STATUS_PENDING
 
 
-def test_mark_import_failed_records_index_stage_for_non_parse_node():
+@pytest.mark.parametrize(
+    "failed_node",
+    ["node_subject_name_recognition", "node_bge_embedding", "node_import_milvus"],
+)
+def test_mark_import_failed_records_index_stage_for_index_nodes(failed_node):
     repo = build_fake_repository()
     repo.create_import_metadata(
         dataset_id=repo_module.DEFAULT_DATASET_ID,
@@ -192,14 +203,15 @@ def test_mark_import_failed_records_index_stage_for_non_parse_node():
         index_status=repo_module.STATUS_PROCESSING,
     )
 
-    repo.mark_import_failed("task_1", "node_import_milvus", "Milvus 入库失败")
+    repo.mark_import_failed("task_1", failed_node, "索引阶段失败")
 
     task = repo.get_task("task_1")
     document = repo.get_document("doc_1")
 
     assert task["status"] == repo_module.STATUS_FAILED
-    assert task["failed_node"] == "node_import_milvus"
-    assert task["error_message"] == "Milvus 入库失败"
+    assert task["running_nodes"] == []
+    assert task["failed_node"] == failed_node
+    assert task["error_message"] == "索引阶段失败"
     assert document["status"] == repo_module.STATUS_FAILED
     assert document["parse_status"] == repo_module.STATUS_COMPLETED
     assert document["index_status"] == repo_module.STATUS_FAILED
