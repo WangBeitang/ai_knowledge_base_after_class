@@ -12,13 +12,19 @@ class FakeImportMetadataRepository:
         self.should_raise = should_raise
         self.create_calls = []
 
-    def get_task(self, task_id):
+    def get_task(self, task_id, owner_user_id):
         if self.should_raise:
             raise RuntimeError("mongo unavailable")
-        return self.tasks.get(task_id, {})
+        task = self.tasks.get(task_id, {})
+        if task and task.get("owner_user_id") != owner_user_id:
+            return {}
+        return task
 
-    def get_document(self, document_id):
-        return self.documents.get(document_id, {})
+    def get_document(self, document_id, owner_user_id):
+        document = self.documents.get(document_id, {})
+        if document and document.get("owner_user_id") != owner_user_id:
+            return {}
+        return document
 
     def create_import_metadata(self, **kwargs):
         self.create_calls.append(kwargs)
@@ -89,6 +95,7 @@ def test_status_prefers_mongo_task_record(monkeypatch):
                 "task_id": "task_1",
                 "document_id": "doc_1",
                 "dataset_id": "dataset_default_equipment_ops",
+                "owner_user_id": "user_a",
                 "status": "failed",
                 "done_nodes": ["upload_file", "node_entry"],
                 "running_nodes": ["node_import_milvus"],
@@ -101,7 +108,7 @@ def test_status_prefers_mongo_task_record(monkeypatch):
     )
     monkeypatch.setattr(import_server, "get_import_metadata_repository", lambda: fake_repo)
 
-    response = TestClient(import_server.app).get("/status/task_1")
+    response = TestClient(import_server.app).get("/status/task_1", headers={"X-User-Id": "user_a"})
 
     assert response.status_code == 200
     data = response.json()
@@ -127,7 +134,7 @@ def test_status_falls_back_to_memory_when_mongo_unavailable(monkeypatch):
     fake_repo = FakeImportMetadataRepository(should_raise=True)
     monkeypatch.setattr(import_server, "get_import_metadata_repository", lambda: fake_repo)
 
-    response = TestClient(import_server.app).get(f"/status/{task_id}")
+    response = TestClient(import_server.app).get(f"/status/{task_id}", headers={"X-User-Id": "user_a"})
 
     assert response.status_code == 200
     data = response.json()
@@ -147,6 +154,7 @@ def test_document_status_returns_mongo_document(monkeypatch):
             "doc_1": {
                 "document_id": "doc_1",
                 "dataset_id": "dataset_default_equipment_ops",
+                "owner_user_id": "user_a",
                 "latest_task_id": "task_1",
                 "file_name": "HAK180说明书.pdf",
                 "file_path": "/tmp/HAK180说明书.pdf",
@@ -167,7 +175,7 @@ def test_document_status_returns_mongo_document(monkeypatch):
     )
     monkeypatch.setattr(import_server, "get_import_metadata_repository", lambda: fake_repo)
 
-    response = TestClient(import_server.app).get("/documents/doc_1")
+    response = TestClient(import_server.app).get("/documents/doc_1", headers={"X-User-Id": "user_a"})
 
     assert response.status_code == 200
     data = response.json()
@@ -186,7 +194,7 @@ def test_document_status_returns_404_for_missing_document(monkeypatch):
     fake_repo = FakeImportMetadataRepository()
     monkeypatch.setattr(import_server, "get_import_metadata_repository", lambda: fake_repo)
 
-    response = TestClient(import_server.app).get("/documents/doc_missing")
+    response = TestClient(import_server.app).get("/documents/doc_missing", headers={"X-User-Id": "user_a"})
 
     assert response.status_code == 404
     assert "document_id=doc_missing 不存在" in response.json()["detail"]

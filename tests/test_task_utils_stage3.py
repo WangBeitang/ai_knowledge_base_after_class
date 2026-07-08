@@ -22,6 +22,7 @@ def test_registered_import_task_syncs_nodes_and_status(monkeypatch):
         task_id=task_id,
         document_id="doc_1",
         dataset_id="dataset_default_equipment_ops",
+        owner_user_id="user_a",
     )
     task_utils.add_running_task(task_id, "node_entry")
     task_utils.add_done_task(task_id, "node_entry")
@@ -38,6 +39,7 @@ def test_registered_import_task_syncs_nodes_and_status(monkeypatch):
         "done_nodes": ["node_entry"],
     }
     assert status_calls == [(task_id, task_utils.TASK_STATUS_COMPLETED)]
+    assert task_utils.get_persistent_task_metadata(task_id)["owner_user_id"] == "user_a"
 
     task_utils.clear_task(task_id)
 
@@ -89,6 +91,7 @@ def test_clear_task_removes_persistent_registration(monkeypatch):
         task_id=task_id,
         document_id="doc_1",
         dataset_id="dataset_default_equipment_ops",
+        owner_user_id="user_a",
     )
     task_utils.clear_task(task_id)
 

@@ -22,6 +22,8 @@ load_dotenv()
 
 DEFAULT_DATASET_ID = "dataset_default_equipment_ops"
 DEFAULT_DATASET_NAME = "设备运维知识库"
+DEFAULT_TENANT_ID = "tenant_default"
+DEFAULT_VISIBILITY = "private"
 
 TASK_TYPE_IMPORT = "import"
 
@@ -79,9 +81,14 @@ class ImportMetadataRepository:
         self.documents.create_index([("dataset_id", ASCENDING), ("updated_at", DESCENDING)])
         self.documents.create_index([("dataset_id", ASCENDING), ("status", ASCENDING)])
         self.documents.create_index([("latest_task_id", ASCENDING)])
+        self.documents.create_index([("owner_user_id", ASCENDING), ("dataset_id", ASCENDING), ("updated_at", DESCENDING)])
+        self.documents.create_index([("owner_user_id", ASCENDING), ("document_id", ASCENDING)])
+        self.documents.create_index([("owner_user_id", ASCENDING), ("status", ASCENDING)])
         self.tasks.create_index([("task_id", ASCENDING)], unique=True)
         self.tasks.create_index([("document_id", ASCENDING), ("created_at", DESCENDING)])
         self.tasks.create_index([("dataset_id", ASCENDING), ("status", ASCENDING)])
+        self.tasks.create_index([("owner_user_id", ASCENDING), ("task_id", ASCENDING)])
+        self.tasks.create_index([("owner_user_id", ASCENDING), ("document_id", ASCENDING), ("created_at", DESCENDING)])
 
     def ensure_default_dataset(self) -> dict[str, Any]:
         now = _now_iso()
@@ -131,6 +138,8 @@ class ImportMetadataRepository:
         file_name: str,
         file_path: str,
         local_dir: str,
+        tenant_id: str = DEFAULT_TENANT_ID,
+        visibility: str = DEFAULT_VISIBILITY,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         """
         创建一次导入需要的 document 和 task 记录。
@@ -146,6 +155,8 @@ class ImportMetadataRepository:
             "document_id": document_id,
             "dataset_id": dataset_id,
             "owner_user_id": owner_user_id,
+            "tenant_id": tenant_id,
+            "visibility": visibility,
             "latest_task_id": task_id,
             "file_name": file_name,
             "file_path": file_path,
@@ -167,6 +178,7 @@ class ImportMetadataRepository:
             "document_id": document_id,
             "dataset_id": dataset_id,
             "owner_user_id": owner_user_id,
+            "tenant_id": tenant_id,
             "task_type": TASK_TYPE_IMPORT,
             "status": STATUS_PENDING,
             "running_nodes": [],
@@ -181,19 +193,26 @@ class ImportMetadataRepository:
         self.tasks.insert_one(task)
         return document, task
 
-    def get_document(self, document_id: str) -> dict[str, Any]:
-        document = self.documents.find_one({"document_id": document_id})
+    def get_document(self, document_id: str, owner_user_id: str) -> dict[str, Any]:
+        document = self.documents.find_one({
+            "document_id": document_id,
+            "owner_user_id": owner_user_id,
+        })
         return _without_mongo_id(document) or {}
 
     def list_documents(
         self,
         *,
+        owner_user_id: str,
         dataset_id: str = DEFAULT_DATASET_ID,
         status: str | None = None,
         keyword: str | None = None,
         limit: int = 20,
     ) -> list[dict[str, Any]]:
-        query: dict[str, Any] = {"dataset_id": dataset_id}
+        query: dict[str, Any] = {
+            "owner_user_id": owner_user_id,
+            "dataset_id": dataset_id,
+        }
         if status:
             query["status"] = status
         if keyword:
@@ -211,19 +230,27 @@ class ImportMetadataRepository:
         payload["updated_at"] = _now_iso()
         self.documents.update_one({"document_id": document_id}, {"$set": payload})
 
-    def get_task(self, task_id: str) -> dict[str, Any]:
+    def _get_task_by_id(self, task_id: str) -> dict[str, Any]:
         task = self.tasks.find_one({"task_id": task_id})
+        return _without_mongo_id(task) or {}
+
+    def get_task(self, task_id: str, owner_user_id: str) -> dict[str, Any]:
+        task = self.tasks.find_one({
+            "task_id": task_id,
+            "owner_user_id": owner_user_id,
+        })
         return _without_mongo_id(task) or {}
 
     def list_tasks(
         self,
         *,
+        owner_user_id: str,
         document_id: str | None = None,
         dataset_id: str | None = None,
         status: str | None = None,
         limit: int = 20,
     ) -> list[dict[str, Any]]:
-        query: dict[str, Any] = {}
+        query: dict[str, Any] = {"owner_user_id": owner_user_id}
         if document_id:
             query["document_id"] = document_id
         if dataset_id:
@@ -264,7 +291,7 @@ class ImportMetadataRepository:
         )
 
     def mark_import_completed(self, task_id: str) -> None:
-        task = self.get_task(task_id)
+        task = self._get_task_by_id(task_id)
         if not task:
             return
 
@@ -297,7 +324,7 @@ class ImportMetadataRepository:
         )
 
     def mark_import_failed(self, task_id: str, failed_node: str, error_message: str) -> None:
-        task = self.get_task(task_id)
+        task = self._get_task_by_id(task_id)
         if not task:
             return
 

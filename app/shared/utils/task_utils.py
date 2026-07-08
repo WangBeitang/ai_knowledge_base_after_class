@@ -89,12 +89,12 @@ def to_display_node_list(node_names: List[str]) -> List[str]:
     return [_to_cn(n) for n in node_names]
 
 
-def register_persistent_task(task_id: str, document_id: str, dataset_id: str) -> None:
+def register_persistent_task(task_id: str, document_id: str, dataset_id: str, owner_user_id: str) -> None:
     """
     注册需要同步到 Mongo 的导入任务。
 
     upload 接口会先在 Mongo 里创建 document/task 记录，再调用这里建立
-    task_id -> document_id/dataset_id 的内存映射。后续 add_running_task、
+    task_id -> document_id/dataset_id/owner_user_id 的内存映射。后续 add_running_task、
     add_done_task、update_task_status 仍然维护原来的内存状态，但会额外把
     已注册导入任务的最新快照同步到 Mongo。
 
@@ -105,6 +105,7 @@ def register_persistent_task(task_id: str, document_id: str, dataset_id: str) ->
     _persistent_task_metadata[task_id] = {
         "document_id": document_id,
         "dataset_id": dataset_id,
+        "owner_user_id": owner_user_id,
     }
 
 

@@ -103,9 +103,10 @@ def _document_status_from_record(document: dict, code: int = 200) -> DocumentSta
 
 # 返回task_id对应的任务状态列表
 @app.get("/status/{task_id}")
-def status(task_id: str) -> TaskStatusSchema:
+def status(request: Request, task_id: str) -> TaskStatusSchema:
+    owner_user_id = get_current_user_id(request)
     try:
-        task = get_import_metadata_repository().get_task(task_id)
+        task = get_import_metadata_repository().get_task(task_id, owner_user_id)
         if task:
             return _task_status_from_record(task)
     except Exception as e:
@@ -122,12 +123,15 @@ def status(task_id: str) -> TaskStatusSchema:
 
 @app.get("/documents")
 def list_documents(
+        request: Request,
         dataset_id: str = DEFAULT_DATASET_ID,
         status: str | None = None,
         keyword: str | None = None,
         limit: int = Query(default=20, ge=1, le=100),
 ) -> DocumentListSchema:
+    owner_user_id = get_current_user_id(request)
     documents = get_import_metadata_repository().list_documents(
+        owner_user_id=owner_user_id,
         dataset_id=dataset_id,
         status=status,
         keyword=keyword,
@@ -139,8 +143,17 @@ def list_documents(
 
 
 @app.get("/documents/{document_id}/tasks")
-def list_document_tasks(document_id: str, limit: int = Query(default=20, ge=1, le=100)) -> TaskHistorySchema:
-    tasks = get_import_metadata_repository().list_tasks(document_id=document_id, limit=limit)
+def list_document_tasks(
+        request: Request,
+        document_id: str,
+        limit: int = Query(default=20, ge=1, le=100),
+) -> TaskHistorySchema:
+    owner_user_id = get_current_user_id(request)
+    tasks = get_import_metadata_repository().list_tasks(
+        document_id=document_id,
+        owner_user_id=owner_user_id,
+        limit=limit,
+    )
     return TaskHistorySchema(
         document_id=document_id,
         items=[_task_status_from_record(task) for task in tasks],
@@ -148,8 +161,9 @@ def list_document_tasks(document_id: str, limit: int = Query(default=20, ge=1, l
 
 
 @app.get("/documents/{document_id}")
-def document_status(document_id: str) -> DocumentStatusSchema:
-    document = get_import_metadata_repository().get_document(document_id)
+def document_status(request: Request, document_id: str) -> DocumentStatusSchema:
+    owner_user_id = get_current_user_id(request)
+    document = get_import_metadata_repository().get_document(document_id, owner_user_id)
     if not document:
         raise HTTPException(status_code=404, detail=f"document_id={document_id} 不存在")
     return _document_status_from_record(document)
@@ -217,7 +231,7 @@ def upload(
         dataset_id = document["dataset_id"]
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
-    register_persistent_task(task_id, document_id, dataset_id)
+    register_persistent_task(task_id, document_id, dataset_id, owner_user_id)
     add_running_task(task_id, "upload_file")
 
     # 2.保存文件

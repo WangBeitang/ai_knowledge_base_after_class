@@ -88,6 +88,28 @@ def build_fake_repository():
     return repo
 
 
+def test_ensure_indexes_includes_owner_user_id_indexes():
+    repo = build_fake_repository()
+
+    repo._ensure_indexes()
+
+    assert ((("owner_user_id", repo_module.ASCENDING), ("dataset_id", repo_module.ASCENDING), ("updated_at", repo_module.DESCENDING)), False) in [
+        (tuple(index_fields), unique) for index_fields, unique in repo.documents.indexes
+    ]
+    assert ((("owner_user_id", repo_module.ASCENDING), ("document_id", repo_module.ASCENDING)), False) in [
+        (tuple(index_fields), unique) for index_fields, unique in repo.documents.indexes
+    ]
+    assert ((("owner_user_id", repo_module.ASCENDING), ("status", repo_module.ASCENDING)), False) in [
+        (tuple(index_fields), unique) for index_fields, unique in repo.documents.indexes
+    ]
+    assert ((("owner_user_id", repo_module.ASCENDING), ("task_id", repo_module.ASCENDING)), False) in [
+        (tuple(index_fields), unique) for index_fields, unique in repo.tasks.indexes
+    ]
+    assert ((("owner_user_id", repo_module.ASCENDING), ("document_id", repo_module.ASCENDING), ("created_at", repo_module.DESCENDING)), False) in [
+        (tuple(index_fields), unique) for index_fields, unique in repo.tasks.indexes
+    ]
+
+
 def test_create_import_metadata_creates_default_dataset_document_and_task():
     repo = build_fake_repository()
 
@@ -106,6 +128,8 @@ def test_create_import_metadata_creates_default_dataset_document_and_task():
     assert dataset["name"] == repo_module.DEFAULT_DATASET_NAME
     assert document["document_id"] == "doc_1"
     assert document["owner_user_id"] == "user_a"
+    assert document["tenant_id"] == repo_module.DEFAULT_TENANT_ID
+    assert document["visibility"] == repo_module.DEFAULT_VISIBILITY
     assert document["latest_task_id"] == "task_1"
     assert document["status"] == repo_module.STATUS_UPLOADED
     assert document["parse_status"] == repo_module.STATUS_PENDING
@@ -113,6 +137,7 @@ def test_create_import_metadata_creates_default_dataset_document_and_task():
     assert task["task_id"] == "task_1"
     assert task["document_id"] == "doc_1"
     assert task["owner_user_id"] == "user_a"
+    assert task["tenant_id"] == repo_module.DEFAULT_TENANT_ID
     assert task["task_type"] == repo_module.TASK_TYPE_IMPORT
 
 
@@ -177,8 +202,8 @@ def test_mark_import_failed_records_parse_stage_for_parse_nodes(failed_node):
 
     repo.mark_import_failed("task_1", failed_node, "解析阶段失败")
 
-    task = repo.get_task("task_1")
-    document = repo.get_document("doc_1")
+    task = repo.get_task("task_1", "user_a")
+    document = repo.get_document("doc_1", "user_a")
 
     assert task["status"] == repo_module.STATUS_FAILED
     assert task["running_nodes"] == []
@@ -212,8 +237,8 @@ def test_mark_import_failed_records_index_stage_for_index_nodes(failed_node):
 
     repo.mark_import_failed("task_1", failed_node, "索引阶段失败")
 
-    task = repo.get_task("task_1")
-    document = repo.get_document("doc_1")
+    task = repo.get_task("task_1", "user_a")
+    document = repo.get_document("doc_1", "user_a")
 
     assert task["status"] == repo_module.STATUS_FAILED
     assert task["running_nodes"] == []
@@ -239,8 +264,8 @@ def test_mark_import_completed_updates_task_and_document():
 
     repo.mark_import_completed("task_1")
 
-    task = repo.get_task("task_1")
-    document = repo.get_document("doc_1")
+    task = repo.get_task("task_1", "user_a")
+    document = repo.get_document("doc_1", "user_a")
 
     assert task["status"] == repo_module.STATUS_COMPLETED
     assert task["running_nodes"] == []
@@ -261,8 +286,41 @@ def test_list_documents_and_tasks_use_document_as_history_entry():
         local_dir="/tmp/task_1",
     )
 
-    documents = repo.list_documents(keyword="HAK180")
-    tasks = repo.list_tasks(document_id="doc_1")
+    documents = repo.list_documents(owner_user_id="user_a", keyword="HAK180")
+    tasks = repo.list_tasks(document_id="doc_1", owner_user_id="user_a")
 
     assert [document["document_id"] for document in documents] == ["doc_1"]
     assert [task["task_id"] for task in tasks] == ["task_1"]
+
+
+def test_repository_queries_filter_by_owner_user_id():
+    repo = build_fake_repository()
+    repo.create_import_metadata(
+        dataset_id=repo_module.DEFAULT_DATASET_ID,
+        document_id="doc_user_a",
+        task_id="task_user_a",
+        owner_user_id="user_a",
+        file_name="HAK180说明书.pdf",
+        file_path="/tmp/HAK180说明书.pdf",
+        local_dir="/tmp/task_user_a",
+    )
+    repo.create_import_metadata(
+        dataset_id=repo_module.DEFAULT_DATASET_ID,
+        document_id="doc_user_b",
+        task_id="task_user_b",
+        owner_user_id="user_b",
+        file_name="HAK180维修手册.pdf",
+        file_path="/tmp/HAK180维修手册.pdf",
+        local_dir="/tmp/task_user_b",
+    )
+
+    assert repo.get_document("doc_user_a", "user_a")["document_id"] == "doc_user_a"
+    assert repo.get_document("doc_user_a", "user_b") == {}
+    assert repo.get_task("task_user_a", "user_a")["task_id"] == "task_user_a"
+    assert repo.get_task("task_user_a", "user_b") == {}
+
+    documents = repo.list_documents(owner_user_id="user_a", keyword="HAK180")
+    tasks = repo.list_tasks(document_id="doc_user_a", owner_user_id="user_a")
+
+    assert [document["document_id"] for document in documents] == ["doc_user_a"]
+    assert [task["task_id"] for task in tasks] == ["task_user_a"]
