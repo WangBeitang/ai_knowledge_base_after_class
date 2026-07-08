@@ -167,6 +167,32 @@
     
     // 默认走导入服务同源地址；如你把页面单独打开（file://），回退到导入服务默认端口。
     const API_BASE = location.origin.startsWith('http') ? location.origin : 'http://127.0.0.1:8000';
+    const USER_ID_STORAGE_KEY = 'kb_user_id';
+    const currentUserId = getOrCreateUserId();
+
+    function createUserId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return `user_${window.crypto.randomUUID()}`;
+        }
+        return `user_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    function getOrCreateUserId() {
+        const existingUserId = localStorage.getItem(USER_ID_STORAGE_KEY);
+        if (existingUserId) {
+            return existingUserId;
+        }
+
+        const userId = createUserId();
+        localStorage.setItem(USER_ID_STORAGE_KEY, userId);
+        return userId;
+    }
+
+    function userHeaders() {
+        return {
+            'X-User-Id': currentUserId,
+        };
+    }
 
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -241,6 +267,7 @@
 
             const response = await fetch(`${API_BASE}/upload`, {
                 method: 'POST',
+                headers: userHeaders(),
                 body: formData
             });
 
@@ -319,7 +346,9 @@
         
         const interval = setInterval(async () => {
             try {
-                const res = await fetch(`${API_BASE}/status/${taskId}`);
+                const res = await fetch(`${API_BASE}/status/${taskId}`, {
+                    headers: userHeaders()
+                });
                 const data = await res.json();
 
                 // 渲染日志（done/running）
