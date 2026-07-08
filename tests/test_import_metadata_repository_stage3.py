@@ -95,6 +95,7 @@ def test_create_import_metadata_creates_default_dataset_document_and_task():
         dataset_id=repo_module.DEFAULT_DATASET_ID,
         document_id="doc_1",
         task_id="task_1",
+        owner_user_id="user_a",
         file_name="HAK180说明书.pdf",
         file_path="/tmp/HAK180说明书.pdf",
         local_dir="/tmp/task_1",
@@ -104,12 +105,14 @@ def test_create_import_metadata_creates_default_dataset_document_and_task():
 
     assert dataset["name"] == repo_module.DEFAULT_DATASET_NAME
     assert document["document_id"] == "doc_1"
+    assert document["owner_user_id"] == "user_a"
     assert document["latest_task_id"] == "task_1"
     assert document["status"] == repo_module.STATUS_UPLOADED
     assert document["parse_status"] == repo_module.STATUS_PENDING
     assert document["index_status"] == repo_module.STATUS_PENDING
     assert task["task_id"] == "task_1"
     assert task["document_id"] == "doc_1"
+    assert task["owner_user_id"] == "user_a"
     assert task["task_type"] == repo_module.TASK_TYPE_IMPORT
 
 
@@ -126,6 +129,7 @@ def test_create_import_metadata_uses_existing_custom_dataset_without_creating_de
         dataset_id="dataset_after_sales",
         document_id="doc_1",
         task_id="task_1",
+        owner_user_id="user_a",
         file_name="HAK180维修手册.pdf",
         file_path="/tmp/HAK180维修手册.pdf",
         local_dir="/tmp/task_1",
@@ -144,6 +148,7 @@ def test_create_import_metadata_rejects_unknown_custom_dataset():
             dataset_id="dataset_missing",
             document_id="doc_1",
             task_id="task_1",
+            owner_user_id="user_a",
             file_name="HAK180维修手册.pdf",
             file_path="/tmp/HAK180维修手册.pdf",
             local_dir="/tmp/task_1",
@@ -164,6 +169,7 @@ def test_mark_import_failed_records_parse_stage_for_parse_nodes(failed_node):
         dataset_id=repo_module.DEFAULT_DATASET_ID,
         document_id="doc_1",
         task_id="task_1",
+        owner_user_id="user_a",
         file_name="HAK180说明书.pdf",
         file_path="/tmp/HAK180说明书.pdf",
         local_dir="/tmp/task_1",
@@ -193,6 +199,7 @@ def test_mark_import_failed_records_index_stage_for_index_nodes(failed_node):
         dataset_id=repo_module.DEFAULT_DATASET_ID,
         document_id="doc_1",
         task_id="task_1",
+        owner_user_id="user_a",
         file_name="HAK180说明书.pdf",
         file_path="/tmp/HAK180说明书.pdf",
         local_dir="/tmp/task_1",
@@ -223,6 +230,7 @@ def test_mark_import_completed_updates_task_and_document():
         dataset_id=repo_module.DEFAULT_DATASET_ID,
         document_id="doc_1",
         task_id="task_1",
+        owner_user_id="user_a",
         file_name="HAK180说明书.pdf",
         file_path="/tmp/HAK180说明书.pdf",
         local_dir="/tmp/task_1",
@@ -247,6 +255,7 @@ def test_list_documents_and_tasks_use_document_as_history_entry():
         dataset_id=repo_module.DEFAULT_DATASET_ID,
         document_id="doc_1",
         task_id="task_1",
+        owner_user_id="user_a",
         file_name="HAK180说明书.pdf",
         file_path="/tmp/HAK180说明书.pdf",
         local_dir="/tmp/task_1",

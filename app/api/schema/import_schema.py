@@ -8,6 +8,7 @@ class UploadSchema(BaseModel):
     task_ids:list[str] = Field(default_factory=list)
     document_ids:list[str] = Field(default_factory=list)
     dataset_id:str = ""
+    owner_user_id:str = ""
 
 # 查询任务状态的数据类型
 class TaskStatusSchema(BaseModel):

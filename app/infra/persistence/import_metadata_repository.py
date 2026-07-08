@@ -127,6 +127,7 @@ class ImportMetadataRepository:
         dataset_id: str,
         document_id: str,
         task_id: str,
+        owner_user_id: str,
         file_name: str,
         file_path: str,
         local_dir: str,
@@ -144,6 +145,7 @@ class ImportMetadataRepository:
         document = {
             "document_id": document_id,
             "dataset_id": dataset_id,
+            "owner_user_id": owner_user_id,
             "latest_task_id": task_id,
             "file_name": file_name,
             "file_path": file_path,
@@ -164,6 +166,7 @@ class ImportMetadataRepository:
             "task_id": task_id,
             "document_id": document_id,
             "dataset_id": dataset_id,
+            "owner_user_id": owner_user_id,
             "task_type": TASK_TYPE_IMPORT,
             "status": STATUS_PENDING,
             "running_nodes": [],

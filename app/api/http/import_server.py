@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 from starlette.middleware.cors import CORSMiddleware
 
@@ -53,6 +53,13 @@ app.add_middleware(
 def html():
     html_path_obj = PROJECT_ROOT / "app" / "resources" / "http" / "import.html"
     return FileResponse(path=html_path_obj)
+
+
+def get_current_user_id(request: Request) -> str:
+    user_id = request.headers.get("X-User-Id", "").strip()
+    if not user_id:
+        raise HTTPException(status_code=400, detail="缺少 X-User-Id 请求头")
+    return user_id
 
 
 def _task_status_from_record(task: dict, code: int = 200) -> TaskStatusSchema:
@@ -152,6 +159,7 @@ def invoke_graph(
         task_id: str,
         dataset_id: str,
         document_id: str,
+        owner_user_id: str,
         local_file_path_obj: Path,
         local_dir_path_obj: Path,
 ):
@@ -159,6 +167,7 @@ def invoke_graph(
         task_id=task_id,
         dataset_id=dataset_id,
         document_id=document_id,
+        owner_user_id=owner_user_id,
         local_file_path=str(local_file_path_obj),
         local_dir=str(local_dir_path_obj)
     )
@@ -183,11 +192,13 @@ def invoke_graph(
 # 上传文件
 @app.post("/upload")
 def upload(
+        request: Request,
         background_tasks: BackgroundTasks,
         files: UploadFile = File(...),
         dataset_id: str = Form(DEFAULT_DATASET_ID),
 ):
     # 1.相关参数
+    owner_user_id = get_current_user_id(request)
     task_id = str(uuid.uuid4())
     document_id = f"doc_{uuid.uuid4().hex}"
     local_dir_path_obj = PROJECT_ROOT / "output" / datetime.now().strftime("%Y%m%d") / task_id
@@ -198,6 +209,7 @@ def upload(
             dataset_id=dataset_id,
             document_id=document_id,
             task_id=task_id,
+            owner_user_id=owner_user_id,
             file_name=files.filename,
             file_path=str(file_path_obj),
             local_dir=str(local_dir_path_obj),
@@ -226,6 +238,7 @@ def upload(
         task_id=task_id,
         dataset_id=dataset_id,
         document_id=document_id,
+        owner_user_id=owner_user_id,
         local_file_path_obj=file_path_obj,
         local_dir_path_obj=local_dir_path_obj
     )
@@ -237,6 +250,7 @@ def upload(
         task_ids=[task_id],
         document_ids=[document_id],
         dataset_id=dataset_id,
+        owner_user_id=owner_user_id,
     )
 
 

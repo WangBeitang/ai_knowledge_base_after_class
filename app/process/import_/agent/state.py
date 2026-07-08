@@ -12,6 +12,8 @@ class ImportGraphState(TypedDict):
     dataset_id: str
     # 文档标识：一个 document 可关联多次 task，当前导入任务写入 latest_task_id
     document_id: str
+    # 用户归属：阶段 3.5 引入，用于 document/task 导入历史隔离
+    owner_user_id: str
 
     # 输入参数：由 API 或调用方传入，不应由后续节点随意改写
     local_file_path: str  # 原始上传文件路径，支持 .pdf / .md
@@ -53,6 +55,7 @@ default_state: ImportGraphState = {
     "task_id": "",
     "dataset_id": "",
     "document_id": "",
+    "owner_user_id": "",
     "local_file_path": "",
     "local_dir": "",
     "is_md_read_enabled": False,

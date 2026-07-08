@@ -10,6 +10,7 @@ class FakeImportMetadataRepository:
         self.tasks = tasks or {}
         self.documents = documents or {}
         self.should_raise = should_raise
+        self.create_calls = []
 
     def get_task(self, task_id):
         if self.should_raise:
@@ -19,14 +20,34 @@ class FakeImportMetadataRepository:
     def get_document(self, document_id):
         return self.documents.get(document_id, {})
 
+    def create_import_metadata(self, **kwargs):
+        self.create_calls.append(kwargs)
+        document = {
+            "document_id": kwargs["document_id"],
+            "dataset_id": kwargs["dataset_id"],
+            "latest_task_id": kwargs["task_id"],
+            "owner_user_id": kwargs["owner_user_id"],
+        }
+        task = {
+            "task_id": kwargs["task_id"],
+            "document_id": kwargs["document_id"],
+            "dataset_id": kwargs["dataset_id"],
+            "owner_user_id": kwargs["owner_user_id"],
+        }
+        self.documents[kwargs["document_id"]] = document
+        self.tasks[kwargs["task_id"]] = task
+        return document, task
+
 
 class FailingImportApp:
     def __init__(self, task_id, failed_node, error_message):
         self.task_id = task_id
         self.failed_node = failed_node
         self.error_message = error_message
+        self.last_state = None
 
     def invoke(self, state):
+        self.last_state = state
         task_utils.add_running_task(self.task_id, self.failed_node)
         raise RuntimeError(self.error_message)
 
@@ -37,6 +58,7 @@ def test_import_schemas_include_stage3_fields():
         task_ids=["task_1"],
         document_ids=["doc_1"],
         dataset_id="dataset_default_equipment_ops",
+        owner_user_id="user_a",
     )
     status = TaskStatusSchema(
         task_id="task_1",
@@ -51,6 +73,7 @@ def test_import_schemas_include_stage3_fields():
 
     assert upload.document_ids == ["doc_1"]
     assert upload.dataset_id == "dataset_default_equipment_ops"
+    assert upload.owner_user_id == "user_a"
     assert status.document_id == "doc_1"
     assert status.dataset_id == "dataset_default_equipment_ops"
     assert status.failed_node == "node_import_milvus"
@@ -169,18 +192,56 @@ def test_document_status_returns_404_for_missing_document(monkeypatch):
     assert "document_id=doc_missing 不存在" in response.json()["detail"]
 
 
+def test_upload_requires_user_id_header():
+    response = TestClient(import_server.app).post(
+        "/upload",
+        files={"files": ("demo.md", b"# demo", "text/markdown")},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "缺少 X-User-Id 请求头"
+
+
+def test_upload_writes_owner_user_id_and_returns_it(monkeypatch, tmp_path):
+    fake_repo = FakeImportMetadataRepository()
+    background_calls = []
+    monkeypatch.setattr(import_server, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(import_server, "get_import_metadata_repository", lambda: fake_repo)
+    monkeypatch.setattr(import_server, "register_persistent_task", lambda *args: None)
+    monkeypatch.setattr(import_server, "add_running_task", lambda *args: None)
+    monkeypatch.setattr(import_server, "add_done_task", lambda *args: None)
+    monkeypatch.setattr(
+        import_server,
+        "invoke_graph",
+        lambda **kwargs: background_calls.append(kwargs),
+    )
+
+    response = TestClient(import_server.app).post(
+        "/upload",
+        headers={"X-User-Id": "user_a"},
+        files={"files": ("demo.md", b"# demo", "text/markdown")},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["owner_user_id"] == "user_a"
+    assert fake_repo.create_calls[0]["owner_user_id"] == "user_a"
+    assert background_calls[0]["owner_user_id"] == "user_a"
+
+
 def test_invoke_graph_marks_failed_task_with_current_running_node(monkeypatch, tmp_path):
     task_id = "task_invoke_failed"
     task_utils.clear_task(task_id)
     failure_calls = []
+    import_app = FailingImportApp(
+        task_id=task_id,
+        failed_node="node_import_milvus",
+        error_message="Milvus 入库失败",
+    )
     monkeypatch.setattr(
         import_server,
         "kb_import_app",
-        FailingImportApp(
-            task_id=task_id,
-            failed_node="node_import_milvus",
-            error_message="Milvus 入库失败",
-        ),
+        import_app,
     )
     monkeypatch.setattr(
         import_server,
@@ -198,6 +259,7 @@ def test_invoke_graph_marks_failed_task_with_current_running_node(monkeypatch, t
         task_id=task_id,
         dataset_id="dataset_default_equipment_ops",
         document_id="doc_1",
+        owner_user_id="user_a",
         local_file_path_obj=tmp_path / "demo.pdf",
         local_dir_path_obj=tmp_path,
     )
@@ -210,5 +272,6 @@ def test_invoke_graph_marks_failed_task_with_current_running_node(monkeypatch, t
             "error_message": "Milvus 入库失败",
         }
     ]
+    assert import_app.last_state["owner_user_id"] == "user_a"
 
     task_utils.clear_task(task_id)
