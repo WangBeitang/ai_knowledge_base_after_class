@@ -26,6 +26,34 @@ class FakeImportMetadataRepository:
             return {}
         return document
 
+    def list_documents(self, *, owner_user_id, dataset_id, status=None, keyword=None, limit=20):
+        documents = []
+        for document in self.documents.values():
+            if document.get("owner_user_id") != owner_user_id:
+                continue
+            if document.get("dataset_id") != dataset_id:
+                continue
+            if status and document.get("status") != status:
+                continue
+            if keyword and keyword.lower() not in document.get("file_name", "").lower():
+                continue
+            documents.append(document)
+        return documents[:limit]
+
+    def list_tasks(self, *, owner_user_id, document_id=None, dataset_id=None, status=None, limit=20):
+        tasks = []
+        for task in self.tasks.values():
+            if task.get("owner_user_id") != owner_user_id:
+                continue
+            if document_id and task.get("document_id") != document_id:
+                continue
+            if dataset_id and task.get("dataset_id") != dataset_id:
+                continue
+            if status and task.get("status") != status:
+                continue
+            tasks.append(task)
+        return tasks[:limit]
+
     def create_import_metadata(self, **kwargs):
         self.create_calls.append(kwargs)
         document = {
@@ -148,6 +176,34 @@ def test_status_falls_back_to_memory_when_mongo_unavailable(monkeypatch):
     task_utils.clear_task(task_id)
 
 
+def test_status_does_not_fallback_to_memory_when_owner_mismatch(monkeypatch):
+    task_id = "task_owner_mismatch"
+    task_utils.clear_task(task_id)
+    task_utils.add_running_task(task_id, "node_import_milvus")
+    task_utils.update_task_status(task_id, task_utils.TASK_STATUS_PROCESSING)
+    fake_repo = FakeImportMetadataRepository(
+        tasks={
+            task_id: {
+                "task_id": task_id,
+                "document_id": "doc_user_b",
+                "dataset_id": "dataset_default_equipment_ops",
+                "owner_user_id": "user_b",
+                "status": "processing",
+                "done_nodes": [],
+                "running_nodes": ["node_import_milvus"],
+            }
+        }
+    )
+    monkeypatch.setattr(import_server, "get_import_metadata_repository", lambda: fake_repo)
+
+    response = TestClient(import_server.app).get(f"/status/{task_id}", headers={"X-User-Id": "user_a"})
+
+    assert response.status_code == 404
+    assert "task_id=task_owner_mismatch 不存在" in response.json()["detail"]
+
+    task_utils.clear_task(task_id)
+
+
 def test_document_status_returns_mongo_document(monkeypatch):
     fake_repo = FakeImportMetadataRepository(
         documents={
@@ -188,6 +244,98 @@ def test_document_status_returns_mongo_document(monkeypatch):
     assert data["standard_subject_name"] == "HAK 180 烫金机"
     assert data["created_at"] == "2026-07-08T08:00:00+00:00"
     assert data["updated_at"] == "2026-07-08T08:01:00+00:00"
+
+
+def test_list_documents_filters_by_owner_user_id(monkeypatch):
+    fake_repo = FakeImportMetadataRepository(
+        documents={
+            "doc_user_a": {
+                "document_id": "doc_user_a",
+                "dataset_id": "dataset_default_equipment_ops",
+                "owner_user_id": "user_a",
+                "latest_task_id": "task_user_a",
+                "file_name": "HAK180说明书.pdf",
+                "status": "completed",
+                "parse_status": "completed",
+                "index_status": "completed",
+                "chunk_count": 8,
+            },
+            "doc_user_b": {
+                "document_id": "doc_user_b",
+                "dataset_id": "dataset_default_equipment_ops",
+                "owner_user_id": "user_b",
+                "latest_task_id": "task_user_b",
+                "file_name": "HAK180维修手册.pdf",
+                "status": "failed",
+                "parse_status": "completed",
+                "index_status": "failed",
+                "chunk_count": 0,
+            },
+        }
+    )
+    monkeypatch.setattr(import_server, "get_import_metadata_repository", lambda: fake_repo)
+
+    response = TestClient(import_server.app).get("/documents", headers={"X-User-Id": "user_a"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert [item["document_id"] for item in data["items"]] == ["doc_user_a"]
+
+
+def test_document_status_returns_404_for_other_user_document(monkeypatch):
+    fake_repo = FakeImportMetadataRepository(
+        documents={
+            "doc_user_b": {
+                "document_id": "doc_user_b",
+                "dataset_id": "dataset_default_equipment_ops",
+                "owner_user_id": "user_b",
+                "latest_task_id": "task_user_b",
+                "file_name": "HAK180维修手册.pdf",
+                "status": "failed",
+            }
+        }
+    )
+    monkeypatch.setattr(import_server, "get_import_metadata_repository", lambda: fake_repo)
+
+    response = TestClient(import_server.app).get("/documents/doc_user_b", headers={"X-User-Id": "user_a"})
+
+    assert response.status_code == 404
+    assert "document_id=doc_user_b 不存在" in response.json()["detail"]
+
+
+def test_document_tasks_filters_by_owner_user_id(monkeypatch):
+    fake_repo = FakeImportMetadataRepository(
+        tasks={
+            "task_user_a": {
+                "task_id": "task_user_a",
+                "document_id": "doc_shared_name",
+                "dataset_id": "dataset_default_equipment_ops",
+                "owner_user_id": "user_a",
+                "status": "completed",
+                "done_nodes": ["upload_file"],
+                "running_nodes": [],
+            },
+            "task_user_b": {
+                "task_id": "task_user_b",
+                "document_id": "doc_shared_name",
+                "dataset_id": "dataset_default_equipment_ops",
+                "owner_user_id": "user_b",
+                "status": "failed",
+                "done_nodes": [],
+                "running_nodes": ["node_import_milvus"],
+            },
+        }
+    )
+    monkeypatch.setattr(import_server, "get_import_metadata_repository", lambda: fake_repo)
+
+    response = TestClient(import_server.app).get(
+        "/documents/doc_shared_name/tasks",
+        headers={"X-User-Id": "user_a"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert [item["task_id"] for item in data["items"]] == ["task_user_a"]
 
 
 def test_document_status_returns_404_for_missing_document(monkeypatch):
@@ -281,5 +429,7 @@ def test_invoke_graph_marks_failed_task_with_current_running_node(monkeypatch, t
         }
     ]
     assert import_app.last_state["owner_user_id"] == "user_a"
+    assert import_app.last_state["tenant_id"] == "tenant_default"
+    assert import_app.last_state["visibility"] == "private"
 
     task_utils.clear_task(task_id)

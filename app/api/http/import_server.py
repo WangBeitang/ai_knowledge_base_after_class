@@ -16,6 +16,8 @@ from app.api.schema.import_schema import (
 )
 from app.infra.persistence.import_metadata_repository import (
     DEFAULT_DATASET_ID,
+    DEFAULT_TENANT_ID,
+    DEFAULT_VISIBILITY,
     get_import_metadata_repository,
     safe_mark_import_completed,
     safe_mark_import_failed,
@@ -30,6 +32,7 @@ from app.shared.utils.task_utils import (
     TASK_STATUS_PROCESSING,
     get_done_task_list,
     get_last_running_task_node_name,
+    get_persistent_task_metadata,
     get_running_task_list,
     get_task_status,
     register_persistent_task,
@@ -101,6 +104,20 @@ def _document_status_from_record(document: dict, code: int = 200) -> DocumentSta
     )
 
 
+def _memory_task_status(task_id: str, owner_user_id: str) -> TaskStatusSchema:
+    metadata = get_persistent_task_metadata(task_id)
+    if metadata and metadata.get("owner_user_id") != owner_user_id:
+        raise HTTPException(status_code=404, detail=f"task_id={task_id} 不存在")
+
+    return TaskStatusSchema(
+        code=200,
+        task_id=task_id,
+        status=get_task_status(task_id),
+        done_list=get_done_task_list(task_id),
+        running_list=get_running_task_list(task_id)
+    )
+
+
 # 返回task_id对应的任务状态列表
 @app.get("/status/{task_id}")
 def status(request: Request, task_id: str) -> TaskStatusSchema:
@@ -111,14 +128,9 @@ def status(request: Request, task_id: str) -> TaskStatusSchema:
             return _task_status_from_record(task)
     except Exception as e:
         logger.warning(f"查询 Mongo 任务状态失败，回退内存状态，task_id={task_id}, error={e}")
+        return _memory_task_status(task_id, owner_user_id)
 
-    return TaskStatusSchema(
-        code=200,
-        task_id=task_id,
-        status=get_task_status(task_id),
-        done_list=get_done_task_list(task_id),
-        running_list=get_running_task_list(task_id)
-    )
+    raise HTTPException(status_code=404, detail=f"task_id={task_id} 不存在")
 
 
 @app.get("/documents")
@@ -182,6 +194,8 @@ def invoke_graph(
         dataset_id=dataset_id,
         document_id=document_id,
         owner_user_id=owner_user_id,
+        tenant_id=DEFAULT_TENANT_ID,
+        visibility=DEFAULT_VISIBILITY,
         local_file_path=str(local_file_path_obj),
         local_dir=str(local_dir_path_obj)
     )

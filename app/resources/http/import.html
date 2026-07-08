@@ -16,7 +16,7 @@
         }
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 960px;
             background-color: white;
             padding: 30px;
             border-radius: 12px;
@@ -64,8 +64,27 @@
             background-color: #bdc3c7;
             cursor: not-allowed;
         }
+        .btn-secondary {
+            background-color: #eef3f8;
+            color: #34495e;
+        }
+        .btn-secondary:hover {
+            background-color: #dfeaf4;
+        }
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 28px;
+        }
+        .history-header h2 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 20px;
+        }
         .file-list {
-            margin-top: 30px;
+            margin-top: 16px;
         }
         .file-item {
             background-color: #fff;
@@ -75,17 +94,19 @@
             margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            gap: 16px;
         }
         .file-info {
             display: flex;
             flex-direction: column;
             flex: 1;
-            margin-right: 20px;
+            min-width: 0;
         }
         .file-name {
             font-weight: 600;
             color: #333;
+            overflow-wrap: anywhere;
         }
         .file-size {
             font-size: 12px;
@@ -100,6 +121,26 @@
             color: white;
             min-width: 80px;
             text-align: center;
+        }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 6px 12px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #566573;
+        }
+        .failure-summary {
+            display: none;
+            margin-top: 8px;
+            color: #c0392b;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .empty-state {
+            color: #7f8c8d;
+            font-size: 14px;
+            padding: 16px 0;
         }
         .status-uploading { background-color: #f39c12; }
         .status-processing { background-color: #3498db; }
@@ -138,9 +179,20 @@
             margin: 6px 0 0 16px;
             padding: 0;
         }
-        .log-list li {
+        .detail-heading {
+            margin-top: 8px;
+            color: #34495e;
+            font-weight: 600;
+        }
+        .detail-list {
+            margin: 6px 0 0 16px;
+            padding: 0;
+        }
+        .log-list li,
+        .detail-list li {
             margin: 2px 0;
             line-height: 1.4;
+            overflow-wrap: anywhere;
         }
     </style>
 </head>
@@ -155,20 +207,46 @@
         <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.md">
     </div>
 
+    <div id="activeFileList" class="file-list">
+        <!-- 当前上传任务将在这里生成 -->
+    </div>
+
+    <div class="history-header">
+        <h2>我的导入记录</h2>
+        <button type="button" class="btn btn-secondary" id="refreshHistoryBtn">刷新</button>
+    </div>
     <div id="fileList" class="file-list">
-        <!-- 文件列表将在这里生成 -->
+        <!-- 历史导入记录将在这里生成 -->
     </div>
 </div>
 
 <script>
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
+    const activeFileList = document.getElementById('activeFileList');
     const fileList = document.getElementById('fileList');
+    const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
     
     // 默认走导入服务同源地址；如你把页面单独打开（file://），回退到导入服务默认端口。
     const API_BASE = location.origin.startsWith('http') ? location.origin : 'http://127.0.0.1:8000';
     const USER_ID_STORAGE_KEY = 'kb_user_id';
     const currentUserId = getOrCreateUserId();
+    const STATUS_LABELS = {
+        pending: '等待中',
+        uploaded: '已上传',
+        processing: '处理中',
+        completed: '已完成',
+        failed: '失败',
+    };
+    const FAILED_NODE_MESSAGES = {
+        upload_file: '文件保存失败，请重新上传',
+        node_entry: '文件类型不支持或文件信息读取失败',
+        node_pdf_to_md: 'PDF 解析失败，请检查文件是否损坏或格式是否支持',
+        node_md_img: 'Markdown 图片处理失败',
+        node_subject_name_recognition: '文档主题识别失败',
+        node_bge_embedding: '文档向量化失败，请稍后重试',
+        node_import_milvus: '文档索引入库失败，请稍后重试',
+    };
 
     function createUserId() {
         if (window.crypto && typeof window.crypto.randomUUID === 'function') {
@@ -194,6 +272,136 @@
         };
     }
 
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+        }[char]));
+    }
+
+    function formatTime(value) {
+        if (!value) return '-';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleString('zh-CN', { hour12: false });
+    }
+
+    function statusLabel(status) {
+        return STATUS_LABELS[status] || status || '未知';
+    }
+
+    function statusClass(status) {
+        if (status === 'completed') return 'status-completed';
+        if (status === 'failed') return 'status-error';
+        if (status === 'processing') return 'status-processing';
+        return 'status-uploading';
+    }
+
+    function failureSummary(record) {
+        const failedNode = record?.failed_node || '';
+        if (!failedNode && record?.status !== 'failed') return '';
+        return FAILED_NODE_MESSAGES[failedNode] || '导入失败，请稍后重试或联系管理员';
+    }
+
+    function detailLine(label, value) {
+        return `<li>${escapeHtml(label)}：${escapeHtml(value || '-')}</li>`;
+    }
+
+    function renderFailureSummary(itemEl, record) {
+        const failureEl = itemEl.querySelector('.failure-summary');
+        if (!failureEl) return;
+        const summary = failureSummary(record);
+        failureEl.textContent = summary;
+        failureEl.style.display = summary ? 'block' : 'none';
+    }
+
+    function renderTaskDetails(itemEl, data) {
+        const detailListEl = itemEl.querySelector('.detail-list');
+        if (!detailListEl) return;
+
+        const lines = [
+            detailLine('task_id', data.task_id),
+            detailLine('document_id', data.document_id),
+            detailLine('dataset_id', data.dataset_id),
+            detailLine('failed_node', data.failed_node),
+            detailLine('error_message', data.error_message),
+        ];
+        detailListEl.innerHTML = lines.join('');
+    }
+
+    async function loadDocumentHistory() {
+        refreshHistoryBtn.disabled = true;
+        try {
+            const response = await fetch(`${API_BASE}/documents`, {
+                headers: userHeaders(),
+            });
+            if (!response.ok) {
+                throw new Error(`Load documents failed: ${response.status}`);
+            }
+            const data = await response.json();
+            renderDocumentHistory(data.items || []);
+            return true;
+        } catch (error) {
+            console.error(error);
+            fileList.innerHTML = '<div class="empty-state">导入记录加载失败</div>';
+            return false;
+        } finally {
+            refreshHistoryBtn.disabled = false;
+        }
+    }
+
+    function renderDocumentHistory(documents) {
+        fileList.innerHTML = '';
+        if (!documents.length) {
+            fileList.innerHTML = '<div class="empty-state">暂无导入记录</div>';
+            return;
+        }
+
+        for (const documentRecord of documents) {
+            fileList.insertAdjacentHTML('beforeend', createDocumentHistoryHtml(documentRecord));
+        }
+    }
+
+    function createDocumentHistoryHtml(documentRecord) {
+        const summary = failureSummary(documentRecord);
+        const failureHtml = summary
+            ? `<div class="failure-summary" style="display:block">${escapeHtml(summary)}</div>`
+            : '<div class="failure-summary"></div>';
+        const detailLines = [
+            detailLine('document_id', documentRecord.document_id),
+            detailLine('latest_task_id', documentRecord.latest_task_id),
+            detailLine('dataset_id', documentRecord.dataset_id),
+            detailLine('subject_id', documentRecord.subject_id),
+            detailLine('standard_subject_name', documentRecord.standard_subject_name),
+            detailLine('md_path', documentRecord.md_path),
+            detailLine('failed_node', documentRecord.failed_node),
+            detailLine('error_message', documentRecord.error_message),
+        ].join('');
+
+        return `
+            <div class="file-item" data-document-id="${escapeHtml(documentRecord.document_id)}">
+                <div class="file-info">
+                    <span class="file-name">${escapeHtml(documentRecord.file_name || documentRecord.document_id)}</span>
+                    <div class="meta-grid">
+                        <span>上传：${escapeHtml(formatTime(documentRecord.created_at))}</span>
+                        <span>解析：${escapeHtml(statusLabel(documentRecord.parse_status))}</span>
+                        <span>索引：${escapeHtml(statusLabel(documentRecord.index_status))}</span>
+                        <span>Chunk：${escapeHtml(documentRecord.chunk_count ?? 0)}</span>
+                    </div>
+                    ${failureHtml}
+                    <details class="log-details">
+                        <summary>查看详情</summary>
+                        <ul class="detail-list">${detailLines}</ul>
+                    </details>
+                </div>
+                <div class="status-badge ${statusClass(documentRecord.status)}">${escapeHtml(statusLabel(documentRecord.status))}</div>
+            </div>
+        `;
+    }
+
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.style.backgroundColor = '#ecf6fd';
@@ -212,6 +420,10 @@
 
     fileInput.addEventListener('change', (e) => {
         handleFiles(e.target.files);
+    });
+
+    refreshHistoryBtn.addEventListener('click', () => {
+        loadDocumentHistory();
     });
 
     function handleFiles(files) {
@@ -233,27 +445,27 @@
         const html = `
             <div class="file-item" id="${id}">
                 <div class="file-info">
-                    <span class="file-name">${file.name}</span>
-                    <span class="file-size">${(file.size / 1024).toFixed(2)} KB</span>
+                    <span class="file-name">${escapeHtml(file.name)}</span>
+                    <span class="file-size">${escapeHtml((file.size / 1024).toFixed(2))} KB</span>
                     <div class="progress-bar-container">
                         <div class="progress-bar"></div>
                     </div>
+                    <div class="failure-summary"></div>
                     <details class="log-details">
                         <summary>日志（点击展开）</summary>
                         <ul class="log-list"></ul>
+                        <div class="detail-heading">技术详情</div>
+                        <ul class="detail-list"></ul>
                     </details>
                 </div>
                 <div class="status-badge status-uploading">上传中...</div>
             </div>
         `;
-        fileList.insertAdjacentHTML('afterbegin', html);
+        activeFileList.insertAdjacentHTML('afterbegin', html);
         const itemEl = document.getElementById(id);
         const statusBadge = itemEl.querySelector('.status-badge');
         const progressBar = itemEl.querySelector('.progress-bar');
         const progressContainer = itemEl.querySelector('.progress-bar-container');
-        const logDetails = itemEl.querySelector('.log-details');
-        const logSummary = itemEl.querySelector('.log-details summary');
-        const logListEl = itemEl.querySelector('.log-list');
 
         // 构建FormData
         const formData = new FormData();
@@ -271,7 +483,10 @@
                 body: formData
             });
 
-            if (!response.ok) throw new Error('Upload failed');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || 'Upload failed');
+            }
             
             const result = await response.json();
             const taskId = result.task_ids[0]; // 假设一次传一个或取第一个
@@ -288,6 +503,11 @@
             console.error(error);
             statusBadge.textContent = '失败';
             statusBadge.className = 'status-badge status-error';
+            renderFailureSummary(itemEl, {
+                status: 'failed',
+                failed_node: 'upload_file',
+                error_message: error.message,
+            });
         }
     }
 
@@ -353,12 +573,17 @@
 
                 // 渲染日志（done/running）
                 renderLogs(itemEl, data.done_list, data.running_list);
+                renderTaskDetails(itemEl, data);
+                renderFailureSummary(itemEl, data);
                 
                 if (data.status === 'completed') {
                     statusBadge.textContent = '已完成';
                     statusBadge.className = 'status-badge status-completed';
                     updateProgressBar(progressBar, 100);
                     clearInterval(interval);
+                    loadDocumentHistory().then((isLoaded) => {
+                        if (isLoaded) itemEl.remove();
+                    });
                 } else if (data.status === 'processing') {
                     // 保持处理中状态
                     statusBadge.textContent = '处理中...';
@@ -368,12 +593,17 @@
                     statusBadge.textContent = '失败';
                     statusBadge.className = 'status-badge status-error';
                     clearInterval(interval);
+                    loadDocumentHistory().then((isLoaded) => {
+                        if (isLoaded) itemEl.remove();
+                    });
                 }
             } catch (e) {
                 console.error('Polling error', e);
             }
         }, 2000); // 每2秒轮询一次
     }
+
+    loadDocumentHistory();
 </script>
 
 </body>

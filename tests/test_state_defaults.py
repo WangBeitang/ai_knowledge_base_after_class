@@ -10,6 +10,8 @@ def test_import_default_state_fields_are_complete():
         "dataset_id",
         "document_id",
         "owner_user_id",
+        "tenant_id",
+        "visibility",
         "local_file_path",
         "local_dir",
         "is_md_read_enabled",
@@ -35,6 +37,8 @@ def test_import_default_state_fields_are_complete():
     assert state["dataset_id"] == ""
     assert state["document_id"] == ""
     assert state["owner_user_id"] == ""
+    assert state["tenant_id"] == ""
+    assert state["visibility"] == ""
     assert isinstance(state["subject_aliases"], list)
     assert isinstance(state["chunks"], list)
     assert isinstance(state["embedding_content"], list)
