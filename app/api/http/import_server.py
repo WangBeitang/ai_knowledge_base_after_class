@@ -206,7 +206,13 @@ def invoke_graph(
 
         final_state = kb_import_app.invoke(state)
 
-        logger.info(f"{task_id}对应的文件解析任务完成!最终结果: {final_state}")
+        logger.info(
+            f"{task_id} 对应的文件解析任务完成! "
+            f"chunks数量={len(final_state.get('chunks', []))}, "
+            f"subject_id={final_state.get('subject_id')}, "
+            f"file_title={final_state.get('file_title')}, "
+            f"md_content长度={len(final_state.get('md_content', ''))}"
+        )
         update_task_status(task_id, TASK_STATUS_COMPLETED)
         safe_mark_import_completed(task_id)
     except Exception as e:
