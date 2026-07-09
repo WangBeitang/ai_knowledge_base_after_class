@@ -131,6 +131,11 @@ def test_create_import_metadata_creates_default_dataset_document_and_task():
     assert document["tenant_id"] == repo_module.DEFAULT_TENANT_ID
     assert document["visibility"] == repo_module.DEFAULT_VISIBILITY
     assert document["latest_task_id"] == "task_1"
+    assert document["index_version"] == repo_module.DEFAULT_INDEX_VERSION
+    assert document["deleted_at"] == ""
+    assert document["image_prefix"] == ""
+    assert document["parse_result_zip_path"] == ""
+    assert document["parse_result_dir"] == ""
     assert document["status"] == repo_module.STATUS_UPLOADED
     assert document["parse_status"] == repo_module.STATUS_PENDING
     assert document["index_status"] == repo_module.STATUS_PENDING
@@ -139,6 +144,67 @@ def test_create_import_metadata_creates_default_dataset_document_and_task():
     assert task["owner_user_id"] == "user_a"
     assert task["tenant_id"] == repo_module.DEFAULT_TENANT_ID
     assert task["task_type"] == repo_module.TASK_TYPE_IMPORT
+
+
+def test_create_rebuild_task_metadata_reuses_document_and_increments_index_version():
+    repo = build_fake_repository()
+    repo.create_import_metadata(
+        dataset_id=repo_module.DEFAULT_DATASET_ID,
+        document_id="doc_1",
+        task_id="task_import",
+        owner_user_id="user_a",
+        file_name="HAK180说明书.pdf",
+        file_path="/tmp/HAK180说明书.pdf",
+        local_dir="/tmp/task_import",
+    )
+
+    document, task = repo.create_rebuild_task_metadata(
+        document_id="doc_1",
+        task_id="task_rebuild",
+        owner_user_id="user_a",
+    )
+
+    stored_document = repo.get_document("doc_1", "user_a")
+    stored_task = repo.get_task("task_rebuild", "user_a")
+
+    assert document["document_id"] == "doc_1"
+    assert document["latest_task_id"] == "task_rebuild"
+    assert document["index_version"] == repo_module.DEFAULT_INDEX_VERSION + 1
+    assert document["status"] == repo_module.STATUS_PROCESSING
+    assert task["task_type"] == repo_module.TASK_TYPE_REBUILD_INDEX
+    assert task["status"] == repo_module.STATUS_PENDING
+    assert stored_document["latest_task_id"] == "task_rebuild"
+    assert stored_document["index_version"] == repo_module.DEFAULT_INDEX_VERSION + 1
+    assert stored_task["task_type"] == repo_module.TASK_TYPE_REBUILD_INDEX
+
+
+def test_create_rebuild_task_metadata_rejects_missing_or_deleted_document():
+    repo = build_fake_repository()
+
+    with pytest.raises(ValueError, match="document_id=doc_missing 不存在"):
+        repo.create_rebuild_task_metadata(
+            document_id="doc_missing",
+            task_id="task_rebuild",
+            owner_user_id="user_a",
+        )
+
+    repo.create_import_metadata(
+        dataset_id=repo_module.DEFAULT_DATASET_ID,
+        document_id="doc_deleted",
+        task_id="task_import",
+        owner_user_id="user_a",
+        file_name="HAK180说明书.pdf",
+        file_path="/tmp/HAK180说明书.pdf",
+        local_dir="/tmp/task_import",
+    )
+    repo.update_document("doc_deleted", status=repo_module.STATUS_DELETED)
+
+    with pytest.raises(ValueError, match="document_id=doc_deleted 已删除"):
+        repo.create_rebuild_task_metadata(
+            document_id="doc_deleted",
+            task_id="task_rebuild_deleted",
+            owner_user_id="user_a",
+        )
 
 
 def test_create_import_metadata_uses_existing_custom_dataset_without_creating_default():

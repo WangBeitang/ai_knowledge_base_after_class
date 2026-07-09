@@ -24,14 +24,17 @@ DEFAULT_DATASET_ID = "dataset_default_equipment_ops"
 DEFAULT_DATASET_NAME = "设备运维知识库"
 DEFAULT_TENANT_ID = "tenant_default"
 DEFAULT_VISIBILITY = "private"
+DEFAULT_INDEX_VERSION = 1
 
 TASK_TYPE_IMPORT = "import"
+TASK_TYPE_REBUILD_INDEX = "rebuild_index"
 
 STATUS_PENDING = "pending"
 STATUS_UPLOADED = "uploaded"
 STATUS_PROCESSING = "processing"
 STATUS_COMPLETED = "completed"
 STATUS_FAILED = "failed"
+STATUS_DELETED = "deleted"
 
 # 失败时用节点名判断失败阶段：这些节点属于“解析阶段”，其它后续节点默认归为
 # “索引阶段”。这样 document.status 负责表达整体成功/失败，parse_status 和
@@ -140,6 +143,7 @@ class ImportMetadataRepository:
         local_dir: str,
         tenant_id: str = DEFAULT_TENANT_ID,
         visibility: str = DEFAULT_VISIBILITY,
+        index_version: int = DEFAULT_INDEX_VERSION,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         """
         创建一次导入需要的 document 和 task 记录。
@@ -158,6 +162,7 @@ class ImportMetadataRepository:
             "tenant_id": tenant_id,
             "visibility": visibility,
             "latest_task_id": task_id,
+            "index_version": index_version,
             "file_name": file_name,
             "file_path": file_path,
             "local_dir": local_dir,
@@ -168,6 +173,10 @@ class ImportMetadataRepository:
             "subject_id": "",
             "standard_subject_name": "",
             "md_path": "",
+            "image_prefix": "",
+            "parse_result_zip_path": "",
+            "parse_result_dir": "",
+            "deleted_at": "",
             "failed_node": "",
             "error_message": "",
             "created_at": now,
@@ -192,6 +201,62 @@ class ImportMetadataRepository:
         self.documents.insert_one(document)
         self.tasks.insert_one(task)
         return document, task
+
+    def create_rebuild_task_metadata(
+        self,
+        *,
+        document_id: str,
+        task_id: str,
+        owner_user_id: str,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """
+        为已有 document 创建一次重建索引任务。
+
+        rebuild_index 是任务类型，不是运行状态。它会持久保存在 tasks.task_type
+        中，任务进度仍由 tasks.status 表达。
+        """
+        document = self.get_document(document_id, owner_user_id)
+        # 正常流程中 deleted document 不会进入重建索引入口；
+        # 这里作为 repository 层兜底，防止绕过 API/前端后复活已删除文档。
+        if not document:
+            raise ValueError(f"document_id={document_id} 不存在")
+        if document.get("status") == STATUS_DELETED:
+            raise ValueError(f"document_id={document_id} 已删除，不能重建索引")
+
+        now = _now_iso()
+        next_index_version = int(document.get("index_version") or DEFAULT_INDEX_VERSION) + 1
+        task = {
+            "task_id": task_id,
+            "document_id": document_id,
+            "dataset_id": document.get("dataset_id", DEFAULT_DATASET_ID),
+            "owner_user_id": owner_user_id,
+            "tenant_id": document.get("tenant_id", DEFAULT_TENANT_ID),
+            "task_type": TASK_TYPE_REBUILD_INDEX,
+            "status": STATUS_PENDING,
+            "running_nodes": [],
+            "done_nodes": [],
+            "failed_node": "",
+            "error_message": "",
+            "created_at": now,
+            "updated_at": now,
+        }
+        document_update = {
+            "latest_task_id": task_id,
+            "index_version": next_index_version,
+            "status": STATUS_PROCESSING,
+            "index_status": STATUS_PENDING,
+            "failed_node": "",
+            "error_message": "",
+            "updated_at": now,
+        }
+
+        self.tasks.insert_one(task)
+        self.documents.update_one(
+            {"document_id": document_id},
+            {"$set": document_update},
+        )
+        updated_document = {**document, **document_update}
+        return updated_document, task
 
     def get_document(self, document_id: str, owner_user_id: str) -> dict[str, Any]:
         document = self.documents.find_one({

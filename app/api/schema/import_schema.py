@@ -9,11 +9,13 @@ class UploadSchema(BaseModel):
     document_ids:list[str] = Field(default_factory=list)
     dataset_id:str = ""
     owner_user_id:str = ""
+    index_version:int = 0
 
 # 查询任务状态的数据类型
 class TaskStatusSchema(BaseModel):
     code:int = 200
     task_id:str
+    task_type:str = ""
     status:str # 当前文件整体状态
     done_list:list[str] = Field(default_factory=list) # 当前task_id已完成的节点列表
     running_list:list[str] = Field(default_factory=list) # 当前task_id正在处理的节点列表
@@ -33,6 +35,7 @@ class DocumentStatusSchema(BaseModel):
     file_name:str = ""
     file_path:str = ""
     local_dir:str = ""
+    index_version:int = 0
     status:str = ""
     parse_status:str = ""
     index_status:str = ""
@@ -40,6 +43,10 @@ class DocumentStatusSchema(BaseModel):
     subject_id:str = ""
     standard_subject_name:str = ""
     md_path:str = ""
+    image_prefix:str = ""
+    parse_result_zip_path:str = ""
+    parse_result_dir:str = ""
+    deleted_at:str = ""
     failed_node:str = ""
     error_message:str = ""
     created_at:str = ""

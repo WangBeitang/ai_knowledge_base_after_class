@@ -60,6 +60,7 @@ class FakeImportMetadataRepository:
             "document_id": kwargs["document_id"],
             "dataset_id": kwargs["dataset_id"],
             "latest_task_id": kwargs["task_id"],
+            "index_version": kwargs.get("index_version", 1),
             "owner_user_id": kwargs["owner_user_id"],
         }
         task = {
@@ -67,6 +68,7 @@ class FakeImportMetadataRepository:
             "document_id": kwargs["document_id"],
             "dataset_id": kwargs["dataset_id"],
             "owner_user_id": kwargs["owner_user_id"],
+            "task_type": "import",
         }
         self.documents[kwargs["document_id"]] = document
         self.tasks[kwargs["task_id"]] = task
@@ -93,9 +95,11 @@ def test_import_schemas_include_stage3_fields():
         document_ids=["doc_1"],
         dataset_id="dataset_default_equipment_ops",
         owner_user_id="user_a",
+        index_version=1,
     )
     status = TaskStatusSchema(
         task_id="task_1",
+        task_type="import",
         status="failed",
         document_id="doc_1",
         dataset_id="dataset_default_equipment_ops",
@@ -108,8 +112,10 @@ def test_import_schemas_include_stage3_fields():
     assert upload.document_ids == ["doc_1"]
     assert upload.dataset_id == "dataset_default_equipment_ops"
     assert upload.owner_user_id == "user_a"
+    assert upload.index_version == 1
     assert status.document_id == "doc_1"
     assert status.dataset_id == "dataset_default_equipment_ops"
+    assert status.task_type == "import"
     assert status.failed_node == "node_import_milvus"
     assert status.error_message == "Milvus 入库失败"
     assert status.created_at
@@ -124,6 +130,7 @@ def test_status_prefers_mongo_task_record(monkeypatch):
                 "document_id": "doc_1",
                 "dataset_id": "dataset_default_equipment_ops",
                 "owner_user_id": "user_a",
+                "task_type": "import",
                 "status": "failed",
                 "done_nodes": ["upload_file", "node_entry"],
                 "running_nodes": ["node_import_milvus"],
@@ -143,6 +150,7 @@ def test_status_prefers_mongo_task_record(monkeypatch):
     assert data["task_id"] == "task_1"
     assert data["document_id"] == "doc_1"
     assert data["dataset_id"] == "dataset_default_equipment_ops"
+    assert data["task_type"] == "import"
     assert data["status"] == "failed"
     assert data["done_list"] == ["开始上传文件", "检查文件"]
     assert data["running_list"] == ["导入向量库"]
@@ -212,6 +220,7 @@ def test_document_status_returns_mongo_document(monkeypatch):
                 "dataset_id": "dataset_default_equipment_ops",
                 "owner_user_id": "user_a",
                 "latest_task_id": "task_1",
+                "index_version": 2,
                 "file_name": "HAK180说明书.pdf",
                 "file_path": "/tmp/HAK180说明书.pdf",
                 "local_dir": "/tmp/task_1",
@@ -222,6 +231,10 @@ def test_document_status_returns_mongo_document(monkeypatch):
                 "subject_id": "subject_hak_180",
                 "standard_subject_name": "HAK 180 烫金机",
                 "md_path": "/tmp/HAK180说明书.md",
+                "image_prefix": "images/doc_1",
+                "parse_result_zip_path": "/tmp/task_1/result.zip",
+                "parse_result_dir": "/tmp/task_1/extract",
+                "deleted_at": "",
                 "failed_node": "",
                 "error_message": "",
                 "created_at": "2026-07-08T08:00:00+00:00",
@@ -238,10 +251,15 @@ def test_document_status_returns_mongo_document(monkeypatch):
     assert data["document_id"] == "doc_1"
     assert data["dataset_id"] == "dataset_default_equipment_ops"
     assert data["latest_task_id"] == "task_1"
+    assert data["index_version"] == 2
     assert data["index_status"] == "completed"
     assert data["chunk_count"] == 8
     assert data["subject_id"] == "subject_hak_180"
     assert data["standard_subject_name"] == "HAK 180 烫金机"
+    assert data["image_prefix"] == "images/doc_1"
+    assert data["parse_result_zip_path"] == "/tmp/task_1/result.zip"
+    assert data["parse_result_dir"] == "/tmp/task_1/extract"
+    assert data["deleted_at"] == ""
     assert data["created_at"] == "2026-07-08T08:00:00+00:00"
     assert data["updated_at"] == "2026-07-08T08:01:00+00:00"
 
@@ -381,8 +399,10 @@ def test_upload_writes_owner_user_id_and_returns_it(monkeypatch, tmp_path):
     assert response.status_code == 200
     data = response.json()
     assert data["owner_user_id"] == "user_a"
+    assert data["index_version"] == 1
     assert fake_repo.create_calls[0]["owner_user_id"] == "user_a"
     assert background_calls[0]["owner_user_id"] == "user_a"
+    assert background_calls[0]["index_version"] == 1
 
 
 def test_invoke_graph_marks_failed_task_with_current_running_node(monkeypatch, tmp_path):
@@ -415,6 +435,7 @@ def test_invoke_graph_marks_failed_task_with_current_running_node(monkeypatch, t
         task_id=task_id,
         dataset_id="dataset_default_equipment_ops",
         document_id="doc_1",
+        index_version=1,
         owner_user_id="user_a",
         local_file_path_obj=tmp_path / "demo.pdf",
         local_dir_path_obj=tmp_path,
@@ -429,6 +450,7 @@ def test_invoke_graph_marks_failed_task_with_current_running_node(monkeypatch, t
         }
     ]
     assert import_app.last_state["owner_user_id"] == "user_a"
+    assert import_app.last_state["index_version"] == 1
     assert import_app.last_state["tenant_id"] == "tenant_default"
     assert import_app.last_state["visibility"] == "private"
 

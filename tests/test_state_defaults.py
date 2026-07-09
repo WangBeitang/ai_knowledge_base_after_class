@@ -9,6 +9,7 @@ def test_import_default_state_fields_are_complete():
         "task_id",
         "dataset_id",
         "document_id",
+        "index_version",
         "owner_user_id",
         "tenant_id",
         "visibility",
@@ -36,6 +37,7 @@ def test_import_default_state_fields_are_complete():
     assert state["is_pdf_read_enabled"] is False
     assert state["dataset_id"] == ""
     assert state["document_id"] == ""
+    assert state["index_version"] == 0
     assert state["owner_user_id"] == ""
     assert state["tenant_id"] == ""
     assert state["visibility"] == ""

@@ -69,6 +69,7 @@ def _task_status_from_record(task: dict, code: int = 200) -> TaskStatusSchema:
     return TaskStatusSchema(
         code=code,
         task_id=task.get("task_id", ""),
+        task_type=task.get("task_type", ""),
         status=task.get("status", ""),
         done_list=to_display_node_list(task.get("done_nodes", [])),
         running_list=to_display_node_list(task.get("running_nodes", [])),
@@ -90,6 +91,7 @@ def _document_status_from_record(document: dict, code: int = 200) -> DocumentSta
         file_name=document.get("file_name", ""),
         file_path=document.get("file_path", ""),
         local_dir=document.get("local_dir", ""),
+        index_version=document.get("index_version", 0),
         status=document.get("status", ""),
         parse_status=document.get("parse_status", ""),
         index_status=document.get("index_status", ""),
@@ -97,6 +99,10 @@ def _document_status_from_record(document: dict, code: int = 200) -> DocumentSta
         subject_id=document.get("subject_id", ""),
         standard_subject_name=document.get("standard_subject_name", ""),
         md_path=document.get("md_path", ""),
+        image_prefix=document.get("image_prefix", ""),
+        parse_result_zip_path=document.get("parse_result_zip_path", ""),
+        parse_result_dir=document.get("parse_result_dir", ""),
+        deleted_at=document.get("deleted_at", ""),
         failed_node=document.get("failed_node", ""),
         error_message=document.get("error_message", ""),
         created_at=document.get("created_at", ""),
@@ -185,6 +191,7 @@ def invoke_graph(
         task_id: str,
         dataset_id: str,
         document_id: str,
+        index_version: int,
         owner_user_id: str,
         local_file_path_obj: Path,
         local_dir_path_obj: Path,
@@ -193,6 +200,7 @@ def invoke_graph(
         task_id=task_id,
         dataset_id=dataset_id,
         document_id=document_id,
+        index_version=index_version,
         owner_user_id=owner_user_id,
         tenant_id=DEFAULT_TENANT_ID,
         visibility=DEFAULT_VISIBILITY,
@@ -249,6 +257,7 @@ def upload(
             local_dir=str(local_dir_path_obj),
         )
         dataset_id = document["dataset_id"]
+        index_version = document.get("index_version", 0)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     register_persistent_task(task_id, document_id, dataset_id, owner_user_id)
@@ -272,6 +281,7 @@ def upload(
         task_id=task_id,
         dataset_id=dataset_id,
         document_id=document_id,
+        index_version=index_version,
         owner_user_id=owner_user_id,
         local_file_path_obj=file_path_obj,
         local_dir_path_obj=local_dir_path_obj
@@ -285,6 +295,7 @@ def upload(
         document_ids=[document_id],
         dataset_id=dataset_id,
         owner_user_id=owner_user_id,
+        index_version=index_version,
     )
 
 

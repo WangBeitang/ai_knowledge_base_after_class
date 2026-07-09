@@ -12,6 +12,8 @@ class ImportGraphState(TypedDict):
     dataset_id: str
     # 文档标识：一个 document 可关联多次 task，当前导入任务写入 latest_task_id
     document_id: str
+    # 文档级检索索引产物版本：表示当前 document 对应的 chunk/vector 入库版本
+    index_version: int
     # 用户归属：阶段 3.5 引入，用于 document/task 导入历史隔离
     owner_user_id: str
     # 租户与可见性：当前阶段使用默认值，为后续多租户和共享能力预留
@@ -58,6 +60,7 @@ default_state: ImportGraphState = {
     "task_id": "",
     "dataset_id": "",
     "document_id": "",
+    "index_version": 0,
     "owner_user_id": "",
     "tenant_id": "",
     "visibility": "",
