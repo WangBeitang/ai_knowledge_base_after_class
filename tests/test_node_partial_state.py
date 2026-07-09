@@ -43,12 +43,25 @@ def test_import_processing_nodes_return_partial_state(monkeypatch):
     monkeypatch.setattr(
         import_pdf_node,
         "parse_pdf_to_markdown",
-        lambda state: {**state, "md_path": "demo.md", "md_content": "markdown", "extra": "ignored"},
+        lambda state: {
+            **state,
+            "md_path": "demo.md",
+            "md_content": "markdown",
+            "parse_result_zip_path": "/tmp/task-1/demo_result.zip",
+            "parse_result_dir": "/tmp/task-1/demo",
+            "extra": "ignored",
+        },
     )
     monkeypatch.setattr(
         import_md_img_node,
         "enrich_markdown_images",
-        lambda state: {**state, "md_path": "demo_new.md", "md_content": "new markdown", "extra": "ignored"},
+        lambda state: {
+            **state,
+            "md_path": "demo_new.md",
+            "md_content": "new markdown",
+            "image_prefix": "kb-images/doc-1",
+            "extra": "ignored",
+        },
     )
     monkeypatch.setattr(
         import_split_node,
@@ -105,8 +118,23 @@ def test_import_processing_nodes_return_partial_state(monkeypatch):
     assert set(import_embedding_node.node_bge_embedding(base_state)) == {"chunks"}
     assert set(import_milvus_node.node_import_milvus(base_state)) == {"chunks"}
     assert document_updates == [
-        ("doc-1", {"md_path": "demo.md"}),
-        ("doc-1", {"parse_status": "completed", "md_path": "demo_new.md"}),
+        (
+            "doc-1",
+            {
+                "md_path": "demo.md",
+                "parse_result_zip_path": "/tmp/task-1/demo_result.zip",
+                "parse_result_dir": "/tmp/task-1/demo",
+                "parse_status": "completed",
+            },
+        ),
+        (
+            "doc-1",
+            {
+                "parse_status": "completed",
+                "md_path": "demo_new.md",
+                "image_prefix": "kb-images/doc-1",
+            },
+        ),
         ("doc-1", {"chunk_count": 1, "index_status": "processing"}),
         (
             "doc-1",

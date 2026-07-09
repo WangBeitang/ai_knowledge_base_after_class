@@ -2,7 +2,7 @@ from app.shared.runtime.logger import node_log
 from app.shared.utils.task_utils import add_done_task, add_running_task
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.pdf_parse_service import parse_pdf_to_markdown
-from app.infra.persistence.import_metadata_repository import safe_update_document
+from app.infra.persistence.import_metadata_repository import STATUS_COMPLETED, safe_update_document
 
 @node_log("node_pdf_to_md")
 def node_pdf_to_md(state: ImportGraphState) -> dict:
@@ -15,6 +15,9 @@ def node_pdf_to_md(state: ImportGraphState) -> dict:
     safe_update_document(
         state.get("document_id", ""),
         md_path=result_state.get("md_path", ""),
+        parse_result_zip_path=result_state.get("parse_result_zip_path", ""),
+        parse_result_dir=result_state.get("parse_result_dir", ""),
+        parse_status=STATUS_COMPLETED,
     )
     add_done_task(state["task_id"], "node_pdf_to_md")
     return {

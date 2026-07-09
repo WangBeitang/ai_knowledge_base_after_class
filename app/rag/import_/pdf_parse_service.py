@@ -169,7 +169,7 @@ def _upload_pdf_and_poll(pdf_path_obj):
         raise RuntimeError(f"轮询获取zip_url,MinerU服务器返回结果异常，无法处理的解析状态：{result_state}")
 
 @step_log()
-def download_and_extract_markdown(zip_url:Path, local_dir_obj: Path, stem: str):
+def download_and_extract_markdown(zip_url: str, local_dir_obj: Path, stem: str):
     # 1.下载MinerU返回的zip结果包
     response = requests.get(zip_url, timeout=MINERU_POLL_TIMEOUT_SECONDS)
     if response.status_code != 200:
@@ -199,7 +199,7 @@ def download_and_extract_markdown(zip_url:Path, local_dir_obj: Path, stem: str):
     # 5.优先选择与pdf同名的.md文件
     for md_file_obj in md_file_obj_list:
         if md_file_obj.stem == stem:
-            return md_file_obj
+            return md_file_obj, zip_path_obj, extract_dir_obj
 
     # 6.没有同名文件，取full.md
     target_md_obj = None
@@ -213,7 +213,8 @@ def download_and_extract_markdown(zip_url:Path, local_dir_obj: Path, stem: str):
 
     # 8.重命名为stem.md
     logger.info(f"MinerU交互，获取zip_url{zip_url}成功，已找到.md文件，将重命名为{stem}.md")
-    return target_md_obj.rename(target_md_obj.with_name(f"{stem}.md"))
+    md_path_obj = target_md_obj.rename(target_md_obj.with_name(f"{stem}.md"))
+    return md_path_obj, zip_path_obj, extract_dir_obj
 
 
 @step_log()
@@ -229,11 +230,12 @@ def parse_pdf_to_markdown(state: ImportGraphState) -> ImportGraphState:
     pdf_path_obj, local_dir_obj = _validate_pdf_paths(state)
     # 2.pdf上传和zip-url地址获取
     zip_url = _upload_pdf_and_poll(pdf_path_obj)
-    print(zip_url)
     # 3.zip文件下载、解压及md文件重命名
-    md_path_obj = download_and_extract_markdown(zip_url, local_dir_obj, pdf_path_obj.stem)
+    md_path_obj, zip_path_obj, extract_dir_obj = download_and_extract_markdown(zip_url, local_dir_obj, pdf_path_obj.stem)
 
     # 4.md_path  md_content 回写
     state["md_path"] = str(md_path_obj)
     state["md_content"] = md_path_obj.read_text(encoding="utf-8")
+    state["parse_result_zip_path"] = str(zip_path_obj)
+    state["parse_result_dir"] = str(extract_dir_obj)
     return state

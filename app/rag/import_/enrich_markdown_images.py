@@ -128,19 +128,19 @@ def summarize_images(images_context, stem):
 
 
 @step_log()
-def upload_images_and_replace(images_context, images_summary_dict, md_content, stem):
+def upload_images_and_replace(images_context, images_summary_dict, md_content, image_prefix):
     """
         思路：
-        1.删除原文件在minio中存储的图片信息
+        1.删除当前 document 在minio中存储的旧图片信息
         2.循环传递每一张图片到minio服务器
         3.存储每张图片对应的minio地址
         4.循环处理每一张图片，替换md_content内容
     """
-    # 1.删除原文件在minio中存储的图片信息
+    # 1.删除当前 document 在minio中存储的旧图片信息
     # 1.1 获取要删除的图片列表
     delete_list = minio_gateway.client().list_objects(
         bucket_name=minio_gateway.bucket_name,
-        prefix=f"{minio_gateway.image_dir[1:]}/{stem}",
+        prefix=image_prefix,
         recursive=True
     )
     delete_obj_list = [DeleteObject(delete_obj.object_name) for delete_obj in delete_list]
@@ -151,7 +151,7 @@ def upload_images_and_replace(images_context, images_summary_dict, md_content, s
     )
     for error in errors:
         logger.warning(f"删除图片失败：{error}")
-    logger.info(f"已完成文件{stem}的图片删除")
+    logger.info(f"已完成图片前缀{image_prefix}的图片删除")
 
     # 2.循环传递每一张图片到minio服务器
     image_minio_url_dict = {}
@@ -159,13 +159,13 @@ def upload_images_and_replace(images_context, images_summary_dict, md_content, s
         try:
             minio_gateway.client().fput_object(
                 bucket_name=minio_gateway.bucket_name,
-                object_name=f"{minio_gateway.image_dir}/{stem}/{image_name}",
+                object_name=f"{image_prefix}/{image_name}",
                 file_path=image_path,
                 content_type=mimetypes.guess_type(image_name)[0]
             )
 
             # 3.存储每张图片对应的minio地址
-            image_minio_url_dict[image_name] = minio_gateway.build_image_url(stem, image_name)
+            image_minio_url_dict[image_name] = minio_gateway.build_image_url(image_prefix, image_name)
         except Exception as e:
             logger.error(f"上传图片{image_name}失败：{e}")
 
@@ -219,8 +219,15 @@ def enrich_markdown_images(state: ImportGraphState) -> ImportGraphState:
     # 格式 {xx.jpg:描述}
     images_summary_dict = summarize_images(images_context, md_path_obj.stem)
 
+    document_id = state.get("document_id", "")
+    if not document_id:
+        logger.error("document_id参数为空，无法按 document 维度管理图片资源")
+        raise ValueError("document_id参数为空，无法按 document 维度管理图片资源")
+
+    image_prefix = minio_gateway.build_image_prefix(document_id)
+
     # 5. 上传图片到MinIO，并替换md_content中的图片地址和描述
-    md_content_new = upload_images_and_replace(images_context, images_summary_dict, md_content, md_path_obj.stem)
+    md_content_new = upload_images_and_replace(images_context, images_summary_dict, md_content, image_prefix)
 
     # 6. 备份新的md_content_new -> md_path_obj  烫金机.md  烫金机_new.md
     new_md_path_str = back_up_new_md_content(md_content_new, md_path_obj)
@@ -228,6 +235,7 @@ def enrich_markdown_images(state: ImportGraphState) -> ImportGraphState:
     # 7. 更新state md_content md_path
     state['md_content'] = md_content_new
     state['md_path'] = new_md_path_str
+    state["image_prefix"] = image_prefix
 
     # 8. 返回结果
     return state

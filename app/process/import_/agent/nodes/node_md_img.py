@@ -16,6 +16,7 @@ def node_md_img(state: ImportGraphState) -> dict:
         state.get("document_id", ""),
         parse_status=STATUS_COMPLETED,
         md_path=result_state.get("md_path", ""),
+        image_prefix=result_state.get("image_prefix", ""),
     )
     add_done_task(state["task_id"], "node_md_img")
     return {
