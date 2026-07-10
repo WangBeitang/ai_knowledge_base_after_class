@@ -1,3 +1,5 @@
+import pytest
+
 from app.rag.import_ import index_service
 
 
@@ -148,3 +150,98 @@ def test_index_chunks_deletes_by_document_id_and_inserts_stage4_metadata(monkeyp
     assert fake_gateway.client.inserted_data[0]["source_title"] == "同名说明书"
     assert result["chunks"][0]["chunk_id"] == 101
     assert result["chunks"][1]["chunk_id"] == 102
+
+
+def test_index_chunks_replaces_only_current_document(monkeypatch):
+    class FakeClient:
+        def __init__(self):
+            self.rows = [
+                {"chunk_id": 1, "document_id": "doc_a", "file_title": "同名说明书", "content": "旧内容1"},
+                {"chunk_id": 2, "document_id": "doc_a", "file_title": "同名说明书", "content": "旧内容2"},
+                {"chunk_id": 3, "document_id": "doc_b", "file_title": "同名说明书", "content": "其他文档内容"},
+            ]
+            self.next_id = 100
+
+        def has_collection(self, collection_name):
+            return True
+
+        def delete(self, *, collection_name, filter):
+            document_id = filter.split("==", 1)[1].strip("'\"")
+            self.rows = [row for row in self.rows if row.get("document_id") != document_id]
+
+        def insert(self, *, collection_name, data):
+            ids = []
+            for chunk in data:
+                self.next_id += 1
+                ids.append(self.next_id)
+                self.rows.append({**chunk, "chunk_id": self.next_id})
+            return {"insert_count": len(data), "ids": ids}
+
+    class FakeGateway:
+        def __init__(self):
+            self.client = FakeClient()
+            self.chunk_collection_name = "chunks"
+
+    fake_gateway = FakeGateway()
+    monkeypatch.setattr(index_service, "milvus_gateway", fake_gateway)
+    state = {
+        "dataset_id": "dataset_default_equipment_ops",
+        "document_id": "doc_a",
+        "owner_user_id": "user_a",
+        "index_version": 2,
+        "file_title": "同名说明书",
+        "chunks": [
+            {"content": "新内容1", "dense_vector": [0.1], "sparse_vector": {1: 0.5}},
+            {"content": "新内容2", "dense_vector": [0.2], "sparse_vector": {2: 0.4}},
+        ],
+    }
+
+    index_service.index_chunks(state)
+
+    document_a_rows = [row for row in fake_gateway.client.rows if row["document_id"] == "doc_a"]
+    document_b_rows = [row for row in fake_gateway.client.rows if row["document_id"] == "doc_b"]
+    assert [row["content"] for row in document_a_rows] == ["新内容1", "新内容2"]
+    assert [row["chunk_index"] for row in document_a_rows] == [0, 1]
+    assert [row["content"] for row in document_b_rows] == ["其他文档内容"]
+
+
+def test_index_chunks_does_not_restore_old_chunks_when_insert_fails(monkeypatch):
+    class FakeClient:
+        def __init__(self):
+            self.rows = [
+                {"document_id": "doc_a", "content": "已过期内容"},
+                {"document_id": "doc_b", "content": "其他文档内容"},
+            ]
+
+        def has_collection(self, collection_name):
+            return True
+
+        def delete(self, *, collection_name, filter):
+            document_id = filter.split("==", 1)[1].strip("'\"")
+            self.rows = [row for row in self.rows if row.get("document_id") != document_id]
+
+        def insert(self, *, collection_name, data):
+            raise RuntimeError("Milvus insert failed")
+
+    class FakeGateway:
+        def __init__(self):
+            self.client = FakeClient()
+            self.chunk_collection_name = "chunks"
+
+    fake_gateway = FakeGateway()
+    monkeypatch.setattr(index_service, "milvus_gateway", fake_gateway)
+    state = {
+        "dataset_id": "dataset_default_equipment_ops",
+        "document_id": "doc_a",
+        "owner_user_id": "user_a",
+        "index_version": 2,
+        "file_title": "HAK180说明书",
+        "chunks": [
+            {"content": "新内容", "dense_vector": [0.1], "sparse_vector": {1: 0.5}},
+        ],
+    }
+
+    with pytest.raises(RuntimeError, match="Milvus insert failed"):
+        index_service.index_chunks(state)
+
+    assert [row["document_id"] for row in fake_gateway.client.rows] == ["doc_b"]

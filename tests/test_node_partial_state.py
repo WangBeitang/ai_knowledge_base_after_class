@@ -104,7 +104,13 @@ def test_import_processing_nodes_return_partial_state(monkeypatch):
     ]:
         monkeypatch.setattr(node_module, "safe_update_document", record_document_update)
 
-    base_state = {"task_id": "task-1", "document_id": "doc-1"}
+    base_state = {
+        "task_id": "task-1",
+        "document_id": "doc-1",
+        "subject_id": "subject_hak_180",
+        "standard_subject_name": "HAK 180 烫金机",
+        "index_version": 2,
+    }
 
     assert set(import_pdf_node.node_pdf_to_md(base_state)) == {"md_path", "md_content"}
     assert set(import_md_img_node.node_md_img(base_state)) == {"md_path", "md_content"}
@@ -149,6 +155,9 @@ def test_import_processing_nodes_return_partial_state(monkeypatch):
                 "status": "completed",
                 "index_status": "completed",
                 "chunk_count": 1,
+                "subject_id": "subject_hak_180",
+                "standard_subject_name": "HAK 180 烫金机",
+                "index_version": 2,
             },
         ),
     ]

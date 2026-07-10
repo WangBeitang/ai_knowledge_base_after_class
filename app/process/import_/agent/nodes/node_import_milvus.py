@@ -2,7 +2,11 @@ from app.shared.runtime.logger import node_log
 from app.shared.utils.task_utils import add_done_task, add_running_task
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.index_service import index_chunks
-from app.infra.persistence.import_metadata_repository import STATUS_COMPLETED, safe_update_document
+from app.infra.persistence.import_metadata_repository import (
+    DEFAULT_INDEX_VERSION,
+    STATUS_COMPLETED,
+    safe_update_document,
+)
 
 @node_log("node_import_milvus")
 def node_import_milvus(state: ImportGraphState) -> dict:
@@ -12,14 +16,17 @@ def node_import_milvus(state: ImportGraphState) -> dict:
     """
     add_running_task(state["task_id"], "node_import_milvus")
     result_state = index_chunks(state)
-    # Milvus 入库是当前导入链路的最后一个索引动作；走到这里才把 document 的
-    # index_status 和整体 status 标记为 completed。失败场景由 invoke_graph 的
-    # safe_mark_import_failed 统一收口，避免节点内部吞掉异常。
+    # Milvus 入库是当前导入链路的最后一个索引动作。只有 index_chunks 成功返回后，
+    # 才把本次实际入库的数量、主题和版本作为最终索引结果写回 document。
+    # index_chunks 抛出的异常继续交给 invoke_graph 统一标记 task/document failed。
     safe_update_document(
         state.get("document_id", ""),
         status=STATUS_COMPLETED,
         index_status=STATUS_COMPLETED,
         chunk_count=len(result_state.get("chunks", [])),
+        subject_id=result_state.get("subject_id", ""),
+        standard_subject_name=result_state.get("standard_subject_name", ""),
+        index_version=int(result_state.get("index_version") or DEFAULT_INDEX_VERSION),
     )
     add_done_task(state["task_id"], "node_import_milvus")
     return {
