@@ -41,6 +41,7 @@ if __name__ == "__main__":
         test_state = {
             "md_path": test_md_path,
             "task_id": "test_task_123456",
+            "document_id": "doc_debug_md_img",
             "md_content": "",
         }
         logger.info("开始本地测试 - MD图片处理全流程")

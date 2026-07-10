@@ -43,6 +43,12 @@ if __name__ == '__main__':
     dim = 1024
     test_state = {
         "task_id": "test_milvus_task",
+        "dataset_id": "dataset_default_equipment_ops",
+        "document_id": "doc_test_milvus",
+        "index_version": 1,
+        "owner_user_id": "user_debug",
+        "tenant_id": "tenant_default",
+        "visibility": "private",
         "subject_id":"subject_test_milvus",
         "standard_subject_name":"测试项目_Milvus",
         "file_title":"文件名.md",

@@ -1,10 +1,12 @@
 from pymilvus import DataType
 
 from app.infra.vectorstore.milvus_gateway import milvus_gateway
+from app.infra.persistence.import_metadata_repository import DEFAULT_INDEX_VERSION, DEFAULT_TENANT_ID, DEFAULT_VISIBILITY
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.config import MILVUS_DEFAULT_VARCHAR_MAX_LENGTH
 from app.rag.import_.subject_name_service import SUBJECT_DOMAIN_FIELD_DESCRIPTIONS
 from app.shared.runtime.logger import logger,step_log
+from app.shared.utils.escape_milvus_string_utils import escape_milvus_string
 
 CHUNK_SUBJECT_FIELDS = (
     "subject_id",
@@ -17,7 +19,6 @@ CHUNK_SUBJECT_FIELDS = (
     "maintenance_stage",
 )
 
-
 def _add_varchar_field(schema, field_name, description, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH):
     schema.add_field(
         field_name=field_name,
@@ -25,6 +26,14 @@ def _add_varchar_field(schema, field_name, description, max_length=MILVUS_DEFAUL
         max_length=max_length,
         description=description,
     )
+
+
+def _require_state_text(state: ImportGraphState, field_name: str) -> str:
+    value = str(state.get(field_name) or "").strip()
+    if not value:
+        logger.error(f"{field_name}为空，无法补齐chunk元数据！")
+        raise ValueError(f"{field_name}为空，无法补齐chunk元数据！")
+    return value
 
 
 @step_log()
@@ -65,10 +74,32 @@ def prepare_chunks_collection(state):
         auto_id=True,
         description="Milvus 自动生成的 chunk 主键。用于返回检索命中的切片标识，不作为业务幂等键。",
     )
+    # 阶段4 document 维度元数据。用于 document 级幂等、删除、重建索引和阶段5权限过滤。
+    _add_varchar_field(schema, "dataset_id", "chunk 所属知识库 ID。阶段5可基于该字段做多知识库过滤。")
+    _add_varchar_field(schema, "document_id", "chunk 所属 document ID。导入幂等、删除和重建索引以该字段为业务键。")
+    _add_varchar_field(schema, "owner_user_id", "chunk 所属用户 ID。阶段5查询权限过滤使用。")
+    _add_varchar_field(schema, "tenant_id", "chunk 所属租户 ID。当前默认 tenant_default，为后续多租户预留。")
+    _add_varchar_field(schema, "visibility", "chunk 可见性。当前默认 private，后续支持 shared/public。")
+    schema.add_field(
+        field_name="index_version",
+        datatype=DataType.INT64,
+        description="document 级检索索引产物版本。用于追踪该 chunk 属于 document 的第几版索引结果。",
+    )
+    schema.add_field(
+        field_name="chunk_index",
+        datatype=DataType.INT64,
+        description="chunk 在当前 document 最终切片结果中的顺序，从 0 递增。",
+    )
+    schema.add_field(
+        field_name="enabled",
+        datatype=DataType.BOOL,
+        description="chunk 是否启用。当前默认 true，阶段6可用于 chunk 启停。",
+    )
+    _add_varchar_field(schema, "source_title", "来源标题。当前使用 file_title，作为展示和兼容字段。")
     # 内容
     _add_varchar_field(schema, "content", "切片正文内容。答案生成阶段主要依据该字段组织回答。", max_length=65535)
     # 原始文件标题
-    _add_varchar_field(schema, "file_title", "来源文件标题。导入时按该字段清理同一文件的旧 chunk，引用展示时也会使用。")
+    _add_varchar_field(schema, "file_title", "来源文件标题。仅作为展示和兼容字段，不再作为导入幂等删除条件。")
     # 标题
     _add_varchar_field(schema, "title", "当前切片标题。通常来自 Markdown 标题，用于答案引用和上下文定位。")
     # 父标题
@@ -165,12 +196,40 @@ def normalize_chunk_subject_fields(chunks):
     return chunks
 
 
+def normalize_chunk_document_fields(chunks, state: ImportGraphState, file_title: str):
+    """
+    插入 Milvus 前补齐阶段4新增的 document 维度 chunk 元数据。
+
+    这些字段不依赖切分节点产出，统一从导入图 state 回填，避免上游节点重复关心
+    document/user/visibility 这类横切元数据。
+    """
+    dataset_id = _require_state_text(state, "dataset_id")
+    document_id = _require_state_text(state, "document_id")
+    owner_user_id = _require_state_text(state, "owner_user_id")
+    tenant_id = str(state.get("tenant_id") or DEFAULT_TENANT_ID)
+    visibility = str(state.get("visibility") or DEFAULT_VISIBILITY)
+    index_version = int(state.get("index_version") or DEFAULT_INDEX_VERSION)
+
+    for chunk_index, chunk in enumerate(chunks):
+        chunk["dataset_id"] = dataset_id
+        chunk["document_id"] = document_id
+        chunk["owner_user_id"] = owner_user_id
+        chunk["tenant_id"] = tenant_id
+        chunk["visibility"] = visibility
+        chunk["index_version"] = index_version
+        chunk["chunk_index"] = chunk_index
+        chunk["enabled"] = True
+        chunk["source_title"] = file_title
+        chunk.setdefault("file_title", file_title)
+    return chunks
+
+
 @step_log()
-def remove_old_chunks(file_title):
+def remove_old_chunks(document_id):
     client = milvus_gateway.client
     client.delete(
         collection_name=milvus_gateway.chunk_collection_name,
-        filter=f"file_title=='{file_title}'"
+        filter=f"document_id=='{escape_milvus_string(document_id)}'"
     )
 
 
@@ -197,8 +256,8 @@ def index_chunks(state: ImportGraphState) -> ImportGraphState:
     """
     入库服务：
     1. 准备集合 schema 和索引
-    2. 根据 file_title 删除旧数据
-    3. 批量插入新的 chunks
+    2. 根据 document_id 删除旧数据
+    3. 补齐 chunk 元数据并批量插入新的 chunks
     4. 回写 chunk_id 等入库结果
     """
     # 1.参数校验
@@ -207,10 +266,12 @@ def index_chunks(state: ImportGraphState) -> ImportGraphState:
     # 2.准备集合 schema 和索引
     prepare_chunks_collection(state)
 
-    # 3.根据file_title删除旧数据
-    remove_old_chunks(file_title)
+    # 3.根据 document_id 删除旧数据，file_title 只保留为展示和兼容字段
+    document_id = _require_state_text(state, "document_id")
+    remove_old_chunks(document_id)
 
-    # 4.插入新数据
+    # 4.补齐阶段4元数据并插入新数据
+    chunks = normalize_chunk_document_fields(chunks, state, file_title)
     insert_chunks(chunks)
 
     return state

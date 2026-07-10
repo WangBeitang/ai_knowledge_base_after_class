@@ -20,6 +20,9 @@ def test_import_default_state_fields_are_complete():
         "pdf_path",
         "md_path",
         "md_content",
+        "parse_result_zip_path",
+        "parse_result_dir",
+        "image_prefix",
         "file_title",
         "subject_id",
         "standard_subject_name",
@@ -41,6 +44,9 @@ def test_import_default_state_fields_are_complete():
     assert state["owner_user_id"] == ""
     assert state["tenant_id"] == ""
     assert state["visibility"] == ""
+    assert state["parse_result_zip_path"] == ""
+    assert state["parse_result_dir"] == ""
+    assert state["image_prefix"] == ""
     assert isinstance(state["subject_aliases"], list)
     assert isinstance(state["chunks"], list)
     assert isinstance(state["embedding_content"], list)

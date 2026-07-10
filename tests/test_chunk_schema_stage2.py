@@ -65,6 +65,9 @@ def test_prepare_chunks_collection_includes_stage2_subject_fields(monkeypatch):
     }.issubset(set(fake_gateway.client.schema.field_names))
     assert "subject_name" not in fake_gateway.client.schema.field_names
     assert "subject_name" not in CHUNK_OUTPUT_FIELDS
+    assert "document_id" in CHUNK_OUTPUT_FIELDS
+    assert "owner_user_id" in CHUNK_OUTPUT_FIELDS
+    assert "chunk_index" in CHUNK_OUTPUT_FIELDS
     assert "标准主题稳定业务 ID" in fake_gateway.client.schema.field_descriptions["subject_id"]
     assert "设备型号" in fake_gateway.client.schema.field_descriptions["equipment_model"]
     assert "报警码或故障码" in fake_gateway.client.schema.field_descriptions["alarm_code"]
@@ -102,6 +105,15 @@ def test_format_chunk_search_item_preserves_stage2_fields():
         "id": 1,
         "distance": 0.87,
             "entity": {
+                "dataset_id": "dataset_default_equipment_ops",
+                "document_id": "doc_1",
+                "owner_user_id": "user_a",
+                "tenant_id": "tenant_default",
+                "visibility": "private",
+                "index_version": 2,
+                "chunk_index": 0,
+                "enabled": True,
+                "source_title": "HAK180说明书",
                 "subject_id": "subject_hak_180",
                 "standard_subject_name": "HAK 180 烫金机",
                 "equipment_model": "HAK 180",
@@ -114,6 +126,15 @@ def test_format_chunk_search_item_preserves_stage2_fields():
     result = format_chunk_search_item(item, source_type="milvus")
 
     assert result["chunk_id"] == 1
+    assert result["dataset_id"] == "dataset_default_equipment_ops"
+    assert result["document_id"] == "doc_1"
+    assert result["owner_user_id"] == "user_a"
+    assert result["tenant_id"] == "tenant_default"
+    assert result["visibility"] == "private"
+    assert result["index_version"] == 2
+    assert result["chunk_index"] == 0
+    assert result["enabled"] is True
+    assert result["source_title"] == "HAK180说明书"
     assert result["subject_id"] == "subject_hak_180"
     assert result["standard_subject_name"] == "HAK 180 烫金机"
     assert result["equipment_model"] == "HAK 180"

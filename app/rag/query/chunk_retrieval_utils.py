@@ -3,6 +3,15 @@ from app.shared.utils.escape_milvus_string_utils import escape_milvus_string
 
 CHUNK_OUTPUT_FIELDS = [
     "chunk_id",
+    "dataset_id",
+    "document_id",
+    "owner_user_id",
+    "tenant_id",
+    "visibility",
+    "index_version",
+    "chunk_index",
+    "enabled",
+    "source_title",
     "subject_id",
     "standard_subject_name",
     "content",
@@ -61,6 +70,15 @@ def format_chunk_search_item(item, source_type):
     entity = item.get("entity", {})
     return {
         "chunk_id": item.get("id") or entity.get("chunk_id"),
+        "dataset_id": entity.get("dataset_id"),
+        "document_id": entity.get("document_id"),
+        "owner_user_id": entity.get("owner_user_id"),
+        "tenant_id": entity.get("tenant_id"),
+        "visibility": entity.get("visibility"),
+        "index_version": entity.get("index_version"),
+        "chunk_index": entity.get("chunk_index"),
+        "enabled": entity.get("enabled"),
+        "source_title": entity.get("source_title"),
         "subject_id": entity.get("subject_id"),
         "standard_subject_name": entity.get("standard_subject_name"),
         "content": entity.get("content"),

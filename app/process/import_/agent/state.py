@@ -32,6 +32,9 @@ class ImportGraphState(TypedDict):
     pdf_path: str  # PDF 文件路径，仅 PDF 导入时有效
     md_path: str  # 最终进入切分流程的 Markdown 文件路径
     md_content: str  # Markdown 完整正文内容
+    parse_result_zip_path: str  # MinerU 解析结果 zip 本地路径，仅 PDF 导入时写入
+    parse_result_dir: str  # MinerU 解析结果解压目录，仅 PDF 导入时写入
+    image_prefix: str  # 当前 document 在 MinIO 中的图片对象前缀，图片增强时写入
     file_title: str  # 文件标题，通常来自文件名 stem，作为主体识别兜底
 
     # 主体识别结果：阶段 2 引入标准主题体系，统一用标准主题字段贯穿导入和查询
@@ -71,6 +74,9 @@ default_state: ImportGraphState = {
     "pdf_path": "",
     "md_path": "",
     "md_content": "",
+    "parse_result_zip_path": "",
+    "parse_result_dir": "",
+    "image_prefix": "",
     "file_title": "",
     "subject_id": "",
     "standard_subject_name": "",
