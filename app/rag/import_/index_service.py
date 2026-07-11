@@ -227,8 +227,14 @@ def normalize_chunk_document_fields(chunks, state: ImportGraphState, file_title:
 @step_log()
 def remove_old_chunks(document_id):
     client = milvus_gateway.client
+    collection_name = milvus_gateway.chunk_collection_name
+    # 解析或向量化阶段失败的 document 可能从未创建 chunk collection。
+    # 删除接口需要保持幂等，此时直接视为“没有旧 chunk 可清理”。
+    if not client.has_collection(collection_name=collection_name):
+        logger.info(f"集合{collection_name}不存在，无需删除document_id={document_id}的chunk")
+        return
     client.delete(
-        collection_name=milvus_gateway.chunk_collection_name,
+        collection_name=collection_name,
         filter=f"document_id=='{escape_milvus_string(document_id)}'"
     )
 

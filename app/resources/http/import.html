@@ -71,6 +71,27 @@
         .btn-secondary:hover {
             background-color: #dfeaf4;
         }
+        .history-notice {
+            display: none;
+            margin-top: 12px;
+            padding: 10px 12px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .history-notice.is-success {
+            display: block;
+            color: #17653a;
+            background-color: #edf9f1;
+            border-color: #b9e3c7;
+        }
+        .history-notice.is-error {
+            display: block;
+            color: #9f2d24;
+            background-color: #fff2f0;
+            border-color: #f2c2bc;
+        }
         .history-header {
             display: flex;
             align-items: center;
@@ -102,6 +123,67 @@
             flex-direction: column;
             flex: 1;
             min-width: 0;
+        }
+        .document-side {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            flex: 0 0 auto;
+        }
+        .document-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .document-action {
+            min-width: 72px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 0 10px;
+            border: 1px solid #cfd8e3;
+            border-radius: 6px;
+            background-color: #fff;
+            color: #34495e;
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+        }
+        .document-action:hover:not(:disabled) {
+            background-color: #f3f7fa;
+            border-color: #9fb2c5;
+        }
+        .document-action.delete-action {
+            color: #b03a2e;
+            border-color: #e6b8b3;
+        }
+        .document-action.delete-action:hover:not(:disabled) {
+            background-color: #fff2f0;
+            border-color: #d58d85;
+        }
+        .document-action:disabled {
+            color: #98a3ad;
+            background-color: #f4f6f8;
+            border-color: #e0e5ea;
+            cursor: not-allowed;
+        }
+        .document-action svg {
+            width: 15px;
+            height: 15px;
+            flex: 0 0 auto;
+        }
+        .action-message {
+            display: none;
+            margin-top: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .action-message.is-error {
+            display: block;
+            color: #b03a2e;
         }
         .file-name {
             font-weight: 600;
@@ -146,6 +228,7 @@
         .status-processing { background-color: #3498db; }
         .status-completed { background-color: #2ecc71; }
         .status-error { background-color: #e74c3c; }
+        .status-deleted { background-color: #7f8c8d; }
         
         /* 简单的进度条 */
         .progress-bar-container {
@@ -194,6 +277,37 @@
             line-height: 1.4;
             overflow-wrap: anywhere;
         }
+        @media (max-width: 640px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 18px;
+            }
+            .upload-area {
+                padding: 28px 16px;
+            }
+            .file-item {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .document-side {
+                width: 100%;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+            .document-actions {
+                margin-left: auto;
+            }
+            .document-action {
+                min-width: 68px;
+            }
+            .status-badge {
+                min-width: 72px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -215,17 +329,20 @@
         <h2>我的导入记录</h2>
         <button type="button" class="btn btn-secondary" id="refreshHistoryBtn">刷新</button>
     </div>
+    <div id="historyNotice" class="history-notice" role="status" aria-live="polite"></div>
     <div id="fileList" class="file-list">
         <!-- 历史导入记录将在这里生成 -->
     </div>
 </div>
 
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 <script>
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const activeFileList = document.getElementById('activeFileList');
     const fileList = document.getElementById('fileList');
     const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
+    const historyNotice = document.getElementById('historyNotice');
     
     // 默认走导入服务同源地址；如你把页面单独打开（file://），回退到导入服务默认端口。
     const API_BASE = location.origin.startsWith('http') ? location.origin : 'http://127.0.0.1:8000';
@@ -237,6 +354,7 @@
         processing: '处理中',
         completed: '已完成',
         failed: '失败',
+        deleted: '已删除',
     };
     const FAILED_NODE_MESSAGES = {
         upload_file: '文件保存失败，请重新上传',
@@ -272,6 +390,22 @@
         };
     }
 
+    function renderLucideIcons() {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    }
+
+    function showHistoryNotice(message, type = 'success') {
+        historyNotice.textContent = message;
+        historyNotice.className = `history-notice is-${type}`;
+    }
+
+    function clearHistoryNotice() {
+        historyNotice.textContent = '';
+        historyNotice.className = 'history-notice';
+    }
+
     function escapeHtml(value) {
         return String(value ?? '').replace(/[&<>"']/g, (char) => ({
             '&': '&amp;',
@@ -297,6 +431,7 @@
         if (status === 'completed') return 'status-completed';
         if (status === 'failed') return 'status-error';
         if (status === 'processing') return 'status-processing';
+        if (status === 'deleted') return 'status-deleted';
         return 'status-uploading';
     }
 
@@ -363,9 +498,13 @@
         for (const documentRecord of documents) {
             fileList.insertAdjacentHTML('beforeend', createDocumentHistoryHtml(documentRecord));
         }
+        renderLucideIcons();
     }
 
     function createDocumentHistoryHtml(documentRecord) {
+        const canOperate = ['completed', 'failed'].includes(documentRecord.status);
+        const disabledAttribute = canOperate ? '' : 'disabled';
+        const disabledTitle = canOperate ? '' : '文档处理完成后才能操作';
         const summary = failureSummary(documentRecord);
         const failureHtml = summary
             ? `<div class="failure-summary" style="display:block">${escapeHtml(summary)}</div>`
@@ -392,14 +531,132 @@
                         <span>Chunk：${escapeHtml(documentRecord.chunk_count ?? 0)}</span>
                     </div>
                     ${failureHtml}
+                    <div class="action-message" role="alert"></div>
                     <details class="log-details">
                         <summary>查看详情</summary>
                         <ul class="detail-list">${detailLines}</ul>
                     </details>
                 </div>
-                <div class="status-badge ${statusClass(documentRecord.status)}">${escapeHtml(statusLabel(documentRecord.status))}</div>
+                <div class="document-side">
+                    <div class="status-badge ${statusClass(documentRecord.status)}">${escapeHtml(statusLabel(documentRecord.status))}</div>
+                    <div class="document-actions">
+                        <button type="button"
+                                class="document-action rebuild-action"
+                                data-action="rebuild"
+                                data-operable="${canOperate}"
+                                aria-label="重建索引"
+                                title="${disabledTitle || '重建索引'}"
+                                ${disabledAttribute}>
+                            <i data-lucide="refresh-cw" aria-hidden="true"></i>
+                            <span>重建</span>
+                        </button>
+                        <button type="button"
+                                class="document-action delete-action"
+                                data-action="delete"
+                                data-operable="${canOperate}"
+                                aria-label="删除文档"
+                                title="${disabledTitle || '删除文档'}"
+                                ${disabledAttribute}>
+                            <i data-lucide="trash-2" aria-hidden="true"></i>
+                            <span>删除</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
+    }
+
+    function documentActionErrorMessage(error) {
+        if (error.status === 404) {
+            return '未找到该文档，或你没有操作权限';
+        }
+        if (error.status === 409) {
+            return '当前文档状态不允许此操作，请刷新后重试';
+        }
+        return '操作失败，请稍后重试';
+    }
+
+    function renderDocumentActionError(itemEl, error) {
+        const messageEl = itemEl.querySelector('.action-message');
+        messageEl.textContent = documentActionErrorMessage(error);
+        messageEl.className = 'action-message is-error';
+
+        const detailListEl = itemEl.querySelector('.detail-list');
+        let detailEl = detailListEl.querySelector('[data-action-error]');
+        if (!detailEl) {
+            detailEl = document.createElement('li');
+            detailEl.dataset.actionError = 'true';
+            detailListEl.appendChild(detailEl);
+        }
+        detailEl.textContent = `最近操作错误：${error.detail || error.message || '未知错误'}`;
+    }
+
+    function setDocumentActionBusy(itemEl, activeButton, isBusy) {
+        const buttons = itemEl.querySelectorAll('.document-action');
+        for (const button of buttons) {
+            button.disabled = isBusy || button.dataset.operable !== 'true';
+        }
+
+        const labelEl = activeButton.querySelector('span');
+        if (isBusy) {
+            activeButton.dataset.originalLabel = labelEl.textContent;
+            activeButton.setAttribute('aria-busy', 'true');
+            labelEl.textContent = '处理中';
+        } else {
+            labelEl.textContent = activeButton.dataset.originalLabel || labelEl.textContent;
+            activeButton.removeAttribute('aria-busy');
+            delete activeButton.dataset.originalLabel;
+        }
+    }
+
+    async function requestDocumentAction(documentId, action) {
+        const suffix = action === 'rebuild' ? '/rebuild' : '';
+        const response = await fetch(
+            `${API_BASE}/documents/${encodeURIComponent(documentId)}${suffix}`,
+            {
+                method: action === 'rebuild' ? 'POST' : 'DELETE',
+                headers: userHeaders(),
+            }
+        );
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            const error = new Error(data.detail || `Document action failed: ${response.status}`);
+            error.status = response.status;
+            error.detail = data.detail || error.message;
+            throw error;
+        }
+        return data;
+    }
+
+    async function handleDocumentAction(button) {
+        const itemEl = button.closest('.file-item');
+        const documentId = itemEl?.dataset.documentId;
+        const action = button.dataset.action;
+        if (!itemEl || !documentId || !['delete', 'rebuild'].includes(action)) return;
+
+        if (action === 'delete') {
+            const fileName = itemEl.querySelector('.file-name')?.textContent || documentId;
+            if (!window.confirm(`确定删除“${fileName}”吗？删除后该文档将不再参与检索。`)) {
+                return;
+            }
+        }
+
+        clearHistoryNotice();
+        const messageEl = itemEl.querySelector('.action-message');
+        messageEl.textContent = '';
+        messageEl.className = 'action-message';
+        setDocumentActionBusy(itemEl, button, true);
+
+        try {
+            await requestDocumentAction(documentId, action);
+            showHistoryNotice(action === 'delete' ? '文档已删除' : '已提交重建索引任务');
+            await loadDocumentHistory();
+        } catch (error) {
+            console.error(error);
+            renderDocumentActionError(itemEl, error);
+        } finally {
+            setDocumentActionBusy(itemEl, button, false);
+        }
     }
 
     dropZone.addEventListener('dragover', (e) => {
@@ -423,7 +680,14 @@
     });
 
     refreshHistoryBtn.addEventListener('click', () => {
+        clearHistoryNotice();
         loadDocumentHistory();
+    });
+
+    fileList.addEventListener('click', (event) => {
+        const button = event.target.closest('.document-action');
+        if (!button || button.disabled) return;
+        handleDocumentAction(button);
     });
 
     function handleFiles(files) {

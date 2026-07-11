@@ -35,6 +35,8 @@ class FakeImportMetadataRepository:
                 continue
             if status and document.get("status") != status:
                 continue
+            if not status and document.get("status") == "deleted":
+                continue
             if keyword and keyword.lower() not in document.get("file_name", "").lower():
                 continue
             documents.append(document)

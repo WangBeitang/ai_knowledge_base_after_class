@@ -8,8 +8,10 @@ from fastapi.responses import FileResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from app.api.schema.import_schema import (
+    DeleteDocumentSchema,
     DocumentListSchema,
     DocumentStatusSchema,
+    RebuildDocumentSchema,
     TaskHistorySchema,
     TaskStatusSchema,
     UploadSchema,
@@ -26,6 +28,12 @@ from app.shared.runtime.logger import PROJECT_ROOT, logger
 from app.process.import_.agent.main_graph import kb_import_app
 from app.process.import_.agent.state import create_default_state
 from app.infra.config.providers import settings
+from app.rag.import_.document_lifecycle_service import (
+    DocumentNotFoundError,
+    DocumentStateError,
+    delete_document as delete_document_service,
+    prepare_document_rebuild,
+)
 from app.shared.utils.task_utils import (
     TASK_STATUS_COMPLETED,
     TASK_STATUS_FAILED,
@@ -195,6 +203,8 @@ def invoke_graph(
         owner_user_id: str,
         local_file_path_obj: Path,
         local_dir_path_obj: Path,
+        tenant_id: str = DEFAULT_TENANT_ID,
+        visibility: str = DEFAULT_VISIBILITY,
 ):
     state = create_default_state(
         task_id=task_id,
@@ -202,8 +212,8 @@ def invoke_graph(
         document_id=document_id,
         index_version=index_version,
         owner_user_id=owner_user_id,
-        tenant_id=DEFAULT_TENANT_ID,
-        visibility=DEFAULT_VISIBILITY,
+        tenant_id=tenant_id,
+        visibility=visibility,
         local_file_path=str(local_file_path_obj),
         local_dir=str(local_dir_path_obj)
     )
@@ -228,6 +238,80 @@ def invoke_graph(
         update_task_status(task_id, TASK_STATUS_FAILED)
         safe_mark_import_failed(task_id, failed_node, str(e))
         logger.exception(f"===== 全流程测试运行失败 =====,错误信息：{e}")
+
+
+@app.delete("/documents/{document_id}")
+def delete_document(
+        request: Request,
+        document_id: str,
+) -> DeleteDocumentSchema:
+    owner_user_id = get_current_user_id(request)
+    try:
+        document = delete_document_service(document_id, owner_user_id)
+    except DocumentNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except DocumentStateError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+    except Exception as e:
+        logger.exception(
+            f"删除document失败，document_id={document_id}, owner_user_id={owner_user_id}, error={e}"
+        )
+        raise HTTPException(status_code=500, detail="删除文档失败") from e
+
+    return DeleteDocumentSchema(
+        message="文档删除成功",
+        document_id=document_id,
+        status=document.get("status", "deleted"),
+        deleted_at=document.get("deleted_at", ""),
+    )
+
+
+@app.post("/documents/{document_id}/rebuild")
+def rebuild_document(
+        request: Request,
+        background_tasks: BackgroundTasks,
+        document_id: str,
+) -> RebuildDocumentSchema:
+    owner_user_id = get_current_user_id(request)
+    try:
+        preparation = prepare_document_rebuild(document_id, owner_user_id)
+    except DocumentNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except DocumentStateError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+    except Exception as e:
+        logger.exception(
+            f"创建重建索引任务失败，document_id={document_id}, owner_user_id={owner_user_id}, error={e}"
+        )
+        raise HTTPException(status_code=500, detail="创建重建索引任务失败") from e
+
+    task_id = preparation["task_id"]
+    register_persistent_task(
+        task_id,
+        preparation["document_id"],
+        preparation["dataset_id"],
+        preparation["owner_user_id"],
+    )
+    background_tasks.add_task(
+        invoke_graph,
+        task_id=task_id,
+        dataset_id=preparation["dataset_id"],
+        document_id=preparation["document_id"],
+        index_version=preparation["index_version"],
+        owner_user_id=preparation["owner_user_id"],
+        tenant_id=preparation["tenant_id"],
+        visibility=preparation["visibility"],
+        local_file_path_obj=preparation["source_file_path"],
+        local_dir_path_obj=preparation["local_dir"],
+    )
+
+    return RebuildDocumentSchema(
+        message="重建索引任务已创建",
+        task_id=task_id,
+        document_id=preparation["document_id"],
+        dataset_id=preparation["dataset_id"],
+        index_version=preparation["index_version"],
+    )
 
 
 

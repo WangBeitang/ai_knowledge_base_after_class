@@ -5,8 +5,6 @@ from pathlib import Path
 
 from langchain_core.messages import HumanMessage
 from langchain_core.output_parsers import StrOutputParser
-from minio.deleteobjects import DeleteObject
-
 from app.infra.llm.providers import llm_provider
 from app.infra.object_storage.minio_gateway import minio_gateway
 from app.process.import_.agent.state import ImportGraphState
@@ -136,22 +134,9 @@ def upload_images_and_replace(images_context, images_summary_dict, md_content, i
         3.存储每张图片对应的minio地址
         4.循环处理每一张图片，替换md_content内容
     """
-    # 1.删除当前 document 在minio中存储的旧图片信息
-    # 1.1 获取要删除的图片列表
-    delete_list = minio_gateway.client().list_objects(
-        bucket_name=minio_gateway.bucket_name,
-        prefix=image_prefix,
-        recursive=True
-    )
-    delete_obj_list = [DeleteObject(delete_obj.object_name) for delete_obj in delete_list]
-    # 1.2 删除图片
-    errors = minio_gateway.client().remove_objects(
-        bucket_name=minio_gateway.bucket_name,
-        delete_object_list=delete_obj_list
-    )
-    for error in errors:
-        logger.warning(f"删除图片失败：{error}")
-    logger.info(f"已完成图片前缀{image_prefix}的图片删除")
+    # 上传新图片前先清理当前 document 的旧图片。文档删除流程也复用 gateway
+    # 的同一方法，保证两条链路使用完全一致的前缀边界和错误处理规则。
+    minio_gateway.delete_image_prefix(image_prefix)
 
     # 2.循环传递每一张图片到minio服务器
     image_minio_url_dict = {}

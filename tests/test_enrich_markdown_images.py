@@ -77,6 +77,7 @@ def test_enrich_markdown_images_uses_document_id_image_prefix(monkeypatch, tmp_p
 
         def __init__(self):
             self.client_instance = FakeMinioClient()
+            self.deleted_prefix = ""
 
         def client(self):
             return self.client_instance
@@ -86,6 +87,10 @@ def test_enrich_markdown_images_uses_document_id_image_prefix(monkeypatch, tmp_p
 
         def build_image_url(self, image_prefix, object_name):
             return f"http://127.0.0.1:9000/enterprise-rag/{image_prefix}/{object_name}"
+
+        def delete_image_prefix(self, image_prefix):
+            self.deleted_prefix = image_prefix
+            return 1
 
     fake_gateway = FakeMinioGateway()
     monkeypatch.setattr(enrich_module, "minio_gateway", fake_gateway)
@@ -107,6 +112,5 @@ def test_enrich_markdown_images_uses_document_id_image_prefix(monkeypatch, tmp_p
     assert result["image_prefix"] == "kb-images/doc-1"
     assert result["md_path"] == str(tmp_path / "manual_new.md")
     assert "![设备结构示意图](http://127.0.0.1:9000/enterprise-rag/kb-images/doc-1/diagram.png)" in result["md_content"]
-    assert fake_gateway.client_instance.list_prefix == "kb-images/doc-1"
-    assert fake_gateway.client_instance.deleted_objects == ["kb-images/doc-1/old.png"]
+    assert fake_gateway.deleted_prefix == "kb-images/doc-1"
     assert fake_gateway.client_instance.uploaded_objects[0]["object_name"] == "kb-images/doc-1/diagram.png"

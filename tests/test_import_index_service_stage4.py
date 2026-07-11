@@ -245,3 +245,27 @@ def test_index_chunks_does_not_restore_old_chunks_when_insert_fails(monkeypatch)
         index_service.index_chunks(state)
 
     assert [row["document_id"] for row in fake_gateway.client.rows] == ["doc_b"]
+
+
+def test_remove_old_chunks_skips_missing_collection(monkeypatch):
+    class FakeClient:
+        def __init__(self):
+            self.delete_called = False
+
+        def has_collection(self, collection_name):
+            return False
+
+        def delete(self, **kwargs):
+            self.delete_called = True
+
+    class FakeGateway:
+        def __init__(self):
+            self.client = FakeClient()
+            self.chunk_collection_name = "chunks"
+
+    fake_gateway = FakeGateway()
+    monkeypatch.setattr(index_service, "milvus_gateway", fake_gateway)
+
+    index_service.remove_old_chunks("doc_failed_before_index")
+
+    assert fake_gateway.client.delete_called is False

@@ -72,6 +72,10 @@ class FakeCollection:
                     if value["$regex"].lower() not in str(document_value).lower():
                         is_match = False
                         break
+                elif isinstance(value, dict) and "$ne" in value:
+                    if document_value == value["$ne"]:
+                        is_match = False
+                        break
                 elif document_value != value:
                     is_match = False
                     break
@@ -162,6 +166,7 @@ def test_create_rebuild_task_metadata_reuses_document_and_increments_index_versi
         document_id="doc_1",
         task_id="task_rebuild",
         owner_user_id="user_a",
+        local_dir="/tmp/task_rebuild",
     )
 
     stored_document = repo.get_document("doc_1", "user_a")
@@ -171,6 +176,8 @@ def test_create_rebuild_task_metadata_reuses_document_and_increments_index_versi
     assert document["latest_task_id"] == "task_rebuild"
     assert document["index_version"] == repo_module.DEFAULT_INDEX_VERSION + 1
     assert document["status"] == repo_module.STATUS_PROCESSING
+    assert document["parse_status"] == repo_module.STATUS_PENDING
+    assert document["local_dir"] == "/tmp/task_rebuild"
     assert task["task_type"] == repo_module.TASK_TYPE_REBUILD_INDEX
     assert task["status"] == repo_module.STATUS_PENDING
     assert stored_document["latest_task_id"] == "task_rebuild"
@@ -186,6 +193,7 @@ def test_create_rebuild_task_metadata_rejects_missing_or_deleted_document():
             document_id="doc_missing",
             task_id="task_rebuild",
             owner_user_id="user_a",
+            local_dir="/tmp/task_rebuild",
         )
 
     repo.create_import_metadata(
@@ -204,6 +212,7 @@ def test_create_rebuild_task_metadata_rejects_missing_or_deleted_document():
             document_id="doc_deleted",
             task_id="task_rebuild_deleted",
             owner_user_id="user_a",
+            local_dir="/tmp/task_rebuild_deleted",
         )
 
 
@@ -357,6 +366,56 @@ def test_list_documents_and_tasks_use_document_as_history_entry():
 
     assert [document["document_id"] for document in documents] == ["doc_1"]
     assert [task["task_id"] for task in tasks] == ["task_1"]
+
+
+def test_mark_document_deleted_keeps_history_and_list_hides_it_by_default():
+    repo = build_fake_repository()
+    repo.create_import_metadata(
+        dataset_id=repo_module.DEFAULT_DATASET_ID,
+        document_id="doc_1",
+        task_id="task_1",
+        owner_user_id="user_a",
+        file_name="HAK180说明书.pdf",
+        file_path="/tmp/HAK180说明书.pdf",
+        local_dir="/tmp/task_1",
+    )
+    repo.update_document(
+        "doc_1",
+        subject_id="subject_hak_180",
+        status=repo_module.STATUS_COMPLETED,
+    )
+
+    deleted_document = repo.mark_document_deleted(
+        document_id="doc_1",
+        owner_user_id="user_a",
+    )
+
+    assert deleted_document["status"] == repo_module.STATUS_DELETED
+    assert deleted_document["deleted_at"]
+    assert deleted_document["latest_task_id"] == "task_1"
+    assert deleted_document["file_path"] == "/tmp/HAK180说明书.pdf"
+    assert deleted_document["subject_id"] == "subject_hak_180"
+    assert repo.list_documents(owner_user_id="user_a") == []
+    assert [
+        item["document_id"]
+        for item in repo.list_documents(owner_user_id="user_a", status=repo_module.STATUS_DELETED)
+    ] == ["doc_1"]
+
+
+def test_mark_document_deleted_rejects_other_owner():
+    repo = build_fake_repository()
+    repo.create_import_metadata(
+        dataset_id=repo_module.DEFAULT_DATASET_ID,
+        document_id="doc_1",
+        task_id="task_1",
+        owner_user_id="user_a",
+        file_name="HAK180说明书.pdf",
+        file_path="/tmp/HAK180说明书.pdf",
+        local_dir="/tmp/task_1",
+    )
+
+    with pytest.raises(ValueError, match="document_id=doc_1 不存在"):
+        repo.mark_document_deleted(document_id="doc_1", owner_user_id="user_b")
 
 
 def test_repository_queries_filter_by_owner_user_id():

@@ -1,10 +1,11 @@
 """
 导入元数据持久化仓储。
 
-阶段 3 只负责 dataset/document/task 的管理元数据闭环：
+本模块负责 dataset/document/task 的管理元数据闭环：
 - Mongo 作为长期状态源。
 - task_utils 仍负责进程内即时进度。
-- 不在这里处理 chunk 幂等、删除文档或重建索引。
+- repository 只处理 document 软删除状态和 rebuild task 元数据。
+- Milvus、MinIO 和导入图调用由上层 service 编排，不进入 repository。
 """
 from __future__ import annotations
 
@@ -208,6 +209,7 @@ class ImportMetadataRepository:
         document_id: str,
         task_id: str,
         owner_user_id: str,
+        local_dir: str,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         """
         为已有 document 创建一次重建索引任务。
@@ -243,7 +245,9 @@ class ImportMetadataRepository:
         document_update = {
             "latest_task_id": task_id,
             "index_version": next_index_version,
+            "local_dir": local_dir,
             "status": STATUS_PROCESSING,
+            "parse_status": STATUS_PENDING,
             "index_status": STATUS_PENDING,
             "failed_node": "",
             "error_message": "",
@@ -280,11 +284,48 @@ class ImportMetadataRepository:
         }
         if status:
             query["status"] = status
+        else:
+            # 默认文档列表只展示当前有效文档；显式传 status=deleted 时仍可查询
+            # 当前用户自己的删除历史。
+            query["status"] = {"$ne": STATUS_DELETED}
         if keyword:
             query["file_name"] = {"$regex": keyword, "$options": "i"}
 
         cursor = self.documents.find(query).sort("updated_at", DESCENDING).limit(limit)
         return [_without_mongo_id(document) or {} for document in cursor]
+
+    def mark_document_deleted(
+        self,
+        *,
+        document_id: str,
+        owner_user_id: str,
+    ) -> dict[str, Any]:
+        """
+        将当前用户拥有的 document 标记为已删除。
+
+        这里只更新 Mongo 软删除状态。Milvus chunk 和 MinIO 图片必须由 service
+        先清理成功，避免 document 已显示 deleted 但检索资源仍然残留。
+        """
+        document = self.get_document(document_id, owner_user_id)
+        if not document:
+            raise ValueError(f"document_id={document_id} 不存在")
+        if document.get("status") == STATUS_DELETED:
+            return document
+
+        now = _now_iso()
+        payload = {
+            "status": STATUS_DELETED,
+            "deleted_at": now,
+            "updated_at": now,
+        }
+        self.documents.update_one(
+            {
+                "document_id": document_id,
+                "owner_user_id": owner_user_id,
+            },
+            {"$set": payload},
+        )
+        return {**document, **payload}
 
     def update_document(self, document_id: str, **fields: Any) -> None:
         if not document_id:

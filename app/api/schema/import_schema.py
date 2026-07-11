@@ -62,3 +62,20 @@ class TaskHistorySchema(BaseModel):
     code:int = 200
     document_id:str = ""
     items:list[TaskStatusSchema] = Field(default_factory=list)
+
+
+class DeleteDocumentSchema(BaseModel):
+    code:int = 200
+    message:str
+    document_id:str
+    status:str = "deleted"
+    deleted_at:str = ""
+
+
+class RebuildDocumentSchema(BaseModel):
+    code:int = 200
+    message:str
+    task_id:str
+    document_id:str
+    dataset_id:str = ""
+    index_version:int = 0
