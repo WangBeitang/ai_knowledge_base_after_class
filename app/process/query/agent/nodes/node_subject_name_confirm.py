@@ -10,6 +10,9 @@ def node_subject_name_confirm(state):
     节点功能：确认用户问题中的核心主体名称。
     输入：state['original_query']
     输出：更新 state['subject_ids'] 和 state['standard_subject_names']
+
+    返回值只列出主体确认节点真正负责写入的字段，也就是 partial state（局部状态）。
+    LangGraph 会负责与主 State 合并，节点不能返回收到的完整 State 副本。
     """
     # 先登记节点开始，前端进度区可以立即感知"主体确认"已启动。
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state["is_stream"])

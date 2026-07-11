@@ -1,7 +1,8 @@
-from mimetypes import guess_type
-from pathlib import Path
 import sys
 import uuid
+from datetime import datetime, timezone
+from mimetypes import guess_type
+from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.responses import FileResponse, StreamingResponse
@@ -88,6 +89,12 @@ def query_graph_invoke(
         tenant_id=tenant_id,
         # Pydantic 已完成规范化，这里再复制一次，避免后台任务和调用方意外共享可变 list。
         dataset_ids=list(dataset_ids),
+        # trace 的中文含义是“追踪”。它标识一次完整查询执行，不能复用 session_id，
+        # 因为同一聊天会话可以连续发起多次独立查询。
+        trace_id=str(uuid.uuid4()),
+        # 使用带 UTC 时区的 ISO 8601 时间，后续计算耗时、持久化 Trace 和离线重放时
+        # 不依赖部署机器的本地时区。
+        query_started_at=datetime.now(timezone.utc).isoformat(),
     )
 
     # 清空task_utils的数据

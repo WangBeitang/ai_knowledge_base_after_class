@@ -1,4 +1,6 @@
 import copy
+from datetime import datetime
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
@@ -7,6 +9,7 @@ from pydantic import ValidationError
 from app.api.http import query_server
 from app.api.schema.query_schema import QueryRequestParam
 from app.shared.config.knowledge_base_config import DEFAULT_DATASET_ID, DEFAULT_TENANT_ID
+from app.shared.runtime.logger import _trace_id
 
 
 client = TestClient(query_server.app)
@@ -198,3 +201,27 @@ def test_query_graph_state_keeps_different_owner_context_for_same_query(monkeypa
     assert [state["owner_user_id"] for state in captured_states] == ["user_a", "user_b"]
     assert all(state["tenant_id"] == DEFAULT_TENANT_ID for state in captured_states)
     assert all(state["dataset_ids"] == [DEFAULT_DATASET_ID] for state in captured_states)
+    # 同一个 session 可以执行多次查询，所以 trace_id 必须是每次执行独立生成的 UUID，
+    # 不能直接复用用户 ID 或会话 ID。
+    assert len({state["trace_id"] for state in captured_states}) == 2
+    assert all(str(UUID(state["trace_id"])) == state["trace_id"] for state in captured_states)
+    # query_started_at 使用带 UTC 时区的 ISO 8601 字符串，后续 Trace 计算耗时不依赖本地时区。
+    assert all(datetime.fromisoformat(state["query_started_at"]).utcoffset() is not None for state in captured_states)
+    # Planner 尚未接入当前主图，因此不能提前把空 State 标记成已经运行 rule-v1。
+    assert all(state["planner_step"] == 0 for state in captured_states)
+    assert all(state["policy_version"] == "" for state in captured_states)
+
+
+def test_query_log_trace_prefers_single_execution_id_and_keeps_legacy_fallbacks():
+    # trace_id 表示单次查询执行，应优先于可能覆盖多次查询的 session_id。
+    assert _trace_id(
+        {
+            "trace_id": "trace-query-1",
+            "task_id": "task-import-1",
+            "session_id": "session-1",
+        }
+    ) == "trace-query-1"
+    # 导入 State 暂时没有 trace_id，日志装饰器仍需兼容原有 task_id。
+    assert _trace_id({"task_id": "task-import-1", "session_id": "session-1"}) == "task-import-1"
+    # 旧查询调用或测试没有新字段时，最后回退 session_id，而不是产生异常。
+    assert _trace_id({"session_id": "session-1"}) == "session-1"

@@ -9,6 +9,8 @@ def node_rrf(state):
     """
     节点功能：Reciprocal Rank Fusion
     将多路召回的结果（向量、HyDE、Web）进行加权融合排序。
+
+    只返回融合产物 ``rrf_chunks`` 的 partial state（局部状态），不重复回传输入候选。
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
     result_state = fuse_by_rrf(state)

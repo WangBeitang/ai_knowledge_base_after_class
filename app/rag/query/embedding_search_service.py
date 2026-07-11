@@ -3,38 +3,37 @@ from app.infra.vectorstore.milvus_gateway import milvus_gateway
 from app.process.query.agent.state import QueryGraphState
 from app.rag.query.chunk_retrieval_utils import (
     CHUNK_OUTPUT_FIELDS,
-    build_subject_filter_expr,
+    build_chunk_retrieval_filter_from_state,
     format_chunk_search_item,
-    resolve_subject_filter_values,
 )
 from app.rag.query.config import RETRIEVAL_RANKER_WEIGHTS, RETRIEVAL_DEFAULT_LIMIT
 from app.shared.runtime.logger import logger,step_log
 
 
 def check_params(state):
-    subject_ids = resolve_subject_filter_values(state)
     rewritten_query = state.get("rewritten_query")
-    if len(subject_ids) == 0:
-        logger.error("标准主题ID为空，业务无法继续进行")
-        raise ValueError("请输入标准主题ID")
     if not rewritten_query:
         logger.error("请输入问题")
         raise ValueError("请输入问题")
+    # 普通检索和 HyDE 都通过共享函数读取 dataset、subject、用户和 tenant。任何必填
+    # 范围为空都会在这里明确失败，不允许通过删除 expr 条件回退成全库搜索。
+    filter_expr = build_chunk_retrieval_filter_from_state(state)
     logger.warning(f"{rewritten_query},类型{type(rewritten_query)}")
-    return subject_ids, rewritten_query
+    return rewritten_query, filter_expr
 
 
-def query_chunk_by_milvus(subject_ids, rewritten_query):
+def query_chunk_by_milvus(rewritten_query, filter_expr):
     # 1.向量化问题
     embedding_result = llm_provider.embed_documents([rewritten_query])
     dense_vector = embedding_result["dense"][0]
     sparse_vector = embedding_result["sparse"][0]
 
-    # 2.阶段 2 后只按 subject_id 过滤 chunk。
+    # 2.使用共享构建器生成的完整 expr。这里不再自行拼 subject 或权限条件，避免普通检索
+    # 与 HyDE/BM25 在后续修改时出现不同的访问范围。
     reqs = milvus_gateway.create_requests(
         dense_vector=dense_vector,
         sparse_vector=sparse_vector,
-        expr=build_subject_filter_expr(subject_ids),
+        expr=filter_expr,
     )
 
     # 3.执行混合搜索。
@@ -66,10 +65,10 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
     4. 回写 embedding_chunks
     """
     # 1.参数校验
-    subject_ids, rewritten_query = check_params(state)
+    rewritten_query, filter_expr = check_params(state)
 
     # 2.混合检索
-    embedding_chunks = query_chunk_by_milvus(subject_ids, rewritten_query)
+    embedding_chunks = query_chunk_by_milvus(rewritten_query, filter_expr)
 
     # 3.结果回写
     state["embedding_chunks"] = embedding_chunks

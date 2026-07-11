@@ -9,12 +9,15 @@ def node_search_embedding_hyde(state):
     """
     节点功能：HyDE (Hypothetical Document Embedding)
     先让 LLM 生成假设性答案，再对答案进行向量检索，提高召回率。
+
+    这里只返回 ``hyde_embedding_chunks`` partial state（局部状态），不把 service 返回的
+    整个 State 原样交回 LangGraph，避免并发检索节点用各自收到的旧 State 覆盖彼此结果。
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
-    state = search_by_hyde(state)
+    result_state = search_by_hyde(state)
     add_done_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
     return {
-        "hyde_embedding_chunks": state.get("hyde_embedding_chunks")
+        "hyde_embedding_chunks": result_state.get("hyde_embedding_chunks")
     }
 
 

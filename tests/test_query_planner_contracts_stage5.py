@@ -5,6 +5,7 @@ from app.rag.query.contracts import (
     Citation,
     EvidenceSourceType,
     EvidenceSummary,
+    IdentifierResolutionStatus,
     MAX_EVIDENCE_EXCERPT_CHARS,
     ObservationStatus,
     PlannerContext,
@@ -44,6 +45,8 @@ def test_query_action_and_reason_code_are_stable_string_enums():
         "subject_ambiguous",
         "subject_required",
         "subject_not_found",
+        "identifier_confirmation_required",
+        "identifier_not_found",
         "realtime_query",
         "initial_local_search",
         "local_evidence_sufficient",
@@ -56,6 +59,13 @@ def test_query_action_and_reason_code_are_stable_string_enums():
         "evidence_ambiguous",
         "action_execution_error",
         "safe_guard_triggered",
+    }
+    assert {status.value for status in IdentifierResolutionStatus} == {
+        "not_applicable",
+        "exact_match",
+        "fallback_exact_match",
+        "suggestion_required",
+        "not_found",
     }
     assert RULE_BASED_POLICY_VERSION == "rule-v1"
 
@@ -143,6 +153,165 @@ def test_retrieval_observation_accepts_structured_success_result():
     assert observation.status is ObservationStatus.SUCCESS
     assert observation.channel_counts["dense"] == 5
     assert observation.evidence_summaries[0].chunk_id == 1
+
+
+def test_exact_identifier_match_requires_actual_matched_identifier():
+    observation = RetrievalObservation(
+        action="local_search",
+        status="success",
+        candidate_count=1,
+        reranked_count=1,
+        top_rerank_score=0.91,
+        requested_identifiers={"alarm_code": ["E020"]},
+        matched_identifiers={"alarm_code": ["E020"]},
+        identifier_resolution_status="exact_match",
+        citation_count=1,
+        evidence_summaries=[_local_evidence()],
+        used_structured_filter=True,
+    )
+
+    assert observation.identifier_resolution_status is IdentifierResolutionStatus.EXACT_MATCH
+
+    with pytest.raises(ValidationError, match="必须包含 matched_identifiers"):
+        RetrievalObservation(
+            action="local_search",
+            status="success",
+            candidate_count=1,
+            reranked_count=1,
+            top_rerank_score=0.91,
+            requested_identifiers={"alarm_code": ["E020"]},
+            identifier_resolution_status="exact_match",
+        )
+
+    with pytest.raises(ValidationError, match="必须覆盖 requested_identifiers"):
+        RetrievalObservation(
+            action="local_search",
+            status="success",
+            candidate_count=1,
+            reranked_count=1,
+            top_rerank_score=0.96,
+            requested_identifiers={"alarm_code": ["E020"]},
+            matched_identifiers={"alarm_code": ["E021"]},
+            identifier_resolution_status="exact_match",
+        )
+
+
+def test_fallback_same_identifier_can_be_evidence_only_when_fallback_is_recorded():
+    observation = RetrievalObservation(
+        action="local_search",
+        status="success",
+        candidate_count=1,
+        reranked_count=1,
+        top_rerank_score=0.88,
+        requested_identifiers={"alarm_code": ["E020"]},
+        matched_identifiers={"alarm_code": ["E020"]},
+        identifier_resolution_status="fallback_exact_match",
+        citation_count=1,
+        evidence_summaries=[_local_evidence()],
+        used_structured_filter=True,
+        filter_fallback=True,
+    )
+
+    assert observation.identifier_resolution_status is IdentifierResolutionStatus.FALLBACK_EXACT_MATCH
+
+    with pytest.raises(ValidationError, match="必须标记 filter_fallback"):
+        RetrievalObservation(
+            action="local_search",
+            status="success",
+            candidate_count=1,
+            reranked_count=1,
+            top_rerank_score=0.88,
+            requested_identifiers={"alarm_code": ["E020"]},
+            matched_identifiers={"alarm_code": ["E020"]},
+            identifier_resolution_status="fallback_exact_match",
+        )
+
+
+def test_different_identifier_is_suggestion_only_and_cannot_create_citation():
+    observation = RetrievalObservation(
+        action="local_search",
+        status="success",
+        candidate_count=1,
+        reranked_count=1,
+        top_rerank_score=0.96,
+        requested_identifiers={"alarm_code": ["E020"]},
+        matched_identifiers={"alarm_code": ["E021"]},
+        identifier_resolution_status="suggestion_required",
+        suggested_identifiers={"alarm_code": ["E021"]},
+        clarification_question="当前知识库未找到 E020，是否想查询 E021？",
+        citation_count=0,
+        evidence_summaries=[_local_evidence()],
+        used_structured_filter=True,
+        filter_fallback=True,
+    )
+
+    assert observation.identifier_resolution_status is IdentifierResolutionStatus.SUGGESTION_REQUIRED
+    assert observation.suggested_identifiers == {"alarm_code": ["E021"]}
+    serialized_observation = observation.model_dump(mode="json")
+    assert serialized_observation["requested_identifiers"] == {"alarm_code": ["E020"]}
+    assert serialized_observation["identifier_resolution_status"] == "suggestion_required"
+    assert serialized_observation["suggested_identifiers"] == {"alarm_code": ["E021"]}
+
+    with pytest.raises(ValidationError, match="citation_count 必须为 0"):
+        RetrievalObservation(
+            action="local_search",
+            status="success",
+            candidate_count=1,
+            reranked_count=1,
+            top_rerank_score=0.96,
+            requested_identifiers={"alarm_code": ["E020"]},
+            matched_identifiers={"alarm_code": ["E021"]},
+            identifier_resolution_status="suggestion_required",
+            suggested_identifiers={"alarm_code": ["E021"]},
+            clarification_question="当前知识库未找到 E020，是否想查询 E021？",
+            citation_count=1,
+        )
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"suggested_identifiers": {}},
+        {"clarification_question": None},
+        {"suggested_identifiers": {"alarm_code": []}},
+        {"suggested_identifiers": {"alarm_code": ["E020"]}},
+    ],
+)
+def test_identifier_suggestion_requires_non_empty_candidate_and_question(overrides):
+    payload = {
+        "action": "local_search",
+        "status": "success",
+        "requested_identifiers": {"alarm_code": ["E020"]},
+        "identifier_resolution_status": "suggestion_required",
+        "suggested_identifiers": {"alarm_code": ["E021"]},
+        "clarification_question": "当前知识库未找到 E020，是否想查询 E021？",
+    }
+    payload.update(overrides)
+
+    with pytest.raises(ValidationError):
+        RetrievalObservation(**payload)
+
+
+def test_identifier_not_found_requires_clarification_and_has_no_matched_identifier():
+    observation = RetrievalObservation(
+        action="local_search",
+        status="empty",
+        requested_identifiers={"alarm_code": ["E020"]},
+        identifier_resolution_status="not_found",
+        clarification_question="当前知识库未找到 E020，请核对设备屏幕上的报警码。",
+    )
+
+    assert observation.identifier_resolution_status is IdentifierResolutionStatus.NOT_FOUND
+
+    with pytest.raises(ValidationError, match="不能包含 matched_identifiers"):
+        RetrievalObservation(
+            action="local_search",
+            status="empty",
+            requested_identifiers={"alarm_code": ["E020"]},
+            identifier_resolution_status="not_found",
+            matched_identifiers={"alarm_code": ["E021"]},
+            clarification_question="请核对报警码。",
+        )
 
 
 @pytest.mark.parametrize(

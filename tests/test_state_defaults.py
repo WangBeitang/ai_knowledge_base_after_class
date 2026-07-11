@@ -1,5 +1,5 @@
 from app.process.import_.agent.state import create_default_state, get_default_state
-from app.process.query.agent.state import create_query_default_state, get_query_default_state
+from app.process.query.agent.state import copy_query_state, create_query_default_state, get_query_default_state
 
 
 def test_import_default_state_fields_are_complete():
@@ -75,15 +75,34 @@ def test_query_default_state_fields_are_complete():
         "owner_user_id",
         "tenant_id",
         "dataset_ids",
+        "query_started_at",
         "rewritten_query",
         "subject_ids",
         "standard_subject_names",
+        "subject_resolution_status",
+        "subject_candidates",
+        "clarification_question",
+        "query_identifiers",
         "history",
+        "trace_id",
+        "planner_step",
+        "policy_version",
+        "current_planner_decision",
+        "planner_action_history",
+        "planner_type",
+        "planner_runtime_metadata",
+        "retrieval_observation",
+        "retrieval_mode",
+        "retrieval_config_version",
+        "retrieval_channel_results",
         "embedding_chunks",
         "hyde_embedding_chunks",
         "web_search_docs",
         "rrf_chunks",
         "reranked_docs",
+        "citations",
+        "terminal_reason_code",
+        "answer_runtime_metadata",
         "prompt",
         "answer",
         "image_urls",
@@ -91,13 +110,32 @@ def test_query_default_state_fields_are_complete():
     assert state["is_stream"] is False
     assert state["owner_user_id"] == ""
     assert state["tenant_id"] == ""
+    assert state["query_started_at"] == ""
+    assert state["subject_resolution_status"] is None
+    assert state["clarification_question"] is None
+    assert state["trace_id"] == ""
+    assert state["planner_step"] == 0
+    assert state["policy_version"] == ""
+    assert state["current_planner_decision"] is None
+    assert state["planner_type"] == ""
+    assert state["retrieval_observation"] is None
+    assert state["retrieval_mode"] == ""
+    assert state["retrieval_config_version"] == ""
+    assert state["terminal_reason_code"] is None
     assert isinstance(state["dataset_ids"], list)
     assert isinstance(state["subject_ids"], list)
     assert isinstance(state["standard_subject_names"], list)
+    assert isinstance(state["subject_candidates"], list)
+    assert isinstance(state["query_identifiers"], dict)
     assert isinstance(state["history"], list)
+    assert isinstance(state["planner_action_history"], list)
+    assert isinstance(state["planner_runtime_metadata"], dict)
+    assert isinstance(state["retrieval_channel_results"], dict)
     assert isinstance(state["embedding_chunks"], list)
     assert isinstance(state["hyde_embedding_chunks"], list)
     assert isinstance(state["web_search_docs"], list)
+    assert isinstance(state["citations"], list)
+    assert isinstance(state["answer_runtime_metadata"], dict)
     assert isinstance(state["image_urls"], list)
 
 
@@ -111,6 +149,13 @@ def test_query_default_state_supports_overrides_and_deepcopy():
     state["subject_ids"].append("subject_hak_180")
     state["standard_subject_names"].append("HAK 180 烫金机")
     state["dataset_ids"].append("dataset_private")
+    state["subject_candidates"].append("HAK 180 Pro 烫金机")
+    state["query_identifiers"]["alarm_code"] = ["E021"]
+    state["planner_action_history"].append({"step": 1})
+    state["planner_runtime_metadata"]["provider"] = "rule"
+    state["retrieval_channel_results"]["dense"] = [{"chunk_id": 1}]
+    state["citations"].append({"chunk_id": 1})
+    state["answer_runtime_metadata"]["model_id"] = "answer-model"
 
     fresh_state = get_query_default_state()
 
@@ -120,3 +165,30 @@ def test_query_default_state_supports_overrides_and_deepcopy():
     assert fresh_state["dataset_ids"] == []
     assert fresh_state["subject_ids"] == []
     assert fresh_state["standard_subject_names"] == []
+    assert fresh_state["subject_candidates"] == []
+    assert fresh_state["query_identifiers"] == {}
+    assert fresh_state["planner_action_history"] == []
+    assert fresh_state["planner_runtime_metadata"] == {}
+    assert fresh_state["retrieval_channel_results"] == {}
+    assert fresh_state["citations"] == []
+    assert fresh_state["answer_runtime_metadata"] == {}
+
+
+def test_copy_query_state_deepcopies_new_planner_and_observation_containers():
+    original = create_query_default_state(
+        trace_id="trace-original",
+        query_identifiers={"equipment_model": ["HAK 180"]},
+        planner_runtime_metadata={"token_usage": {"input": 0}},
+        retrieval_channel_results={"dense": [{"chunk_id": 1}]},
+    )
+
+    copied = copy_query_state(original, trace_id="trace-copy")
+    copied["query_identifiers"]["equipment_model"].append("HAK 180 Pro")
+    copied["planner_runtime_metadata"]["token_usage"]["input"] = 10
+    copied["retrieval_channel_results"]["dense"][0]["chunk_id"] = 2
+
+    assert original["trace_id"] == "trace-original"
+    assert copied["trace_id"] == "trace-copy"
+    assert original["query_identifiers"] == {"equipment_model": ["HAK 180"]}
+    assert original["planner_runtime_metadata"] == {"token_usage": {"input": 0}}
+    assert original["retrieval_channel_results"] == {"dense": [{"chunk_id": 1}]}

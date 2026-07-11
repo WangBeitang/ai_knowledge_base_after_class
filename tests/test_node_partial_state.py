@@ -6,6 +6,9 @@ from app.process.import_.agent.nodes import node_md_img as import_md_img_node
 from app.process.import_.agent.nodes import node_pdf_to_md as import_pdf_node
 from app.process.import_.agent.nodes import node_subject_name_recognition as import_subject_node
 from app.process.query.agent.nodes import node_answer_output as query_answer_node
+from app.process.query.agent.nodes import node_search_embedding as query_embedding_node
+from app.process.query.agent.nodes import node_search_embedding_hyde as query_hyde_node
+from app.process.query.agent.nodes import node_web_search_mcp as query_web_node
 from app.process.query.agent.nodes import node_rerank as query_rerank_node
 from app.process.query.agent.nodes import node_rrf as query_rrf_node
 from app.process.query.agent.nodes import node_subject_name_confirm as query_subject_node
@@ -188,6 +191,21 @@ def test_query_nodes_return_partial_state(monkeypatch):
         lambda state: {**state, "reranked_docs": [{"title": "doc"}], "extra": "ignored"},
     )
     monkeypatch.setattr(
+        query_embedding_node,
+        "search_by_embedding",
+        lambda state: {**state, "embedding_chunks": [{"chunk_id": "c1"}], "extra": "ignored"},
+    )
+    monkeypatch.setattr(
+        query_hyde_node,
+        "search_by_hyde",
+        lambda state: {**state, "hyde_embedding_chunks": [{"chunk_id": "c2"}], "extra": "ignored"},
+    )
+    monkeypatch.setattr(
+        query_web_node,
+        "search_by_web",
+        lambda state: {**state, "web_search_docs": [{"url": "https://example.com"}], "extra": "ignored"},
+    )
+    monkeypatch.setattr(
         query_answer_node,
         "generate_answer",
         lambda state: {**state, "answer": "ok", "image_urls": ["https://example.com/a.png"], "extra": "ignored"},
@@ -204,4 +222,7 @@ def test_query_nodes_return_partial_state(monkeypatch):
     }
     assert set(query_rrf_node.node_rrf(base_state)) == {"rrf_chunks"}
     assert set(query_rerank_node.node_rerank(base_state)) == {"reranked_docs"}
+    assert set(query_embedding_node.node_search_embedding(base_state)) == {"embedding_chunks"}
+    assert set(query_hyde_node.node_search_embedding_hyde(base_state)) == {"hyde_embedding_chunks"}
+    assert set(query_web_node.node_web_search_mcp(base_state)) == {"web_search_docs"}
     assert set(query_answer_node.node_answer_output(base_state)) == {"answer", "image_urls"}

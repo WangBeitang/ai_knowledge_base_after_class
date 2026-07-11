@@ -1,7 +1,6 @@
 from app.rag.import_ import index_service
 from app.rag.query.chunk_retrieval_utils import (
     CHUNK_OUTPUT_FIELDS,
-    build_subject_filter_expr,
     format_chunk_search_item,
 )
 
@@ -91,14 +90,6 @@ def test_normalize_chunk_subject_fields_backfills_stage2_fields():
     assert result[0]["equipment_model"] == ""
     assert result[0]["maintenance_stage"] == ""
 
-
-def test_subject_filter_uses_subject_id_only():
-    assert (
-        build_subject_filter_expr(
-            ["subject_hak_180"],
-        )
-        == 'subject_id in ["subject_hak_180"]'
-    )
 
 def test_format_chunk_search_item_preserves_stage2_fields():
     item = {

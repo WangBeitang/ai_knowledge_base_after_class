@@ -109,7 +109,9 @@ from typing import Mapping
 
 def _trace_id(state) -> str:
     if isinstance(state, Mapping):
-        return str(state.get("session_id") or state.get("task_id") or "-")
+        # 查询链路优先使用阶段 5 新增的 trace_id（一次查询执行 ID）；导入链路没有该
+        # 字段时继续回退 task_id，旧查询调用或测试再回退 session_id，保持装饰器通用。
+        return str(state.get("trace_id") or state.get("task_id") or state.get("session_id") or "-")
     return "-"
 
 def node_log(node_name: str = None):

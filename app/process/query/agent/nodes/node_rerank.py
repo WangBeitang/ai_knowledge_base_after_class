@@ -8,6 +8,9 @@ from app.shared.utils.task_utils import add_done_task, add_running_task
 def node_rerank(state):
     """
     节点功能：使用 Cross-Encoder 模型对 RRF 后的结果进行精确打分重排。
+
+    只返回本节点负责的 ``reranked_docs`` partial state（局部状态），保留其他字段由
+    LangGraph 统一管理，避免用节点拿到的旧 State 覆盖主 State。
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
     result_state = rerank_documents(state)
