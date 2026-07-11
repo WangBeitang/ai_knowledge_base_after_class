@@ -72,6 +72,9 @@ def test_query_default_state_fields_are_complete():
         "session_id",
         "original_query",
         "is_stream",
+        "owner_user_id",
+        "tenant_id",
+        "dataset_ids",
         "rewritten_query",
         "subject_ids",
         "standard_subject_names",
@@ -86,6 +89,9 @@ def test_query_default_state_fields_are_complete():
         "image_urls",
     }
     assert state["is_stream"] is False
+    assert state["owner_user_id"] == ""
+    assert state["tenant_id"] == ""
+    assert isinstance(state["dataset_ids"], list)
     assert isinstance(state["subject_ids"], list)
     assert isinstance(state["standard_subject_names"], list)
     assert isinstance(state["history"], list)
@@ -96,13 +102,21 @@ def test_query_default_state_fields_are_complete():
 
 
 def test_query_default_state_supports_overrides_and_deepcopy():
-    state = create_query_default_state(session_id="session-1")
+    state = create_query_default_state(
+        session_id="session-1",
+        owner_user_id="user_a",
+        tenant_id="tenant_default",
+        dataset_ids=["dataset_default_equipment_ops"],
+    )
     state["subject_ids"].append("subject_hak_180")
     state["standard_subject_names"].append("HAK 180 烫金机")
+    state["dataset_ids"].append("dataset_private")
 
     fresh_state = get_query_default_state()
 
     assert state["session_id"] == "session-1"
+    assert state["owner_user_id"] == "user_a"
     assert fresh_state["session_id"] == ""
+    assert fresh_state["dataset_ids"] == []
     assert fresh_state["subject_ids"] == []
     assert fresh_state["standard_subject_names"] == []

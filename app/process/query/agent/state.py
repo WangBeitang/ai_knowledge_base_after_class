@@ -6,6 +6,11 @@ class QueryGraphState(TypedDict):
     session_id: str  # 会话唯一标识，用于历史记录、SSE、任务状态
     original_query: str  # 用户原始问题
     is_stream: bool  # 是否使用流式输出
+    # 阶段 5 第一部分只把身份和知识库范围稳定传入查询图；真正基于这些字段拼接
+    # Milvus visibility/owner 过滤表达式放在后续“查询权限过滤”部分实现。
+    owner_user_id: str  # 当前轻量用户 ID，来自强制校验后的 X-User-Id 请求头
+    tenant_id: str  # 当前租户上下文；轻量单租户阶段固定为 tenant_default
+    dataset_ids: list[str]  # 本次允许检索的知识库 ID，已在 API 边界完成去空、去重和上限校验
 
     # 主体确认：从问题和历史中识别用户要问的主体
     rewritten_query: str  # 结合历史改写后的独立问题
@@ -37,6 +42,9 @@ query_graph_default_state: QueryGraphState = {
     "session_id": "",
     "original_query": "",
     "is_stream": False,
+    "owner_user_id": "",
+    "tenant_id": "",
+    "dataset_ids": [],
     "rewritten_query": "",
     "subject_ids": [],
     "standard_subject_names": [],

@@ -10,7 +10,9 @@ from starlette.responses import JSONResponse
 
 from app.api.schema.query_schema import QueryRequestParam, QueryStreamResponse, QueryNotStreamResponse, HistoryItem, \
     HistoryResponse, ClearHistoryResponse
+from app.api.http.request_context import get_current_user_id
 from app.infra.persistence.history_repository import history_repository
+from app.shared.config.knowledge_base_config import DEFAULT_TENANT_ID
 from app.shared.runtime.logger import PROJECT_ROOT, logger, step_log
 from app.infra.config.providers import settings
 from app.process.query.agent.main_graph import query_graph_app
@@ -63,11 +65,29 @@ def stream(session_id: str, request: Request):
     )
 
 
-def query_graph_invoke(session_id: str, query: str, is_stream: bool):
+def query_graph_invoke(
+        session_id: str,
+        query: str,
+        is_stream: bool,
+        owner_user_id: str,
+        dataset_ids: list[str],
+        tenant_id: str = DEFAULT_TENANT_ID,
+):
+    """
+    构造一次查询运行时上下文并执行 LangGraph。
+
+    用户身份和 dataset 范围必须由 HTTP 边界完成校验后显式传入，不能在图内再读取
+    Request，也不能回退到 anonymous_user。这样每个节点看到的都是同一份稳定上下文，
+    后续权限过滤、Planner Trace 和评测重放都可以直接复用这些字段。
+    """
     state = create_query_default_state(
         session_id=session_id,
         original_query=query,
-        is_stream=is_stream
+        is_stream=is_stream,
+        owner_user_id=owner_user_id,
+        tenant_id=tenant_id,
+        # Pydantic 已完成规范化，这里再复制一次，避免后台任务和调用方意外共享可变 list。
+        dataset_ids=list(dataset_ids),
     )
 
     # 清空task_utils的数据
@@ -98,10 +118,14 @@ def query_graph_invoke(session_id: str, query: str, is_stream: bool):
         logger.exception(f"执行失败,错误信息为:{e}")
 
 @app.post("/query")
-def query(back_ground_tasks: BackgroundTasks, request_param: QueryRequestParam):
+def query(request: Request, back_ground_tasks: BackgroundTasks, request_param: QueryRequestParam):
+    # 身份校验必须发生在创建 SSE 队列或调度后台任务之前。缺失/空白 header 会在这里
+    # 直接返回 400，保证无身份请求不会进入 LangGraph，也不会留下伪任务状态。
+    owner_user_id = get_current_user_id(request)
     session_id = request_param.session_id or str(uuid.uuid4())
     is_stream = request_param.is_stream
     query = request_param.query
+    dataset_ids = request_param.dataset_ids
 
     if is_stream:
         # 流式响应
@@ -113,7 +137,9 @@ def query(back_ground_tasks: BackgroundTasks, request_param: QueryRequestParam):
             query_graph_invoke,
             session_id=session_id,
             query=query,
-            is_stream=is_stream
+            is_stream=is_stream,
+            owner_user_id=owner_user_id,
+            dataset_ids=dataset_ids,
         )
 
         return QueryStreamResponse(
@@ -125,7 +151,9 @@ def query(back_ground_tasks: BackgroundTasks, request_param: QueryRequestParam):
         result: QueryGraphState = query_graph_invoke(
             session_id=session_id,
             query=query,
-            is_stream=is_stream
+            is_stream=is_stream,
+            owner_user_id=owner_user_id,
+            dataset_ids=dataset_ids,
         )
 
         return QueryNotStreamResponse(

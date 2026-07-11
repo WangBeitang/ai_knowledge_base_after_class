@@ -16,6 +16,7 @@ from app.api.schema.import_schema import (
     TaskStatusSchema,
     UploadSchema,
 )
+from app.api.http.request_context import get_current_user_id
 from app.infra.persistence.import_metadata_repository import (
     DEFAULT_DATASET_ID,
     DEFAULT_TENANT_ID,
@@ -64,14 +65,6 @@ app.add_middleware(
 def html():
     html_path_obj = PROJECT_ROOT / "app" / "resources" / "http" / "import.html"
     return FileResponse(path=html_path_obj)
-
-
-def get_current_user_id(request: Request) -> str:
-    user_id = request.headers.get("X-User-Id", "").strip()
-    if not user_id:
-        raise HTTPException(status_code=400, detail="缺少 X-User-Id 请求头")
-    return user_id
-
 
 def _task_status_from_record(task: dict, code: int = 200) -> TaskStatusSchema:
     return TaskStatusSchema(

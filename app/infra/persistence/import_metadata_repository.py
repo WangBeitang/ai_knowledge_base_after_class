@@ -16,15 +16,17 @@ from typing import Any
 from dotenv import load_dotenv
 from pymongo import ASCENDING, DESCENDING, MongoClient
 
+from app.shared.config.knowledge_base_config import (
+    DEFAULT_DATASET_ID,
+    DEFAULT_TENANT_ID,
+    DEFAULT_VISIBILITY,
+)
 from app.shared.runtime.logger import logger
 
 
 load_dotenv()
 
-DEFAULT_DATASET_ID = "dataset_default_equipment_ops"
 DEFAULT_DATASET_NAME = "设备运维知识库"
-DEFAULT_TENANT_ID = "tenant_default"
-DEFAULT_VISIBILITY = "private"
 DEFAULT_INDEX_VERSION = 1
 
 TASK_TYPE_IMPORT = "import"

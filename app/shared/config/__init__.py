@@ -4,6 +4,11 @@
 from app.shared.config.bailian_mcp_config import McpConfig, mcp_config
 from app.shared.config.embedding_config import EmbeddingConfig, embedding_config
 from app.shared.config.lm_config import LLMConfig, lm_config
+from app.shared.config.knowledge_base_config import (
+    DEFAULT_DATASET_ID,
+    DEFAULT_TENANT_ID,
+    DEFAULT_VISIBILITY,
+)
 from app.shared.config.milvus_config import MilvusConfig, milvus_config
 from app.shared.config.mineru_config import MinerUConfig, mineru_config
 from app.shared.config.minio_config import MinIOConfig, minio_config
@@ -16,6 +21,9 @@ __all__ = [
     "embedding_config",
     "LLMConfig",
     "lm_config",
+    "DEFAULT_DATASET_ID",
+    "DEFAULT_TENANT_ID",
+    "DEFAULT_VISIBILITY",
     "MilvusConfig",
     "milvus_config",
     "MinerUConfig",
