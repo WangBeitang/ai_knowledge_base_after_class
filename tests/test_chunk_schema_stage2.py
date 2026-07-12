@@ -114,20 +114,23 @@ def test_format_chunk_search_item_preserves_stage2_fields():
         },
     }
 
-    result = format_chunk_search_item(item, source_type="milvus")
+    result = format_chunk_search_item(
+        item,
+        retrieval_channels=["dense", "learned_sparse", "original"],
+        retrieval_rank=1,
+    )
 
     assert result["chunk_id"] == 1
     assert result["dataset_id"] == "dataset_default_equipment_ops"
     assert result["document_id"] == "doc_1"
-    assert result["owner_user_id"] == "user_a"
-    assert result["tenant_id"] == "tenant_default"
-    assert result["visibility"] == "private"
     assert result["index_version"] == 2
     assert result["chunk_index"] == 0
-    assert result["enabled"] is True
     assert result["source_title"] == "HAK180说明书"
     assert result["subject_id"] == "subject_hak_180"
     assert result["standard_subject_name"] == "HAK 180 烫金机"
     assert result["equipment_model"] == "HAK 180"
     assert result["alarm_code"] == "E101"
-    assert result["type"] == "milvus"
+    assert result["source_type"] == "local"
+    assert result["retrieval_channels"] == ["dense", "learned_sparse", "original"]
+    assert result["retrieval_rank"] == 1
+    assert result["retrieval_score"] == 0.87

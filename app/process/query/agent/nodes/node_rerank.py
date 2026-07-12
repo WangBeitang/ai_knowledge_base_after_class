@@ -7,10 +7,11 @@ from app.shared.utils.task_utils import add_done_task, add_running_task
 @node_log("node_rerank")
 def node_rerank(state):
     """
-    节点功能：使用 Cross-Encoder 模型对 RRF 后的结果进行精确打分重排。
+    节点功能：使用 Cross-Encoder 模型对累计 local/Web Candidate 统一打分重排。
 
-    只返回本节点负责的 ``reranked_docs`` partial state（局部状态），保留其他字段由
-    LangGraph 统一管理，避免用节点拿到的旧 State 覆盖主 State。
+    rerank 只写 ``rerank_score`` 并调整顺序，document/chunk/dataset/index、URL、召回
+    通道和 RRF 分数必须保留。节点只返回 ``reranked_docs`` partial state，避免用旧
+    State 覆盖其他并发节点字段。
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
     result_state = rerank_documents(state)
@@ -18,21 +19,3 @@ def node_rerank(state):
     return {
         "reranked_docs": result_state.get("reranked_docs", []),
     }
-
-if __name__ == "__main__":
-    mock_rrf_chunks = [
-        {"chunk_id": "local_1", "content": "RRF是一种倒数排名融合算法", "title": "算法介绍"},
-        {"chunk_id": "local_2", "content": "BGE是一个强大的重排序模型", "title": "模型介绍"},
-    ]
-    mock_web_docs = [
-        {"title": "Rerank技术详解", "url": "http://web.com/1", "snippet": "Rerank即重排序，常用于RAG系统的第二阶段"},
-    ]
-    mock_state = {
-        "session_id": "test_rerank_session",
-        "rewritten_query": "什么是RRF和Rerank？",
-        "rrf_chunks": mock_rrf_chunks,
-        "web_search_docs": mock_web_docs,
-        "is_stream": False,
-    }
-    result = node_rerank(mock_state)
-    print(result)

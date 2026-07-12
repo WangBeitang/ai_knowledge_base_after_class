@@ -26,16 +26,24 @@ class MilvusGateway:
     def create_requests(
             self,
             dense_vector: list[float],
-            sparse_vector: dict[int, float],
+            sparse_vector: dict[int, float] | None,
             *,
             expr: str = None,
             limit: int = 5,
+            retrieval_mode: str = "dense_learned_sparse",
+            query_text: str | None = None,
+            learned_sparse_field: str = "sparse_vector",
+            bm25_sparse_field: str = "bm25_sparse_vector",
     ):
         return create_hybrid_search_requests(
             dense_vector=dense_vector,
             sparse_vector=sparse_vector,
             expr=expr,
             limit=limit,
+            retrieval_mode=retrieval_mode,
+            query_text=query_text,
+            learned_sparse_field=learned_sparse_field,
+            bm25_sparse_field=bm25_sparse_field,
         )
 
     def hybrid_search(
@@ -48,6 +56,8 @@ class MilvusGateway:
             limit: int = 5,
             output_fields: list[str] | None = None,
             search_params: dict | None = None,
+            ranker_type: str = "weighted",
+            rrf_k: int = 60,
     ):
         return hybrid_search(
             client=self.client,
@@ -58,6 +68,8 @@ class MilvusGateway:
             limit=limit,
             output_fields=output_fields,
             search_params=search_params,
+            ranker_type=ranker_type,
+            rrf_k=rrf_k,
         )
 
     def query_entities(

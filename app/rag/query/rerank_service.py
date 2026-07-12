@@ -1,179 +1,143 @@
+"""对跨 Action RRF 后的统一候选执行最终相关性重排序。"""
+
 from app.infra.llm.providers import llm_provider
 from app.process.query.agent.state import QueryGraphState
-from app.rag.query.config import RERANK_MAX_INPUT_TOKENS, RERANK_MIN_SUMMARY_CHARS, RERANK_SUMMARY_CHAR_RATIO, \
-    RERANK_MIN_TOPK, RERANK_MAX_TOPK, RERANK_GAP_ABS, RERANK_GAP_RATIO
+from app.rag.query.config import (
+    RERANK_GAP_ABS,
+    RERANK_GAP_RATIO,
+    RERANK_MAX_INPUT_TOKENS,
+    RERANK_MAX_TOPK,
+    RERANK_MIN_SUMMARY_CHARS,
+    RERANK_MIN_TOPK,
+    RERANK_SUMMARY_CHAR_RATIO,
+)
+from app.rag.query.contracts import RetrievalCandidate
+from app.rag.query.query_identifier_service import identifier_requires_clarification
+from app.rag.query.rrf_service import candidate_identity
 from app.shared.runtime.load_prompt import load_prompt
 from app.shared.runtime.logger import logger
-from app.rag.query.query_identifier_service import identifier_requires_clarification
 
 
 def check_params(state):
+    """校验累计候选和用户问题；Web 已在外层 RRF 中，不再在这里二次拼接。"""
     rrf_chunks = state.get("rrf_chunks") or []
-    web_search_docs = state.get("web_search_docs") or []
     rewritten_query = state.get("rewritten_query")
     if not rewritten_query:
         logger.error("请输入有效的查询")
         raise ValueError("请输入有效的查询")
-    if len(rrf_chunks) == 0 and len(web_search_docs) == 0:
-        logger.error("请输入有效的查询")
-        raise ValueError("请输入有效的查询")
-    return rrf_chunks, web_search_docs, rewritten_query
-
-
-def fuse_documents(rrf_chunks, web_search_docs):
-    fused_data_list = []
-    # 1.处理rrf_chunks
-    for chunk in rrf_chunks:
-        current_data = {
-            "title": chunk.get("title", ""),
-            "text": chunk.get("content", ""),
-            "url": None,
-            "type": "milvus",
-            "score": 0.0,
-        }
-        fused_data_list.append(current_data)
-
-    # 2.处理web_search_docs
-    for doc in web_search_docs:
-        current_doc = {
-            "title": doc.get("title", ""),
-            "text": doc.get("snippet", ""),
-            "url": doc.get("url", ""),
-            "type": "web",
-            "score": 0.0,
-        }
-        fused_data_list.append(current_doc)
-
-    return fused_data_list
+    if not rrf_chunks:
+        logger.error("跨 Action RRF 候选为空，无法执行 rerank")
+        raise ValueError("跨 Action RRF 候选为空，无法执行 rerank")
+    candidates = [RetrievalCandidate.model_validate(item) for item in rrf_chunks]
+    return candidates, rewritten_query
 
 
 def refine_long_answer(rewritten_query, long_answer, limit):
     from langchain_core.messages import HumanMessage
     from langchain_core.output_parsers import StrOutputParser
 
-    # 利用llm压缩超长的回答
     llm_client = llm_provider.chat()
-    prompt = load_prompt("rerank_text_refine",question=rewritten_query,answer=long_answer,limit=limit)
-    messages = [
-        HumanMessage(content=prompt)
-    ]
+    prompt = load_prompt("rerank_text_refine", question=rewritten_query, answer=long_answer, limit=limit)
+    messages = [HumanMessage(content=prompt)]
     chains = llm_client | StrOutputParser()
-    result = chains.invoke(messages)
-    return result
+    return chains.invoke(messages)
 
 
-def build_qa_pairs(rewritten_query, fused_data_list):
+def build_qa_pairs(rewritten_query, candidates: list[RetrievalCandidate]):
+    """
+    使用原始用户问题和统一候选正文构造 reranker 输入。
+
+    local、HyDE、Web 在此处使用完全相同的相关性判断，不把 RRF 分数或来源类型写入问题
+    文本影响模型。超长正文只压缩本次模型输入，Candidate 中的原始 content 保持不变。
+    """
     qa_pairs = []
-
     reranker = llm_provider.reranker_model()
     tokenizer = reranker.tokenizer
-    # 对问题进行token编码（不添加特殊符号）[2123,321321,43545,6565,77675,8787878,98989,1]
-    query_tokens = tokenizer.encode(rewritten_query, add_special_tokens=False)
-    query_tokens_number = len(query_tokens)
+    query_tokens_number = len(tokenizer.encode(rewritten_query, add_special_tokens=False))
 
-    for data in fused_data_list:
-        text = data["text"]
-        text_tokens = tokenizer.encode(text, add_special_tokens=False)
-        text_tokens_number = len(text_tokens)
-        # 判断是否超长
-        if (query_tokens_number + text_tokens_number + 4) > RERANK_MAX_INPUT_TOKENS:
+    for candidate in candidates:
+        text = candidate.content
+        text_tokens_number = len(tokenizer.encode(text, add_special_tokens=False))
+        if query_tokens_number + text_tokens_number + 4 > RERANK_MAX_INPUT_TOKENS:
             available_tokens = RERANK_MAX_INPUT_TOKENS - query_tokens_number - 4
             if available_tokens <= 0:
                 logger.error("rewritten_query 过长，无法进入 reranker")
                 raise ValueError("rewritten_query 过长，无法进入 reranker")
             limit = max(
                 RERANK_MIN_SUMMARY_CHARS,
-                int(available_tokens / RERANK_SUMMARY_CHAR_RATIO)
+                int(available_tokens / RERANK_SUMMARY_CHAR_RATIO),
             )
             text = refine_long_answer(rewritten_query, text, limit)
         qa_pairs.append([rewritten_query, text])
-
     return qa_pairs
 
 
 def reranker_score(qa_pairs):
+    """调用 BGE reranker 并要求归一化分数；该分数才用于证据阈值。"""
     reranker = llm_provider.reranker_model()
-    scores = reranker.compute_score(qa_pairs,normalize=True)
-    return  scores
+    scores = reranker.compute_score(qa_pairs, normalize=True)
+    return [float(scores)] if isinstance(scores, (int, float)) else [float(score) for score in scores]
 
 
-def fused_and_sort(fused_data_list, scores):
-    if len(fused_data_list) != len(scores):
-        logger.error("reranker 分数数量和文档数量不一致")
-        raise ValueError("reranker 分数数量和文档数量不一致")
-    for score, data in zip(scores, fused_data_list):
-        data["score"] = score
+def attach_rerank_scores_and_sort(
+        candidates: list[RetrievalCandidate],
+        scores: list[float],
+) -> list[dict]:
+    """写入 rerank_score，同时保留候选的全部本地/Web 身份和召回元数据。"""
+    if len(candidates) != len(scores):
+        logger.error("reranker 分数数量和候选数量不一致")
+        raise ValueError("reranker 分数数量和候选数量不一致")
 
-    fused_data_list.sort(key=lambda x: x["score"], reverse=True)
-    return fused_data_list
+    scored_candidates = []
+    for candidate, score in zip(candidates, scores):
+        scored_candidates.append(RetrievalCandidate.model_validate({
+            **candidate.model_dump(mode="json"),
+            "rerank_score": score,
+        }))
+    scored_candidates.sort(
+        key=lambda candidate: (
+            -(candidate.rerank_score or 0.0),
+            candidate_identity(candidate),
+        )
+    )
+    return [candidate.model_dump(mode="json") for candidate in scored_candidates]
 
 
-def dynamic_topk(sorted_data_list):
-    """
-    动态截断 TopK：
-    1. 至少保留 RERANK_MIN_TOPK 条
-    2. 最多保留 RERANK_MAX_TOPK 条
-    3. 从 min_topk 后开始检查相邻分数，如果出现明显断崖，则提前截断
-    """
-    if not sorted_data_list:
+def dynamic_topk(sorted_candidates: list[dict]) -> list[dict]:
+    """根据归一化 rerank 分数的相邻断崖，在固定最小/最大 TopK 内截断。"""
+    if not sorted_candidates:
         return []
 
-    total = len(sorted_data_list)
+    total = len(sorted_candidates)
     min_topk = min(RERANK_MIN_TOPK, total)
     max_topk = min(RERANK_MAX_TOPK, total)
-
     selected_topk = max_topk
 
-    if max_topk < min_topk:
-        return sorted_data_list
-
-    for index in range(min_topk-1,max_topk-1):
-        score_1 = sorted_data_list[index].get("score", 0.0)
-        score_2 = sorted_data_list[index+1].get("score", 0.0)
+    for index in range(min_topk - 1, max_topk - 1):
+        score_1 = sorted_candidates[index].get("rerank_score") or 0.0
+        score_2 = sorted_candidates[index + 1].get("rerank_score") or 0.0
         abs_score = score_1 - score_2
         ratio_score = abs_score / (score_1 + 1.0e-6)
-
         if ratio_score > RERANK_GAP_RATIO or abs_score > RERANK_GAP_ABS:
             selected_topk = index + 1
             break
-
-    return sorted_data_list[:selected_topk]
-
+    return sorted_candidates[:selected_topk]
 
 
 def rerank_documents(state: QueryGraphState) -> QueryGraphState:
     """
-    重排序服务：
-    1. 合并 RRF 和 Web Search 的文档
-    2. 使用 BGE Reranker 模型计算相关性得分
-    3. 根据得分动态截断，智能截取 TopK
-    4. 回写 reranked_docs
+    对 original/HyDE/Web 累计候选统一 rerank，并保留完整 ``RetrievalCandidate``。
+
+    编号只得到相近候选或完全未找到时仍执行阶段 5 安全保护：直接返回空证据，不让候选
+    进入 reranker 和答案 Prompt。任务 9 接入 Planner 后会由追问 Action 更早终止。
     """
-    # 当前固定图仍会经过 rerank 节点；编号只得到相近候选或完全未找到时，候选不得进入
-    # reranker 和答案证据。这里返回空 partial result，最终由答案出口交付确定性追问。
     if identifier_requires_clarification(state.get("retrieval_observation")):
         state["reranked_docs"] = []
         return state
 
-    # 1.参数校验
-    rrf_chunks, web_search_docs, rewritten_query = check_params(state)
-
-    # 2.两路数据融合
-    fused_data_list = fuse_documents(rrf_chunks, web_search_docs)
-
-    # 3.组装问题和答案列表
-    qa_pairs = build_qa_pairs(rewritten_query, fused_data_list)
-
-    # 4.调用reranker打分
+    candidates, rewritten_query = check_params(state)
+    qa_pairs = build_qa_pairs(rewritten_query, candidates)
     scores = reranker_score(qa_pairs)
-
-    # 5.融合和排序
-    sorted_data_list = fused_and_sort(fused_data_list, scores)
-
-    # 6.动态topK
-    reranked_docs = dynamic_topk(sorted_data_list)
-
-    # 7.回写state
-    state["reranked_docs"] = reranked_docs
-
+    sorted_candidates = attach_rerank_scores_and_sort(candidates, scores)
+    state["reranked_docs"] = dynamic_topk(sorted_candidates)
     return state

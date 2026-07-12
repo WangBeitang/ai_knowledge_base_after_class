@@ -142,6 +142,124 @@ class EvidenceSourceType(str, Enum):
     WEB = "web"  # 联网证据：来自外部 URL，不能伪造本地 document_id/chunk_id。
 
 
+class RetrievalMode(str, Enum):
+    """
+    单次本地检索 Action 可以启用的固定召回组合。
+
+    mode 的中文含义是“模式/组合”。它只决定一次 local/HyDE Action 内部创建哪些
+    Milvus AnnSearchRequest，不决定 Planner 是否继续执行 HyDE 或 Web。
+    """
+
+    DENSE_LEARNED_SPARSE = "dense_learned_sparse"  # 稠密语义向量 + BGE-M3 学习式稀疏向量。
+    DENSE_BM25 = "dense_bm25"  # 稠密语义向量 + Milvus BM25 精确词法通道。
+    DENSE_LEARNED_SPARSE_BM25 = "dense_learned_sparse_bm25"  # 三路同时召回并按名次做 RRF。
+
+
+class RetrievalChannel(str, Enum):
+    """
+    参与生成候选的底层通道配置和检索 Action 来源。
+
+    前三个成员描述单次本地 Action 内的底层召回通道，后三个成员描述跨 Action 来源。
+    当前 Milvus hybrid_search 只返回内部 RRF 后的列表，无法证明单个 chunk 逐条命中了
+    哪个底层请求；因此本地候选记录的是该 Action 启用的模式通道集合，不是逐通道命中
+    事实。original/HyDE/Web Action 来源则是确定的。
+    """
+
+    DENSE = "dense"  # 稠密向量通道：主要匹配自然语言语义。
+    LEARNED_SPARSE = "learned_sparse"  # BGE-M3 学习式稀疏通道：兼顾关键词和模型学习权重。
+    BM25 = "bm25"  # BM25 词法通道：擅长设备型号、报警码和其他精确字符。
+    ORIGINAL = "original"  # 使用用户原问题/改写问题执行的普通本地检索 Action。
+    HYDE = "hyde"  # 使用假设答案增强文本执行的本地检索 Action。
+    WEB = "web"  # 由 Web Search Action 返回的联网候选。
+
+
+class RetrievalCandidate(QueryContractModel):
+    """
+    从召回、跨 Action RRF、rerank 一直传到引用阶段的统一候选结构。
+
+    Candidate 的中文含义是“候选证据”。本地候选必须始终保留 document/chunk/dataset
+    身份；Web 候选没有本地身份，只能使用真实 URL。``retrieval_score`` 是 RRF 排名融合
+    分，不能当证据充分阈值；``rerank_score`` 才是统一 reranker 对相关性的重新评分。
+    """
+
+    # 来源文档 ID。本地 chunk 的稳定文档身份；Web 候选必须为 None。
+    document_id: str | None = None
+    # 来源 chunk ID。本地去重、Trace 和 Citation 的核心键；Web 候选必须为 None。
+    chunk_id: str | int | None = None
+    # 所属知识库 ID。本地候选用于证明它仍处于本次 dataset 权限范围；Web 候选为 None。
+    dataset_id: str | None = None
+    # 文档索引产物版本。本地候选用于重放时确认使用哪一版 chunk；Web 候选为 None。
+    index_version: int | None = Field(default=None, ge=0)
+    # chunk 在文档中的顺序。用于后续相邻片段扩展；旧数据缺失时允许 None。
+    chunk_index: int | None = Field(default=None, ge=0)
+    # 当前切片或网页标题。供 rerank、答案上下文和引用展示使用。
+    title: str = Field(min_length=1)
+    # 来源文件标题。本地通常是原文件名；Web 可以为空字符串。
+    source_title: str = ""
+    # 已确认标准主题 ID。本地候选保留它以便 Trace 核对 subject filter；Web 为 None。
+    subject_id: str | None = None
+    # 标准主题展示名。用于答案上下文和调试，不代替稳定 subject_id。
+    standard_subject_name: str | None = None
+    # 当前标题的父级标题。用于保留文档章节层次，缺失时为 None。
+    parent_title: str | None = None
+    # 候选正文。本地来自 chunk content，Web 来自搜索摘要；不得只保留标题丢失正文。
+    content: str = Field(min_length=1)
+    # 以下六项是当前 chunk schema 已落地的设备运维 metadata。它们继续穿过 RRF/rerank，
+    # 供编号同码核验、Trace 和后续 Citation 使用；Web 候选通常全部为 None。
+    equipment_model: str | None = None  # 设备型号，例如 HAK 180。
+    alarm_code: str | None = None  # 报警码/故障码，例如 E020。
+    part_name: str | None = None  # 中文部件名称，例如温度传感器。
+    sop_type: str | None = None  # SOP 类型，例如开机、维修或点检。
+    safety_level: str | None = None  # 安全等级或风险提示。
+    maintenance_stage: str | None = None  # 维护阶段，例如故障定位或复机确认。
+    # 来源类型。local 表示 Milvus chunk，web 表示外部 URL，二者身份规则不同。
+    source_type: EvidenceSourceType
+    # 参与产生本候选的模式通道和 Action 来源，去重融合时取并集。Milvus 模式通道表示
+    # “本 Action 启用了这些通道”，不能伪装成单个候选的逐通道命中明细。
+    retrieval_channels: list[RetrievalChannel] = Field(min_length=1)
+    # 当前排名，从 1 开始。每次 Action 内或跨 Action 重新排序后覆盖为新名次。
+    retrieval_rank: PositiveStep
+    # 当前 RRF/召回融合分，只用于候选排序与 Trace，不直接判断证据是否充分。
+    retrieval_score: float = Field(ge=0)
+    # 统一 reranker 分数。进入 rerank 前为 None，完成后通常是 0～1 的归一化分数。
+    rerank_score: float | None = Field(default=None, ge=0, le=1)
+    # Web 的真实链接；本地候选通常为空。Web 去重使用规范化 URL，不伪造 chunk_id。
+    url: str | None = None
+
+    @model_validator(mode="after")
+    def validate_candidate_identity(self) -> Self:
+        """保证本地和 Web 身份字段不会在格式转换或 rerank 时互相伪装。"""
+        if len(set(self.retrieval_channels)) != len(self.retrieval_channels):
+            raise ValueError("retrieval_channels 不能包含重复通道")
+
+        if self.source_type == EvidenceSourceType.LOCAL:
+            if (
+                not self.document_id
+                or self.chunk_id is None
+                or not self.dataset_id
+                or self.index_version is None
+                or self.chunk_index is None
+            ):
+                raise ValueError(
+                    "本地候选必须包含 document_id、chunk_id、dataset_id、index_version 和 chunk_index"
+                )
+            if self.url is not None and not self.url.strip():
+                raise ValueError("本地候选的 url 如果存在就不能只有空白")
+        else:
+            if any(value is not None for value in (
+                self.document_id,
+                self.chunk_id,
+                self.dataset_id,
+                self.index_version,
+                self.chunk_index,
+                self.subject_id,
+            )):
+                raise ValueError("Web 候选不能伪造 document/chunk/dataset/index 本地身份")
+            if not self.url or not self.url.strip():
+                raise ValueError("Web 候选必须包含真实 url")
+        return self
+
+
 class PlannerDecision(QueryContractModel):
     """
     Planner 一次决策的唯一业务输出。

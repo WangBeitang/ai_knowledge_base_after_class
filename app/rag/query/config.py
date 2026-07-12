@@ -1,3 +1,6 @@
+from app.rag.query.contracts import RetrievalChannel, RetrievalMode
+
+
 # ====================== 全局配置 ======================
 # 拉取历史消息最大条数
 QUERY_HISTORY_LIMIT = 10
@@ -11,8 +14,50 @@ SUBJECT_NAME_OPTIONS_TOPK = 2
 # ====================== 检索配置 ======================
 # 默认返回的最大知识库片段数量
 RETRIEVAL_DEFAULT_LIMIT = 5
-# 混合检索权重：dense向量权重 0.9，sparse向量权重 0.1
+# 标准主题/别名 collection 仍使用加权融合时的 dense/sparse 权重。chunk 检索从阶段 5
+# 第六部分起显式使用 RRF，不再直接相加不同量级的 dense、learned sparse、BM25 分数。
 RETRIEVAL_RANKER_WEIGHTS = (0.9, 0.1)
+# 当前线上默认仍只使用已存在 schema 的 dense + learned sparse。任务 7 重建 BM25 字段
+# 和 Function 后，才允许把默认值切换到包含 BM25 的模式。
+RETRIEVAL_DEFAULT_MODE = RetrievalMode.DENSE_LEARNED_SPARSE
+# 单次本地 Action 内 Milvus RRF 和跨 Action RRF 使用同一个可版本化 k 基线。
+RETRIEVAL_RRF_K = 60
+# 当前 schema 的 BGE-M3 学习式稀疏字段名。任务 7 若收口改名为 learned_sparse_vector，
+# 必须同步这里、入库 schema、数据字典和固定评测配置。
+LEARNED_SPARSE_FIELD = "sparse_vector"
+# 任务 7 计划新增的 BM25 Function 输出字段。本轮只允许显式 BM25 模式创建请求，默认
+# 模式不会访问该字段，因此 schema 尚未重建时现有线上查询仍可运行。
+BM25_SPARSE_FIELD = "bm25_sparse_vector"
+
+
+def normalize_retrieval_mode(value) -> RetrievalMode:
+    """把 State/config 中的字符串统一校验成关闭枚举，未知模式立即失败。"""
+    if value in (None, ""):
+        return RETRIEVAL_DEFAULT_MODE
+    if isinstance(value, RetrievalMode):
+        return value
+    try:
+        return RetrievalMode(str(value))
+    except ValueError as exc:
+        supported = ", ".join(mode.value for mode in RetrievalMode)
+        raise ValueError(f"不支持的 retrieval_mode={value!r}，可选值：{supported}") from exc
+
+
+def channels_for_retrieval_mode(mode: RetrievalMode | str) -> list[RetrievalChannel]:
+    """返回一个本地 Action 启用的模式通道，顺序与 AnnSearchRequest 创建顺序一致。"""
+    normalized_mode = normalize_retrieval_mode(mode)
+    channels = [RetrievalChannel.DENSE]
+    if normalized_mode in {
+        RetrievalMode.DENSE_LEARNED_SPARSE,
+        RetrievalMode.DENSE_LEARNED_SPARSE_BM25,
+    }:
+        channels.append(RetrievalChannel.LEARNED_SPARSE)
+    if normalized_mode in {
+        RetrievalMode.DENSE_BM25,
+        RetrievalMode.DENSE_LEARNED_SPARSE_BM25,
+    }:
+        channels.append(RetrievalChannel.BM25)
+    return channels
 
 
 RERANK_MAX_TOPK: int = 5

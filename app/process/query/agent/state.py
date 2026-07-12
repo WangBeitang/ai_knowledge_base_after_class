@@ -7,6 +7,7 @@ from app.rag.query.contracts import (
     PlannerDecision,
     PlannerHistoryItem,
     PlannerReasonCode,
+    RetrievalMode,
     RetrievalObservation,
     SubjectResolutionStatus,
 )
@@ -150,9 +151,9 @@ class QueryGraphState(TypedDict):
     # 的完整 Observation、分数和证据摘要仍由后续 Planner/统一召回任务补齐。
     retrieval_observation: RetrievalObservation | None
 
-    # retrieval mode 的中文含义是“召回组合模式”。后续明确本次使用 dense + learned
-    # sparse、dense + BM25 或三路融合，便于评测和 Trace 重放。
-    # 默认空字符串；当前固定检索尚未完成模式化配置，不能提前声称使用某个版本模式。
+    # retrieval mode 的中文含义是“召回组合模式”。阶段 5 第六部分固定三种关闭枚举，
+    # 当前默认 dense_learned_sparse；包含 BM25 的模式只有任务 7 schema 重建后才可启用。
+    # 来源：查询 State 或评测覆盖值；普通检索和 HyDE 必须读取同一个值。
     retrieval_mode: str
 
     # retrieval config version 的中文含义是“检索配置版本”。它关联 top-k、RRF k、rerank
@@ -167,29 +168,27 @@ class QueryGraphState(TypedDict):
 
     # ==================== 当前旧召回字段（阶段 5 分步过渡） ====================
 
-    # embedding chunks 的中文含义是“原问题向量检索候选 chunk”。当前普通本地检索节点
-    # 仍实际读写该字段，所以任务 3 不能提前删除；新召回结构接管后一次性重命名或收口。
-    # 这是代码分步切换，不是 Milvus 历史数据兼容。默认空列表。
+    # embedding chunks 的中文含义是“原问题本地检索 Action 候选”。列表内每项已经通过
+    # RetrievalCandidate 校验，包含本地身份、模式通道、Action 来源、召回名次和分数。
+    # 模式通道表示本次 Action 启用项，不等于 Milvus 返回了逐通道命中明细。
+    # 当前字段名为分步过渡命名，Planner 主链路接入后归入按 Action 保存的结果集合。
     embedding_chunks: list[dict] | None
 
-    # HyDE embedding chunks 的中文含义是“假设答案增强检索候选 chunk”。HyDE 会先生成
-    # 假设答案再检索本地知识库；当前 HyDE 节点仍写入该字段。
-    # 默认空列表，新 Planner 主链路完成后归入统一通道结果，不做长期双写。
+    # HyDE embedding chunks 的中文含义是“假设答案增强检索 Action 候选”。每项也是统一
+    # RetrievalCandidate，并通过 retrieval_channels 标记 hyde 和实际底层召回通道。
     hyde_embedding_chunks: list[dict] | None
 
-    # web search docs 的中文含义是“联网搜索文档”。当前 Web 节点仍写入该字段，rerank
-    # 服务继续读取；后续 Web 改为 fallback 后归入统一通道结果。
-    # 默认空列表；Web 结果没有本地 document_id/chunk_id，不能伪造本地身份。
+    # web search docs 的中文含义是“联网搜索 Action 候选”。每项使用统一 Candidate，真实
+    # URL 是去重和 Citation 身份，document/chunk/dataset/index 等本地字段必须为 None。
     web_search_docs: list[dict] | None
 
-    # RRF 是 Reciprocal Rank Fusion，中文为“倒数排名融合”。rrf_chunks 保存普通检索与
-    # HyDE 候选按名次融合、去重后的本地 chunk，当前 rerank 前置节点仍依赖该字段。
-    # 默认空列表；后续统一融合服务接管后再决定最终命名。
+    # RRF 是 Reciprocal Rank Fusion，中文为“倒数排名融合”。rrf_chunks 保存所有已执行
+    # original/HyDE/Web Action 原始列表一次性重算后的累计 Candidate；本地按 chunk_id、
+    # Web 按规范化 URL 去重。字段名仍是过渡命名，内容已经不再只包含本地 chunk。
     rrf_chunks: list[dict]
 
-    # rerank 的中文含义是“重排序”。reranked_docs 保存 reranker 对本地/Web 候选重新打分
-    # 后的最终证据列表，当前 answer_service 直接使用它构造 Prompt。
-    # 默认空列表；后续仍可保留，但必须补齐 document/chunk 等完整来源元数据。
+    # rerank 的中文含义是“重排序”。reranked_docs 保存统一 reranker 对累计 Candidate
+    # 写入 rerank_score 后的最终证据列表；所有本地/Web 身份和召回元数据必须原样保留。
     reranked_docs: list[dict]
 
     # ==================== 终止结果、引用和答案运行信息 ====================
@@ -251,7 +250,7 @@ query_graph_default_state: QueryGraphState = {
     "planner_type": "",
     "planner_runtime_metadata": {},
     "retrieval_observation": None,
-    "retrieval_mode": "",
+    "retrieval_mode": RetrievalMode.DENSE_LEARNED_SPARSE.value,
     "retrieval_config_version": "",
     "retrieval_channel_results": {},
     "embedding_chunks": [],

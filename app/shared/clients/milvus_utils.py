@@ -1,7 +1,7 @@
 """
 工具模块，负责提供 milvus 相关的辅助能力。
 """
-from pymilvus import MilvusClient, AnnSearchRequest, WeightedRanker
+from pymilvus import AnnSearchRequest, MilvusClient, RRFRanker, WeightedRanker
 from app.shared.config.milvus_config import milvus_config
 from app.shared.runtime.logger import logger
 
@@ -33,8 +33,20 @@ def get_milvus_client() -> MilvusClient | None:
         return None
 
 
-def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None, sparse_params=None, expr=None,
-                                  limit=5):
+def create_hybrid_search_requests(
+        dense_vector,
+        sparse_vector,
+        dense_params=None,
+        sparse_params=None,
+        expr=None,
+        limit=5,
+        *,
+        retrieval_mode="dense_learned_sparse",
+        query_text=None,
+        learned_sparse_field="sparse_vector",
+        bm25_sparse_field="bm25_sparse_vector",
+        bm25_params=None,
+):
     """
     构建Milvus混合搜索请求对象
     分别创建稠密/稀疏向量的搜索请求，用于后续混合搜索融合
@@ -44,7 +56,11 @@ def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None
     :param sparse_params: 稀疏向量搜索参数，默认使用内积相似度
     :param expr: 搜索过滤表达式，用于精准筛选数据
     :param limit: 单向量搜索返回结果数量，默认5
-    :return: 搜索请求列表，包含[dense_req, sparse_req]
+    :param retrieval_mode: 本次本地 Action 的召回组合，固定为三种关闭模式之一
+    :param query_text: BM25 请求的原始/增强查询文本；只有包含 BM25 的模式必填
+    :param learned_sparse_field: BGE-M3 学习式稀疏向量字段名
+    :param bm25_sparse_field: Milvus BM25 Function 输出稀疏字段名
+    :return: 按 dense、learned sparse、BM25 固定顺序生成的 2 或 3 个请求
     """
     # 稠密向量默认搜索参数：余弦相似度（COSINE），适配BGE-M3稠密向量并与建库参数保持一致
     if dense_params is None:
@@ -52,6 +68,18 @@ def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None
     # 稀疏向量默认搜索参数：内积（IP），适配BGE-M3稀疏向量
     if sparse_params is None:
         sparse_params = {"metric_type": "IP"}
+    if bm25_params is None:
+        bm25_params = {"metric_type": "BM25"}
+
+    supported_modes = {
+        "dense_learned_sparse",
+        "dense_bm25",
+        "dense_learned_sparse_bm25",
+    }
+    if retrieval_mode not in supported_modes:
+        raise ValueError(
+            f"不支持的 retrieval_mode={retrieval_mode!r}，可选值：{', '.join(sorted(supported_modes))}"
+        )
 
     # 构建稠密向量搜索请求，关联Milvus的dense_vector字段 近似最近邻（ANN）检索请求的核心类
     dense_req = AnnSearchRequest(
@@ -62,20 +90,51 @@ def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None
         limit=limit
     )
 
-    # 构建稀疏向量搜索请求，关联Milvus的sparse_vector字段
-    sparse_req = AnnSearchRequest(
-        data=[sparse_vector],
-        anns_field="sparse_vector",
-        param=sparse_params,
-        expr=expr,
-        limit=limit
-    )
+    requests = [dense_req]
 
-    return [dense_req, sparse_req]
+    if retrieval_mode in {"dense_learned_sparse", "dense_learned_sparse_bm25"}:
+        if sparse_vector is None:
+            raise ValueError("包含 learned sparse 的 retrieval_mode 必须提供 sparse_vector")
+        # learned sparse 的中文含义是“模型学习式稀疏向量”。它不是 BM25，两者必须使用
+        # 不同字段和 metric，避免把 BGE-M3 sparse 误写成传统关键词分数。
+        requests.append(AnnSearchRequest(
+            data=[sparse_vector],
+            anns_field=learned_sparse_field,
+            param=sparse_params,
+            expr=expr,
+            limit=limit,
+        ))
+
+    if retrieval_mode in {"dense_bm25", "dense_learned_sparse_bm25"}:
+        normalized_query_text = str(query_text or "").strip()
+        if not normalized_query_text:
+            raise ValueError("包含 BM25 的 retrieval_mode 必须提供非空 query_text")
+        # BM25 请求直接提交文本。Milvus Function 使用与入库 lexical_text 相同的 Analyzer
+        # 生成查询稀疏表示，应用侧不能把 BGE-M3 sparse_vector 填入 BM25 字段。
+        requests.append(AnnSearchRequest(
+            data=[normalized_query_text],
+            anns_field=bm25_sparse_field,
+            param=bm25_params,
+            expr=expr,
+            limit=limit,
+        ))
+
+    return requests
 
 
-def hybrid_search(client, collection_name, reqs, ranker_weights=(0.5, 0.5), norm_score=False, limit=5,
-                  output_fields=None, search_params=None):
+def hybrid_search(
+        client,
+        collection_name,
+        reqs,
+        ranker_weights=(0.5, 0.5),
+        norm_score=False,
+        limit=5,
+        output_fields=None,
+        search_params=None,
+        *,
+        ranker_type="weighted",
+        rrf_k=60,
+):
     """
     执行Milvus稠密+稀疏向量混合搜索
     基于WeightedRanker实现双向量搜索结果加权融合，提升检索准确性
@@ -90,9 +149,18 @@ def hybrid_search(client, collection_name, reqs, ranker_weights=(0.5, 0.5), norm
     :return: 混合搜索结果列表，搜索失败返回None
     """
     try:
-        # 初始化加权排名器：按权重融合稠密/稀疏向量的搜索结果
-        # norm_score=True：先将两个向量评分归一化到0~1区间，再加权计算
-        rerank = WeightedRanker(ranker_weights[0], ranker_weights[1], norm_score=norm_score)
+        if ranker_type == "weighted":
+            if len(ranker_weights) != len(reqs):
+                raise ValueError("WeightedRanker 的权重数量必须与 AnnSearchRequest 数量一致")
+            # 标准主题/别名 collection 继续使用历史加权策略，避免 chunk 改造破坏阶段 2。
+            rerank = WeightedRanker(*ranker_weights, norm_score=norm_score)
+        elif ranker_type == "rrf":
+            if rrf_k <= 0:
+                raise ValueError("RRFRanker 的 k 必须大于 0")
+            # chunk 的三路原始分数量级不同，使用名次融合而不是直接相加原始分数。
+            rerank = RRFRanker(k=rrf_k)
+        else:
+            raise ValueError("ranker_type 只支持 weighted 或 rrf")
 
         # 默认返回字段：文档标识字段
         if output_fields is None:

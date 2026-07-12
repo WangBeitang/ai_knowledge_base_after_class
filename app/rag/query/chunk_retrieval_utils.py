@@ -1,5 +1,6 @@
 from collections.abc import Mapping
 
+from app.rag.query.contracts import EvidenceSourceType, RetrievalCandidate, RetrievalChannel
 from app.shared.utils.escape_milvus_string_utils import escape_milvus_string
 
 
@@ -318,33 +319,45 @@ def build_chunk_retrieval_filter_from_state(state: Mapping[str, object]) -> str:
     )
 
 
-def format_chunk_search_item(item, source_type):
+def format_chunk_search_item(
+        item,
+        *,
+        retrieval_channels: list[RetrievalChannel | str],
+        retrieval_rank: int,
+):
+    """
+    把 Milvus 命中转换成统一 ``RetrievalCandidate``，并立即校验本地身份字段。
+
+    格式转换是元数据最容易丢失的边界，因此这里不再只返回 title/content/score。缺少
+    document_id、chunk_id 或 dataset_id 的本地结果会立刻失败，避免等到 Citation 阶段
+    才发现无法追踪来源。retrieval_channels 中的底层通道来自本次启用的 mode；Milvus
+    内部 RRF 不返回逐请求命中明细，所以这里不声称该 chunk 命中了每一条底层通道。
+    """
     entity = item.get("entity", {})
-    return {
-        "chunk_id": item.get("id") or entity.get("chunk_id"),
-        "dataset_id": entity.get("dataset_id"),
-        "document_id": entity.get("document_id"),
-        "owner_user_id": entity.get("owner_user_id"),
-        "tenant_id": entity.get("tenant_id"),
-        "visibility": entity.get("visibility"),
-        "index_version": entity.get("index_version"),
-        "chunk_index": entity.get("chunk_index"),
-        "enabled": entity.get("enabled"),
-        "source_title": entity.get("source_title"),
-        "subject_id": entity.get("subject_id"),
-        "standard_subject_name": entity.get("standard_subject_name"),
-        "content": entity.get("content"),
-        "title": entity.get("title"),
-        "parent_title": entity.get("parent_title"),
-        "part": entity.get("part"),
-        "file_title": entity.get("file_title"),
-        "equipment_model": entity.get("equipment_model"),
-        "alarm_code": entity.get("alarm_code"),
-        "part_name": entity.get("part_name"),
-        "sop_type": entity.get("sop_type"),
-        "safety_level": entity.get("safety_level"),
-        "maintenance_stage": entity.get("maintenance_stage"),
-        "score": item.get("distance", 0.0),
-        "type": source_type,
-        "url": None,
-    }
+    source_title = str(entity.get("source_title") or entity.get("file_title") or "").strip()
+    candidate = RetrievalCandidate(
+        document_id=entity.get("document_id"),
+        chunk_id=item.get("id") if item.get("id") is not None else entity.get("chunk_id"),
+        dataset_id=entity.get("dataset_id"),
+        index_version=entity.get("index_version"),
+        chunk_index=entity.get("chunk_index"),
+        title=str(entity.get("title") or source_title or "未命名知识切片").strip(),
+        source_title=source_title,
+        subject_id=entity.get("subject_id"),
+        standard_subject_name=entity.get("standard_subject_name"),
+        parent_title=entity.get("parent_title"),
+        content=str(entity.get("content") or "").strip(),
+        equipment_model=entity.get("equipment_model"),
+        alarm_code=entity.get("alarm_code"),
+        part_name=entity.get("part_name"),
+        sop_type=entity.get("sop_type"),
+        safety_level=entity.get("safety_level"),
+        maintenance_stage=entity.get("maintenance_stage"),
+        source_type=EvidenceSourceType.LOCAL,
+        retrieval_channels=[RetrievalChannel(channel) for channel in retrieval_channels],
+        retrieval_rank=retrieval_rank,
+        retrieval_score=max(0.0, float(item.get("distance") or 0.0)),
+        rerank_score=None,
+        url=None,
+    )
+    return candidate.model_dump(mode="json")

@@ -40,7 +40,7 @@ class TwoStageFakeGateway:
         self.search_exprs = []
         self.dictionary_exprs = []
 
-    def create_requests(self, dense_vector, sparse_vector, expr=None, limit=5):
+    def create_requests(self, dense_vector, sparse_vector, expr=None, limit=5, **kwargs):
         self.search_exprs.append(expr)
         return [expr]
 
@@ -73,6 +73,8 @@ def _milvus_item(
             "tenant_id": "tenant_default",
             "visibility": "private",
             "enabled": True,
+            "index_version": 1,
+            "chunk_index": 0,
             "subject_id": "subject_hak_180",
             "standard_subject_name": "HAK 180 烫金机",
             "content": content,
@@ -315,7 +317,7 @@ def test_terminal_identifier_observation_skips_empty_rrf_and_rerank(monkeypatch)
     state["retrieval_observation"] = observation
     state["embedding_chunks"] = []
     state["hyde_embedding_chunks"] = []
-    state["web_search_docs"] = [{"title": "网页", "snippet": "不应参与编号纠错"}]
+    state["web_search_docs"] = []
 
     assert rrf_service.fuse_by_rrf(state)["rrf_chunks"] == []
     monkeypatch.setattr(

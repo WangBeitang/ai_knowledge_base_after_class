@@ -68,9 +68,15 @@ def check_params(state):
     standard_subject_names = state.get("standard_subject_names", [])
     rewritten_query = state.get("rewritten_query", "")
 
-    if len(reranked_docs) == 0 or len(standard_subject_names) == 0 or not rewritten_query:
-        logger.error("reranked_docs或standard_subject_names或rewritten_query为空")
-        raise ValueError("reranked_docs或standard_subject_names或rewritten_query为空")
+    if len(reranked_docs) == 0 or not rewritten_query:
+        logger.error("reranked_docs或rewritten_query为空")
+        raise ValueError("reranked_docs或rewritten_query为空")
+    # 明显实时问题在未来 Planner 中可以直接 Web，因此全 Web 证据不强制要求本地主题名。
+    # 只要最终候选含本地 chunk，就仍要求 standard_subject_names，避免本地答案失去主体。
+    has_local_candidate = any(doc.get("source_type") == "local" for doc in reranked_docs)
+    if has_local_candidate and len(standard_subject_names) == 0:
+        logger.error("本地 reranked_docs 存在时 standard_subject_names 不能为空")
+        raise ValueError("本地 reranked_docs 存在时 standard_subject_names 不能为空")
 
     history = state.get("history", [])
     return reranked_docs, standard_subject_names, rewritten_query, history
@@ -81,8 +87,13 @@ def build_answer_prompt(reranked_docs, rewritten_query, standard_subject_names, 
     # 1.拼接context
     context = ""
     for doc in reranked_docs:
-        context += (f"标题: {doc['title']},来源：{'联网查询' if doc['type'] == 'web' else '向量数据库'} ,"
-                    f"reranker模型评分：{doc['score']}，\n内容：{doc['text']}\n\n")
+        # reranked_docs 从阶段 5 第六部分起保持统一 RetrievalCandidate 结构。本地/Web
+        # 只通过 source_type 区分，正文和 rerank 分数不再使用容易混淆的 text/type/score。
+        context += (
+            f"标题: {doc['title']},来源："
+            f"{'联网查询' if doc['source_type'] == 'web' else '本地知识库'},"
+            f"reranker模型评分：{doc['rerank_score']}，\n内容：{doc['content']}\n\n"
+        )
 
     # 2.拼接history
     history_text = ""
@@ -96,7 +107,7 @@ def build_answer_prompt(reranked_docs, rewritten_query, standard_subject_names, 
         history_text = "无历史对话记录"
 
     # 3.拼接标准主题名
-    standard_subject_names_text = ",".join(standard_subject_names)
+    standard_subject_names_text = ",".join(standard_subject_names) or "未限定本地标准主题"
 
     # 4.加载提示词
     prompt_text = load_prompt("answer_out", context=context, history=history_text,
@@ -141,7 +152,7 @@ def extract_image_urls(reranked_docs, state):
     # 3.循环
     for doc in reranked_docs:
         url = doc.get("url", "")
-        text = doc.get("text", "")
+        text = doc.get("content", "")
 
         # 提取url
         if url and url.endswith((".jpg", ".png", ".gif", ".jpeg", ".svg")) and url not in image_urls:

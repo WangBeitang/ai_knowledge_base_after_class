@@ -119,7 +119,7 @@ def test_query_default_state_fields_are_complete():
     assert state["current_planner_decision"] is None
     assert state["planner_type"] == ""
     assert state["retrieval_observation"] is None
-    assert state["retrieval_mode"] == ""
+    assert state["retrieval_mode"] == "dense_learned_sparse"
     assert state["retrieval_config_version"] == ""
     assert state["terminal_reason_code"] is None
     assert isinstance(state["dataset_ids"], list)

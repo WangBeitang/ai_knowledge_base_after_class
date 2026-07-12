@@ -7,10 +7,14 @@ from app.shared.utils.task_utils import add_done_task, add_running_task
 @node_log("node_rrf")
 def node_rrf(state):
     """
-    节点功能：Reciprocal Rank Fusion
-    将多路召回的结果（向量、HyDE、Web）进行加权融合排序。
+    节点功能：跨 Action Reciprocal Rank Fusion（倒数排名融合）。
 
-    只返回融合产物 ``rrf_chunks`` 的 partial state（局部状态），不重复回传输入候选。
+    它读取当前实际有结果的 original、HyDE、Web 原始排名列表，一次性按名次融合；不
+    直接相加原始分数，也不把上一轮 RRF 结果继续套一层 RRF。相同本地 chunk/Web URL
+    会去重并合并 retrieval_channels。
+
+    只返回融合产物 ``rrf_chunks`` 的 partial state（局部状态）；该字段名是过渡名称，
+    其中现在可以同时包含 local 和 Web ``RetrievalCandidate``。
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
     result_state = fuse_by_rrf(state)

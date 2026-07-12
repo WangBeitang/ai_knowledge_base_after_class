@@ -12,11 +12,20 @@ from app.rag.query.chunk_retrieval_utils import (
     format_chunk_search_item,
     select_structured_query_identifiers,
 )
-from app.rag.query.config import RETRIEVAL_DEFAULT_LIMIT, RETRIEVAL_RANKER_WEIGHTS
+from app.rag.query.config import (
+    BM25_SPARSE_FIELD,
+    LEARNED_SPARSE_FIELD,
+    RETRIEVAL_DEFAULT_LIMIT,
+    RETRIEVAL_RRF_K,
+    channels_for_retrieval_mode,
+    normalize_retrieval_mode,
+)
 from app.rag.query.contracts import (
     IdentifierResolutionStatus,
     ObservationStatus,
     QueryAction,
+    RetrievalChannel,
+    RetrievalMode,
     RetrievalObservation,
 )
 from app.rag.query.query_identifier_service import (
@@ -87,6 +96,7 @@ def query_chunk_by_milvus(
         filter_expr: str,
         *,
         query_vectors: tuple[list[float], dict[int, float]] | None = None,
+        retrieval_mode: RetrievalMode | str = RetrievalMode.DENSE_LEARNED_SPARSE,
 ) -> list[dict]:
     """
     使用同一检索文本和指定 expr 执行 Milvus 混合搜索。
@@ -95,24 +105,38 @@ def query_chunk_by_milvus(
     embedding 服务。两段的区别只有 filter，不会因为降级而改变用户原问题。
     """
     dense_vector, sparse_vector = query_vectors or _embed_retrieval_query(rewritten_query)
+    normalized_mode = normalize_retrieval_mode(retrieval_mode)
 
     reqs = milvus_gateway.create_requests(
         dense_vector=dense_vector,
         sparse_vector=sparse_vector,
         expr=filter_expr,
+        retrieval_mode=normalized_mode.value,
+        query_text=rewritten_query,
+        learned_sparse_field=LEARNED_SPARSE_FIELD,
+        bm25_sparse_field=BM25_SPARSE_FIELD,
     )
     hybrid_result = milvus_gateway.hybrid_search(
         collection_name=milvus_gateway.chunk_collection_name,
         reqs=reqs,
-        ranker_weights=RETRIEVAL_RANKER_WEIGHTS,
+        ranker_type="rrf",
+        rrf_k=RETRIEVAL_RRF_K,
         limit=RETRIEVAL_DEFAULT_LIMIT,
         output_fields=CHUNK_OUTPUT_FIELDS,
     )
 
     if hybrid_result and hybrid_result[0]:
+        retrieval_channels = [
+            *channels_for_retrieval_mode(normalized_mode),
+            RetrievalChannel.ORIGINAL,
+        ]
         return [
-            format_chunk_search_item(item, source_type="milvus")
-            for item in hybrid_result[0]
+            format_chunk_search_item(
+                item,
+                retrieval_channels=retrieval_channels,
+                retrieval_rank=rank,
+            )
+            for rank, item in enumerate(hybrid_result[0], start=1)
         ]
     return []
 
@@ -171,6 +195,7 @@ def _build_observation(
         used_structured_filter: bool,
         filter_fallback: bool,
         duration_ms: int,
+        retrieval_mode: RetrievalMode,
 ) -> RetrievalObservation:
     """把两阶段检索事实收口成强校验 Observation，不在这里生成答案或 Citation。"""
     suggested_identifiers = suggested_identifiers or {}
@@ -181,7 +206,9 @@ def _build_observation(
     return RetrievalObservation(
         action=QueryAction.LOCAL_SEARCH,
         status=ObservationStatus.SUCCESS if candidate_count else ObservationStatus.EMPTY,
-        channel_counts={"dense_learned_sparse": len(chunks)},
+        # Milvus hybrid_search 只返回模式内 RRF 后的统一列表，当前拿不到每个底层请求的
+        # 独立命中数，因此按实际 retrieval_mode 记录组合结果数量，不伪造逐通道计数。
+        channel_counts={retrieval_mode.value: len(chunks)},
         candidate_count=candidate_count,
         reranked_count=0,
         top_rerank_score=None,
@@ -216,6 +243,8 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
     rewritten_query, query_identifiers, structured_identifiers, base_filter_expr = check_params(state)
 
     state["query_identifiers"] = query_identifiers
+    retrieval_mode = normalize_retrieval_mode(state.get("retrieval_mode"))
+    state["retrieval_mode"] = retrieval_mode.value
     retrieval_query = append_identifiers_to_query(rewritten_query, query_identifiers)
     query_vectors = _embed_retrieval_query(retrieval_query)
     used_structured_filter = bool(structured_identifiers)
@@ -227,6 +256,7 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
             retrieval_query,
             base_filter_expr,
             query_vectors=query_vectors,
+            retrieval_mode=retrieval_mode,
         )
         observation = _build_observation(
             chunks=chunks,
@@ -238,6 +268,7 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
             used_structured_filter=False,
             filter_fallback=False,
             duration_ms=int((perf_counter() - started_at) * 1000),
+            retrieval_mode=retrieval_mode,
         )
         state["embedding_chunks"] = chunks
         state["retrieval_observation"] = observation
@@ -251,6 +282,7 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
             retrieval_query,
             exact_filter_expr,
             query_vectors=query_vectors,
+            retrieval_mode=retrieval_mode,
         )
         guaranteed_chunks = _records_with_structured_filter_guarantee(
             exact_chunks,
@@ -271,6 +303,7 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
                 used_structured_filter=True,
                 filter_fallback=False,
                 duration_ms=int((perf_counter() - started_at) * 1000),
+                retrieval_mode=retrieval_mode,
             )
             state["embedding_chunks"] = list(exact_evidence)
             state["retrieval_observation"] = observation
@@ -283,6 +316,7 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
         retrieval_query,
         base_filter_expr,
         query_vectors=query_vectors,
+        retrieval_mode=retrieval_mode,
     )
     exact_evidence, matched_identifiers = filter_records_matching_requested_identifiers(
         broad_chunks,
@@ -304,6 +338,7 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
             used_structured_filter=used_structured_filter,
             filter_fallback=filter_fallback,
             duration_ms=int((perf_counter() - started_at) * 1000),
+            retrieval_mode=retrieval_mode,
         )
         state["embedding_chunks"] = list(exact_evidence)
         state["retrieval_observation"] = observation
@@ -331,6 +366,7 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
         used_structured_filter=used_structured_filter,
         filter_fallback=filter_fallback,
         duration_ms=int((perf_counter() - started_at) * 1000),
+        retrieval_mode=retrieval_mode,
     )
     state["embedding_chunks"] = broad_chunks
     state["retrieval_observation"] = observation

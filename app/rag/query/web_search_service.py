@@ -4,6 +4,11 @@ import json
 from app.infra.config.providers import infra_config
 from app.process.query.agent.state import QueryGraphState
 from app.rag.query.config import RETRIEVAL_DEFAULT_LIMIT
+from app.rag.query.contracts import (
+    EvidenceSourceType,
+    RetrievalCandidate,
+    RetrievalChannel,
+)
 from app.shared.runtime.logger import logger,step_log
 
 def check_params(state):
@@ -61,7 +66,36 @@ def search_by_web(state: QueryGraphState) -> QueryGraphState:
 
     # 3.获取结果
     search_text = mcp_result.content[0].text
-    web_search_docs = json.loads(search_text).get("pages", [])
+    raw_pages = json.loads(search_text).get("pages", [])
+    web_search_docs = []
+    for rank, page in enumerate(raw_pages, start=1):
+        url = str(page.get("url") or "").strip()
+        content = str(page.get("snippet") or page.get("content") or "").strip()
+        if not url or not content:
+            # Web 候选没有本地 ID，URL 和摘要就是后续去重、rerank、Citation 的最低身份
+            # 契约。缺少任一项时跳过，不能伪造 chunk_id 或把空正文送进 reranker。
+            logger.warning(f"忽略缺少 url/摘要的 Web 搜索结果，rank={rank}")
+            continue
+        title = str(page.get("title") or url).strip()
+        raw_score = page.get("score")
+        retrieval_score = float(raw_score) if isinstance(raw_score, (int, float)) else 0.0
+        candidate = RetrievalCandidate(
+            document_id=None,
+            chunk_id=None,
+            dataset_id=None,
+            index_version=None,
+            chunk_index=None,
+            title=title,
+            source_title=title,
+            content=content,
+            source_type=EvidenceSourceType.WEB,
+            retrieval_channels=[RetrievalChannel.WEB],
+            retrieval_rank=rank,
+            retrieval_score=max(0.0, retrieval_score),
+            rerank_score=None,
+            url=url,
+        )
+        web_search_docs.append(candidate.model_dump(mode="json"))
     logger.info(f"{rewritten_query}联网搜索查询到的结果: {web_search_docs}")
 
     # 4.回写

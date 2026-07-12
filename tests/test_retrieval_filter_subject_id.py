@@ -28,7 +28,7 @@ class FakeMilvusGateway:
     def __init__(self):
         self.exprs = []
 
-    def create_requests(self, dense_vector, sparse_vector, expr=None, limit=5):
+    def create_requests(self, dense_vector, sparse_vector, expr=None, limit=5, **kwargs):
         self.exprs.append(expr)
         return [f"req:{expr}"]
 
@@ -39,7 +39,11 @@ class FakeMilvusGateway:
                     "id": 1001,
                     "distance": 0.86,
                     "entity": {
-                        "chunk_id": 1001,
+                    "chunk_id": 1001,
+                    "dataset_id": "dataset_ops",
+                    "document_id": "doc-1001",
+                    "index_version": 1,
+                    "chunk_index": 0,
                         "subject_id": "subject_hak_180",
                         "standard_subject_name": "HAK 180 烫金机",
                         "content": "新数据按 subject_id 召回。",
@@ -193,8 +197,10 @@ def test_embedding_and_hyde_reuse_exactly_the_same_filter_expr(monkeypatch):
         + ' AND alarm_code in ["E021"]'
     )
     assert fake_gateway.exprs == [expected_expr, expected_expr]
-    assert embedding_result["embedding_chunks"][0]["type"] == "milvus"
-    assert hyde_result["hyde_embedding_chunks"][0]["type"] == "hyde"
+    assert embedding_result["embedding_chunks"][0]["source_type"] == "local"
+    assert "original" in embedding_result["embedding_chunks"][0]["retrieval_channels"]
+    assert hyde_result["hyde_embedding_chunks"][0]["source_type"] == "local"
+    assert "hyde" in hyde_result["hyde_embedding_chunks"][0]["retrieval_channels"]
 
 
 def test_dense_and_learned_sparse_requests_receive_the_same_filter_expr():
@@ -246,4 +252,5 @@ def test_embedding_query_preserves_formatted_result_metadata(monkeypatch):
 
     assert fake_gateway.exprs == ["expected-filter"]
     assert result[0]["chunk_id"] == 1001
-    assert result[0]["type"] == "milvus"
+    assert result[0]["source_type"] == "local"
+    assert result[0]["document_id"] == "doc-1001"
