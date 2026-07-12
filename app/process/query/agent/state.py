@@ -97,7 +97,7 @@ class QueryGraphState(TypedDict):
     # 型号、报警码、SOP 编号、零件编号等规范化结果，例如 {"alarm_code": ["E020"]}。
     # 该字段必须忠实保留用户输入，不能因为向量检索找到相近的 E021 就静默覆盖成 E021；
     # 系统猜测的纠错候选属于 RetrievalObservation.suggested_identifiers，必须经用户确认。
-    # 默认空字典；后续设备标识提取任务写入，并用于第一段精确过滤或显著加权。
+    # 默认空字典；阶段 5 第五部分已在查询入口写入，并用于第一段精确过滤和第二段查询增强。
     query_identifiers: dict[str, list[str]]
 
     # history 的中文含义是“当前会话历史消息”。主体改写和答案 Prompt 读取该列表；当前
@@ -146,7 +146,8 @@ class QueryGraphState(TypedDict):
 
     # retrieval observation 的中文含义是“检索观察结果”。它是最近一个检索 Action 执行后
     # 返回给 Planner 的结构化事实，包含数量、分数、标识命中、耗时和错误。
-    # 默认 None；当前检索节点尚未生成该契约，后续 Observation 节点写入。
+    # 默认 None；阶段 5 第五部分的普通本地检索已生成编号确认 Observation，其他 Action
+    # 的完整 Observation、分数和证据摘要仍由后续 Planner/统一召回任务补齐。
     retrieval_observation: RetrievalObservation | None
 
     # retrieval mode 的中文含义是“召回组合模式”。后续明确本次使用 dense + learned

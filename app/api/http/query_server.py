@@ -18,6 +18,7 @@ from app.shared.runtime.logger import PROJECT_ROOT, logger, step_log
 from app.infra.config.providers import settings
 from app.process.query.agent.main_graph import query_graph_app
 from app.process.query.agent.state import create_query_default_state,QueryGraphState
+from app.rag.query.query_identifier_service import extract_query_identifiers
 from app.shared.utils.sse_utils import SSEEvent, create_sse_queue, push_to_session, sse_generator
 from app.shared.utils.task_utils import (
     TASK_STATUS_COMPLETED,
@@ -95,6 +96,9 @@ def query_graph_invoke(
         # 使用带 UTC 时区的 ISO 8601 时间，后续计算耗时、持久化 Trace 和离线重放时
         # 不依赖部署机器的本地时区。
         query_started_at=datetime.now(timezone.utc).isoformat(),
+        # 在进入 LangGraph 前从用户原始问题提取确定性设备标识。该字段忠实保存用户输入，
+        # 后续检索发现的 E021 等相近候选只能进入 suggested_identifiers，不能覆盖 E020。
+        query_identifiers=extract_query_identifiers(query),
     )
 
     # 清空task_utils的数据

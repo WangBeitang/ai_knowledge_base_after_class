@@ -44,6 +44,20 @@ STRUCTURED_IDENTIFIER_FIELDS = (
     "maintenance_stage",
 )
 
+# lexical-only identifier 的中文含义是“当前只能通过正文/词法通道查找的标识”。
+# ``sop_code``（SOP 编号）和 ``part_number``（零件/备件编号）还没有独立的 Milvus
+# schema 字段，因此它们可以保存在 QueryGraphState.query_identifiers 中，也可以追加到
+# 检索文本中，但绝不能被拼成不存在的 ``sop_code in [...]`` 表达式。等后续评测证明有
+# 必要扩 schema 后，再把对应字段迁入 STRUCTURED_IDENTIFIER_FIELDS。
+LEXICAL_ONLY_IDENTIFIER_FIELDS = (
+    "sop_code",
+    "part_number",
+)
+
+# QueryGraphState 当前允许承载的全部查询标识。该白名单同时防止调用方使用任意 key
+# 绕过字段契约；其中只有 STRUCTURED_IDENTIFIER_FIELDS 会真正进入 Milvus filter。
+QUERY_IDENTIFIER_FIELDS = STRUCTURED_IDENTIFIER_FIELDS + LEXICAL_ONLY_IDENTIFIER_FIELDS
+
 
 def _normalize_milvus_string_values(values, *, field_name: str) -> list[str]:
     """
@@ -197,6 +211,57 @@ def build_structured_identifier_filter(query_identifiers=None) -> str:
     return " AND ".join(clauses)
 
 
+def select_structured_query_identifiers(query_identifiers=None) -> dict[str, list[str]]:
+    """
+    从查询标识中选出当前 Milvus schema 可以精确过滤的部分。
+
+    该函数与 ``build_structured_identifier_filter`` 的边界不同：后者是严格的底层构建器，
+    直接传入 ``sop_code`` 仍会报错；本函数是 State 到 filter 的适配器，允许 State 同时
+    保存结构化标识和 lexical-only 标识，再只把前者交给 Milvus。
+    """
+    if query_identifiers is None:
+        return {}
+    if not isinstance(query_identifiers, Mapping):
+        raise ValueError("query_identifiers 必须是字段到字符串列表的字典")
+
+    unsupported_fields = sorted(
+        str(field_name)
+        for field_name in query_identifiers
+        if field_name not in QUERY_IDENTIFIER_FIELDS
+    )
+    if unsupported_fields:
+        raise ValueError(
+            "query_identifiers 包含当前查询契约不支持的字段："
+            + ", ".join(unsupported_fields)
+        )
+
+    structured_identifiers: dict[str, list[str]] = {}
+    for field_name in STRUCTURED_IDENTIFIER_FIELDS:
+        if field_name not in query_identifiers:
+            continue
+        normalized_values = _normalize_milvus_string_values(
+            query_identifiers[field_name],
+            field_name=f"query_identifiers.{field_name}",
+        )
+        if not normalized_values:
+            raise ValueError(f"query_identifiers.{field_name} 不能为空")
+        structured_identifiers[field_name] = normalized_values
+
+    # lexical-only 标识虽然不进入 expr，也必须在边界校验非空，避免 State/Trace 声称
+    # 提取到一个编号，实际追加到查询时却什么都没有。
+    for field_name in LEXICAL_ONLY_IDENTIFIER_FIELDS:
+        if field_name not in query_identifiers:
+            continue
+        normalized_values = _normalize_milvus_string_values(
+            query_identifiers[field_name],
+            field_name=f"query_identifiers.{field_name}",
+        )
+        if not normalized_values:
+            raise ValueError(f"query_identifiers.{field_name} 不能为空")
+
+    return structured_identifiers
+
+
 def build_chunk_retrieval_filter(
         *,
         dataset_ids,
@@ -226,7 +291,10 @@ def build_chunk_retrieval_filter(
         subject_ids,
         value_label="subject_ids",
     )
-    identifier_clause = build_structured_identifier_filter(query_identifiers)
+    # State 可以同时包含暂时只有词法能力的 SOP/零件编号。这里只选择 schema 已存在的
+    # 字段进入 expr；未知字段和空值仍由适配器明确拒绝，不能静默忽略。
+    structured_identifiers = select_structured_query_identifiers(query_identifiers)
+    identifier_clause = build_structured_identifier_filter(structured_identifiers)
 
     clauses = [access_clause, subject_clause]
     if identifier_clause:

@@ -193,7 +193,14 @@ def test_query_nodes_return_partial_state(monkeypatch):
     monkeypatch.setattr(
         query_embedding_node,
         "search_by_embedding",
-        lambda state: {**state, "embedding_chunks": [{"chunk_id": "c1"}], "extra": "ignored"},
+        lambda state: {
+            **state,
+            "query_identifiers": {"alarm_code": ["E020"]},
+            "embedding_chunks": [{"chunk_id": "c1"}],
+            "retrieval_observation": {"status": "success"},
+            "clarification_question": None,
+            "extra": "ignored",
+        },
     )
     monkeypatch.setattr(
         query_hyde_node,
@@ -208,7 +215,15 @@ def test_query_nodes_return_partial_state(monkeypatch):
     monkeypatch.setattr(
         query_answer_node,
         "generate_answer",
-        lambda state: {**state, "answer": "ok", "image_urls": ["https://example.com/a.png"], "extra": "ignored"},
+        lambda state: {
+            **state,
+            "answer": "ok",
+            "image_urls": ["https://example.com/a.png"],
+            "citations": [],
+            "clarification_question": None,
+            "terminal_reason_code": None,
+            "extra": "ignored",
+        },
     )
 
     base_state = {"session_id": "session-1", "is_stream": False}
@@ -222,7 +237,18 @@ def test_query_nodes_return_partial_state(monkeypatch):
     }
     assert set(query_rrf_node.node_rrf(base_state)) == {"rrf_chunks"}
     assert set(query_rerank_node.node_rerank(base_state)) == {"reranked_docs"}
-    assert set(query_embedding_node.node_search_embedding(base_state)) == {"embedding_chunks"}
+    assert set(query_embedding_node.node_search_embedding(base_state)) == {
+        "query_identifiers",
+        "embedding_chunks",
+        "retrieval_observation",
+        "clarification_question",
+    }
     assert set(query_hyde_node.node_search_embedding_hyde(base_state)) == {"hyde_embedding_chunks"}
     assert set(query_web_node.node_web_search_mcp(base_state)) == {"web_search_docs"}
-    assert set(query_answer_node.node_answer_output(base_state)) == {"answer", "image_urls"}
+    assert set(query_answer_node.node_answer_output(base_state)) == {
+        "answer",
+        "image_urls",
+        "citations",
+        "clarification_question",
+        "terminal_reason_code",
+    }

@@ -4,6 +4,7 @@ from app.rag.query.config import RERANK_MAX_INPUT_TOKENS, RERANK_MIN_SUMMARY_CHA
     RERANK_MIN_TOPK, RERANK_MAX_TOPK, RERANK_GAP_ABS, RERANK_GAP_RATIO
 from app.shared.runtime.load_prompt import load_prompt
 from app.shared.runtime.logger import logger
+from app.rag.query.query_identifier_service import identifier_requires_clarification
 
 
 def check_params(state):
@@ -148,6 +149,12 @@ def rerank_documents(state: QueryGraphState) -> QueryGraphState:
     3. 根据得分动态截断，智能截取 TopK
     4. 回写 reranked_docs
     """
+    # 当前固定图仍会经过 rerank 节点；编号只得到相近候选或完全未找到时，候选不得进入
+    # reranker 和答案证据。这里返回空 partial result，最终由答案出口交付确定性追问。
+    if identifier_requires_clarification(state.get("retrieval_observation")):
+        state["reranked_docs"] = []
+        return state
+
     # 1.参数校验
     rrf_chunks, web_search_docs, rewritten_query = check_params(state)
 

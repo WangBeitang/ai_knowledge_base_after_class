@@ -6,6 +6,46 @@ from app.shared.utils.task_utils import push_to_session, set_task_result
 from app.shared.utils.sse_utils import SSEEvent
 from app.shared.runtime.logger import logger
 from app.infra.persistence.history_repository import history_repository
+from app.rag.query.contracts import IdentifierResolutionStatus, PlannerReasonCode, RetrievalObservation
+from app.rag.query.query_identifier_service import identifier_requires_clarification
+
+
+def apply_identifier_clarification_guard(state) -> bool:
+    """
+    在答案 LLM 前拦截“相近编号待确认”和“编号未找到”两种状态。
+
+    guard 的中文含义是“安全保护”。当前 Planner 尚未接入固定 LangGraph，因此检索节点
+    不能直接路由到 ask_clarification；本函数作为阶段 5 分步实施期间的兼容保护，只把
+    Observation 中确定性生成的追问交付给用户，并清空图片/引用。它不会把候选 chunk
+    送入答案 Prompt。任务 9 接入 Planner 后，这条规则仍可保留为答案出口的最后防线。
+    """
+    observation = state.get("retrieval_observation")
+    if not identifier_requires_clarification(observation):
+        return False
+
+    if isinstance(observation, RetrievalObservation):
+        resolution_status = observation.identifier_resolution_status
+        clarification_question = observation.clarification_question
+    else:
+        resolution_status = observation.get("identifier_resolution_status")
+        clarification_question = observation.get("clarification_question")
+
+    if not clarification_question:
+        raise ValueError("编号需要确认时 RetrievalObservation.clarification_question 不能为空")
+
+    state["answer"] = clarification_question
+    state["clarification_question"] = clarification_question
+    state["image_urls"] = []
+    state["citations"] = []
+    state["terminal_reason_code"] = (
+        PlannerReasonCode.IDENTIFIER_CONFIRMATION_REQUIRED
+        if resolution_status in {
+            IdentifierResolutionStatus.SUGGESTION_REQUIRED,
+            IdentifierResolutionStatus.SUGGESTION_REQUIRED.value,
+        }
+        else PlannerReasonCode.IDENTIFIER_NOT_FOUND
+    )
+    return True
 
 
 def try_return_existing_answer(state):
@@ -139,6 +179,10 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
     6. 回写 answer 和 image_urls
     """
     ""
+    # 0.编号候选尚未被用户确认时先触发安全保护。保护会写入已有 answer，随后复用统一的
+    # 流式/非流式交付逻辑；因此不会调用答案 LLM，也不会生成 Citation。
+    apply_identifier_clarification_guard(state)
+
     # 1.如果已有答案，直接返回
     if not try_return_existing_answer(state):
         # 校验输入

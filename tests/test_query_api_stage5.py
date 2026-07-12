@@ -192,7 +192,7 @@ def test_query_graph_state_keeps_different_owner_context_for_same_query(monkeypa
     for user_id in ("user_a", "user_b"):
         query_server.query_graph_invoke(
             session_id=f"session-{user_id}",
-            query="相同的问题",
+            query="HAK-180 的 E020 怎么处理？",
             is_stream=False,
             owner_user_id=user_id,
             dataset_ids=[DEFAULT_DATASET_ID],
@@ -210,6 +210,14 @@ def test_query_graph_state_keeps_different_owner_context_for_same_query(monkeypa
     # Planner 尚未接入当前主图，因此不能提前把空 State 标记成已经运行 rule-v1。
     assert all(state["planner_step"] == 0 for state in captured_states)
     assert all(state["policy_version"] == "" for state in captured_states)
+    # 标识提取在进入 LangGraph 前完成，并且不同用户得到彼此独立但内容一致的字典。
+    assert all(
+        state["query_identifiers"] == {
+            "equipment_model": ["HAK 180"],
+            "alarm_code": ["E020"],
+        }
+        for state in captured_states
+    )
 
 
 def test_query_log_trace_prefers_single_execution_id_and_keeps_legacy_fallbacks():
