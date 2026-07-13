@@ -12,6 +12,7 @@ from app.process.query.agent.nodes import node_web_search_mcp as query_web_node
 from app.process.query.agent.nodes import node_rerank as query_rerank_node
 from app.process.query.agent.nodes import node_rrf as query_rrf_node
 from app.process.query.agent.nodes import node_subject_name_confirm as query_subject_node
+from app.rag.query.contracts import PlannerDecision, PlannerReasonCode, QueryAction
 
 
 def test_import_entry_returns_only_route_file_fields():
@@ -176,7 +177,9 @@ def test_query_nodes_return_partial_state(monkeypatch):
             "standard_subject_names": ["HAK 180 烫金机"],
             "rewritten_query": "HAK 180 怎么操作？",
             "history": [],
-            "answer": "",
+            "subject_resolution_status": "confirmed",
+            "subject_candidates": [],
+            "clarification_question": None,
             "extra": "ignored",
         },
     )
@@ -228,23 +231,46 @@ def test_query_nodes_return_partial_state(monkeypatch):
 
     base_state = {"session_id": "session-1", "is_stream": False}
 
+    def state_for(action: QueryAction):
+        return {
+            **base_state,
+            "current_planner_decision": PlannerDecision(
+                action=action,
+                query="HAK 180 怎么操作？",
+                reason_code=PlannerReasonCode.INITIAL_LOCAL_SEARCH,
+            ),
+            "current_action_duration_ms": 0,
+        }
+
     assert set(query_subject_node.node_subject_name_confirm(base_state)) == {
         "subject_ids",
         "standard_subject_names",
         "rewritten_query",
         "history",
-        "answer",
+        "subject_resolution_status",
+        "subject_candidates",
+        "clarification_question",
     }
     assert set(query_rrf_node.node_rrf(base_state)) == {"rrf_chunks"}
-    assert set(query_rerank_node.node_rerank(base_state)) == {"reranked_docs"}
-    assert set(query_embedding_node.node_search_embedding(base_state)) == {
+    assert set(query_rerank_node.node_rerank(state_for(QueryAction.LOCAL_SEARCH))) == {
+        "reranked_docs",
+        "current_action_duration_ms",
+    }
+    assert set(query_embedding_node.node_search_embedding(state_for(QueryAction.LOCAL_SEARCH))) == {
         "query_identifiers",
         "embedding_chunks",
         "retrieval_observation",
         "clarification_question",
+        "current_action_duration_ms",
     }
-    assert set(query_hyde_node.node_search_embedding_hyde(base_state)) == {"hyde_embedding_chunks"}
-    assert set(query_web_node.node_web_search_mcp(base_state)) == {"web_search_docs"}
+    assert set(query_hyde_node.node_search_embedding_hyde(state_for(QueryAction.HYDE_SEARCH))) == {
+        "hyde_embedding_chunks",
+        "current_action_duration_ms",
+    }
+    assert set(query_web_node.node_web_search_mcp(state_for(QueryAction.WEB_SEARCH))) == {
+        "web_search_docs",
+        "current_action_duration_ms",
+    }
     assert set(query_answer_node.node_answer_output(base_state)) == {
         "answer",
         "image_urls",

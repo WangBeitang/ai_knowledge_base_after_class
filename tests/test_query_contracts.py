@@ -40,13 +40,15 @@ def test_rrf_allows_single_retrieval_action():
     assert result["rrf_chunks"][0]["chunk_id"] == "chunk-1"
 
 
-def test_rrf_rejects_empty_retrieval_results():
-    with pytest.raises(ValueError):
-        check_rrf_params({
-            "embedding_chunks": [],
-            "hyde_embedding_chunks": [],
-            "web_search_docs": [],
-        })
+def test_rrf_keeps_empty_retrieval_result_for_planner_observation():
+    state = {
+        "embedding_chunks": [],
+        "hyde_embedding_chunks": [],
+        "web_search_docs": [],
+    }
+
+    assert check_rrf_params(state) == ([], [], [])
+    assert fuse_by_rrf(state)["rrf_chunks"] == []
 
 
 def test_rerank_reads_only_cross_action_rrf_candidates():

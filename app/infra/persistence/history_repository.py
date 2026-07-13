@@ -1,3 +1,5 @@
+from typing import Any
+
 from app.shared.clients.mongo_history_utils import (
     clear_history,
     get_recent_messages,
@@ -19,6 +21,9 @@ class HistoryRepository:
         standard_subject_names: list[str] | None = None,
         image_urls: list[str] | None = None,
         message_id: str | None = None,
+        citations: list[dict[str, Any]] | None = None,
+        trace_id: str = "",
+        terminal_reason_code: str = "",
     ) -> str:
         return save_chat_message(
             session_id=session_id,
@@ -28,6 +33,9 @@ class HistoryRepository:
             standard_subject_names=standard_subject_names,
             image_urls=image_urls,
             message_id=message_id,
+            citations=citations,
+            trace_id=trace_id,
+            terminal_reason_code=terminal_reason_code,
         )
 
     def clear_session(self, session_id: str) -> int:

@@ -4,6 +4,7 @@ from app.infra.vectorstore.milvus_gateway import milvus_gateway
 from app.process.query.agent.state import QueryGraphState
 from app.rag.query.config import QUERY_HISTORY_LIMIT, SUBJECT_NAME_CONFIRM_THRESHOLD, SUBJECT_NAME_CANDIDATE_THRESHOLD, \
     SUBJECT_NAME_OPTIONS_TOPK
+from app.rag.query.contracts import SubjectResolutionStatus
 from app.shared.runtime.load_prompt import load_prompt
 from app.shared.runtime.logger import step_log,logger
 
@@ -216,30 +217,39 @@ def confirm_subject_name(state: QueryGraphState) -> QueryGraphState:
     rewritten_query, subject_mentions = query_rewrite_and_subject_name_recognition(original_query, history_text)
     state["rewritten_query"] = rewritten_query
 
-    # 5. milvus 中查询和确认主体（前提：LLM 识别到主体提及）
+    # 5. 先初始化结构化主体输出。阶段 9 起主体节点不再把追问/未找到文本偷偷写进 answer；
+    # Planner 只读取下面这些事实，决定 ask_clarification、refuse 或继续检索。
+    state["subject_ids"] = []
+    state["standard_subject_names"] = []
+    state["subject_candidates"] = []
+    state["clarification_question"] = None
+
+    # 6. Milvus 中查询和确认主体（前提：LLM 识别到主体提及）。
     if subject_mentions and len(subject_mentions) > 0:
-        # 5.1 先查阶段2别名索引：用户输入别名 -> subject_id / standard_subject_name
+        # 6.1 先查阶段2别名索引：用户输入别名 -> subject_id / standard_subject_name
         search_result_dict = search_subject_alias_in_milvus(subject_mentions)
 
-        # 6. 根据评分分类：确认列表 / 可选列表
+        # 6.2 根据评分分类：确认列表 / 可选列表。
         confirmed_records, candidate_list = classify_subject_aliases(search_result_dict)
 
-        # 7. state 更新
+        # 6.3 只写结构化结果，不提前生成最终 answer。
         if confirmed_records and len(confirmed_records) > 0:
-            return apply_confirmed_subjects_to_state(state, confirmed_records, rewritten_query)
-        if candidate_list and len(candidate_list) > 0:
-            state["subject_ids"] = []
-            state["standard_subject_names"] = []
-            state["rewritten_query"] = rewritten_query
-            state["answer"] = f"请问您想咨询的是[{','.join(candidate_list)}]吗？"
-            return state
-        state["subject_ids"] = []
-        state["standard_subject_names"] = []
-        state["rewritten_query"] = rewritten_query
-        state["answer"] = "非常抱歉，没有找到匹配的答案，请重新提问。"
-        return state
+            apply_confirmed_subjects_to_state(state, confirmed_records, rewritten_query)
+            state["subject_resolution_status"] = SubjectResolutionStatus.CONFIRMED
+        elif candidate_list and len(candidate_list) > 0:
+            state["subject_resolution_status"] = SubjectResolutionStatus.AMBIGUOUS
+            state["subject_candidates"] = list(candidate_list)
+            state["clarification_question"] = f"请问您想咨询的是[{','.join(candidate_list)}]吗？"
+        else:
+            state["subject_resolution_status"] = SubjectResolutionStatus.NOT_FOUND
+    else:
+        # no_mention 表示问题和历史中都没有可确认主体。它和“提到了但库里没找到”不同，
+        # Planner 会选择追问，而不是把未限定主体的问题直接扩成全库搜索。
+        state["subject_resolution_status"] = SubjectResolutionStatus.NO_MENTION
+        state["clarification_question"] = "请说明您要咨询的设备型号或标准设备名称。"
 
-    # 8. 保留此次对话的历史记录
+    # 7. 所有正常主体结果都必须经过同一个用户消息保存点。旧实现的 confirmed/ambiguous/
+    # not_found 分支会提前 return，导致用户问题漏存；现在先完成状态分类，再统一落历史。
     history_repository.save_message(
         session_id=session_id,
         role="user",
@@ -247,4 +257,4 @@ def confirm_subject_name(state: QueryGraphState) -> QueryGraphState:
         rewritten_query=state.get("rewritten_query", original_query),
         standard_subject_names=state.get("standard_subject_names", [])
     )
-    return  state
+    return state

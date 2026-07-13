@@ -135,7 +135,13 @@ def test_query_api_passes_normalized_context_to_sync_graph(monkeypatch):
 
     def fake_query_graph_invoke(**kwargs):
         graph_calls.append(copy.deepcopy(kwargs))
-        return {"answer": "测试答案", "image_urls": []}
+        return {
+            "answer": "测试答案",
+            "image_urls": [],
+            "trace_id": "trace-api-test",
+            "citations": [],
+            "terminal_reason_code": "local_evidence_sufficient",
+        }
 
     monkeypatch.setattr(query_server, "query_graph_invoke", fake_query_graph_invoke)
 
@@ -188,6 +194,7 @@ def test_query_graph_state_keeps_different_owner_context_for_same_query(monkeypa
     monkeypatch.setattr(query_server, "query_graph_app", FakeQueryGraph())
     monkeypatch.setattr(query_server, "clear_task", lambda session_id: None)
     monkeypatch.setattr(query_server, "update_task_status", lambda *args, **kwargs: None)
+    monkeypatch.setattr(query_server, "safe_create_running_trace", lambda state: None)
 
     for user_id in ("user_a", "user_b"):
         query_server.query_graph_invoke(
@@ -207,9 +214,12 @@ def test_query_graph_state_keeps_different_owner_context_for_same_query(monkeypa
     assert all(str(UUID(state["trace_id"])) == state["trace_id"] for state in captured_states)
     # query_started_at 使用带 UTC 时区的 ISO 8601 字符串，后续 Trace 计算耗时不依赖本地时区。
     assert all(datetime.fromisoformat(state["query_started_at"]).utcoffset() is not None for state in captured_states)
-    # Planner 尚未接入当前主图，因此不能提前把空 State 标记成已经运行 rule-v1。
+    # 查询入口必须在创建 running Trace 前冻结策略/检索版本；planner_step 仍为 0，表示
+    # Planner 尚未真正做出第一步 Decision。
     assert all(state["planner_step"] == 0 for state in captured_states)
-    assert all(state["policy_version"] == "" for state in captured_states)
+    assert all(state["policy_version"] == "rule-v1" for state in captured_states)
+    assert all(state["retrieval_config_version"] == "retrieval-stage5-dev-v1" for state in captured_states)
+    assert all(state["retrieval_config_snapshot"]["rrf_k"] == 60 for state in captured_states)
     # 标识提取在进入 LangGraph 前完成，并且不同用户得到彼此独立但内容一致的字典。
     assert all(
         state["query_identifiers"] == {
@@ -233,3 +243,37 @@ def test_query_log_trace_prefers_single_execution_id_and_keeps_legacy_fallbacks(
     assert _trace_id({"task_id": "task-import-1", "session_id": "session-1"}) == "task-import-1"
     # 旧查询调用或测试没有新字段时，最后回退 session_id，而不是产生异常。
     assert _trace_id({"session_id": "session-1"}) == "session-1"
+
+
+def test_query_graph_invoke_reraises_programming_error_instead_of_disguising_no_evidence(monkeypatch):
+    statuses = []
+    errors = []
+
+    class BrokenQueryGraph:
+        def invoke(self, state):
+            raise ValueError("planner state contract broken")
+
+    monkeypatch.setattr(query_server, "query_graph_app", BrokenQueryGraph())
+    monkeypatch.setattr(query_server, "clear_task", lambda session_id: None)
+    monkeypatch.setattr(
+        query_server,
+        "update_task_status",
+        lambda session_id, status, is_stream: statuses.append(status),
+    )
+    monkeypatch.setattr(
+        query_server,
+        "push_to_session",
+        lambda session_id, event, payload: errors.append(payload),
+    )
+
+    with pytest.raises(ValueError, match="planner state contract broken"):
+        query_server.query_graph_invoke(
+            session_id="session-broken",
+            query="HAK 180 怎么开机？",
+            is_stream=False,
+            owner_user_id="user-a",
+            dataset_ids=[DEFAULT_DATASET_ID],
+        )
+
+    assert statuses == [query_server.TASK_STATUS_PROCESSING, query_server.TASK_STATUS_FAILED]
+    assert errors == [{"error": "planner state contract broken"}]

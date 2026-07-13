@@ -1,8 +1,15 @@
 import sys
+from time import perf_counter
 
+from app.rag.query.contracts import QueryAction
 from app.shared.runtime.logger import node_log
 from app.rag.query.embedding_search_service import search_by_embedding
 from app.shared.utils.task_utils import add_done_task, add_running_task
+from app.process.query.agent.nodes.node_retrieval_observation import (
+    build_failed_observation,
+    current_decision,
+    is_expected_external_error,
+)
 
 @node_log("node_search_embedding")
 def node_search_embedding(state):
@@ -16,13 +23,31 @@ def node_search_embedding(state):
     用旧副本覆盖。
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
-    result_state = search_by_embedding(state)
+    decision = current_decision(state)
+    if decision.action != QueryAction.LOCAL_SEARCH:
+        raise ValueError("普通本地检索节点只能执行 local_search Decision")
+    started_at = perf_counter()
+    try:
+        result_state = search_by_embedding(state)
+    except Exception as error:
+        if not is_expected_external_error(error):
+            raise
+        duration_ms = int((perf_counter() - started_at) * 1000)
+        observation = build_failed_observation(state, decision.action, error, duration_ms)
+        add_done_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
+        return {
+            "embedding_chunks": [],
+            "retrieval_observation": observation,
+            "current_action_duration_ms": duration_ms,
+        }
+    duration_ms = int((perf_counter() - started_at) * 1000)
     add_done_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
     return {
         "query_identifiers": result_state.get("query_identifiers", {}),
         "embedding_chunks": result_state.get("embedding_chunks"),
         "retrieval_observation": result_state.get("retrieval_observation"),
         "clarification_question": result_state.get("clarification_question"),
+        "current_action_duration_ms": duration_ms,
     }
 
 if __name__ == "__main__":

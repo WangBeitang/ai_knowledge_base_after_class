@@ -10,7 +10,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
 from app.api.schema.query_schema import QueryRequestParam, QueryStreamResponse, QueryNotStreamResponse, HistoryItem, \
-    HistoryResponse, ClearHistoryResponse
+    HistoryResponse, ClearHistoryResponse, QueryTaskStatusResponse
 from app.api.http.request_context import get_current_user_id
 from app.infra.persistence.history_repository import history_repository
 from app.shared.config.knowledge_base_config import DEFAULT_TENANT_ID
@@ -19,6 +19,15 @@ from app.infra.config.providers import settings
 from app.process.query.agent.main_graph import query_graph_app
 from app.process.query.agent.state import create_query_default_state,QueryGraphState
 from app.rag.query.query_identifier_service import extract_query_identifiers
+from app.rag.query.config import (
+    POLICY_VERSION,
+    RETRIEVAL_CONFIG_VERSION,
+    RETRIEVAL_DEFAULT_MODE,
+    WEB_FALLBACK_ENABLED,
+    build_retrieval_config_snapshot,
+)
+from app.rag.query.contracts import Citation, PlannerReasonCode
+from app.rag.query.trace_service import safe_create_running_trace, safe_fail_trace
 from app.shared.utils.sse_utils import SSEEvent, create_sse_queue, push_to_session, sse_generator
 from app.shared.utils.task_utils import (
     TASK_STATUS_COMPLETED,
@@ -27,6 +36,9 @@ from app.shared.utils.task_utils import (
     clear_task,
     get_done_task_list,
     get_task_result,
+    get_running_task_list,
+    get_task_status,
+    set_task_result,
     update_task_status,
 )
 
@@ -82,6 +94,10 @@ def query_graph_invoke(
     Request，也不能回退到 anonymous_user。这样每个节点看到的都是同一份稳定上下文，
     后续权限过滤、Planner Trace 和评测重放都可以直接复用这些字段。
     """
+    retrieval_config_snapshot = build_retrieval_config_snapshot(
+        retrieval_mode=RETRIEVAL_DEFAULT_MODE,
+        web_fallback_enabled=WEB_FALLBACK_ENABLED,
+    )
     state = create_query_default_state(
         session_id=session_id,
         original_query=query,
@@ -99,10 +115,19 @@ def query_graph_invoke(
         # 在进入 LangGraph 前从用户原始问题提取确定性设备标识。该字段忠实保存用户输入，
         # 后续检索发现的 E021 等相近候选只能进入 suggested_identifiers，不能覆盖 E020。
         query_identifiers=extract_query_identifiers(query),
+        policy_version=POLICY_VERSION,
+        planner_type="rule",
+        retrieval_config_version=RETRIEVAL_CONFIG_VERSION,
+        retrieval_mode=RETRIEVAL_DEFAULT_MODE.value,
+        retrieval_config_snapshot=retrieval_config_snapshot,
+        web_search_allowed=WEB_FALLBACK_ENABLED,
+        # 只有真实查询入口开启持久化；直接调用 graph 的单元测试和离线重放保持无 Mongo I/O。
+        trace_persistence_enabled=True,
     )
 
     # 清空task_utils的数据
     clear_task(session_id)
+    safe_create_running_trace(state)
 
     try:
         update_task_status(session_id, TASK_STATUS_PROCESSING, is_stream)
@@ -111,6 +136,27 @@ def query_graph_invoke(
         logger.info(f"执行结束,执行结果为:{result_state}")
         update_task_status(session_id, TASK_STATUS_COMPLETED, is_stream)
 
+        terminal_reason_code = result_state.get("terminal_reason_code")
+        terminal_reason_value = (
+            terminal_reason_code.value
+            if hasattr(terminal_reason_code, "value")
+            else str(terminal_reason_code or "")
+        )
+        citations = [
+            item if isinstance(item, Citation) else Citation.model_validate(item)
+            for item in result_state.get("citations") or []
+        ]
+        # 后台轮询与 SSE FINAL 使用同一份结构化最终结果，避免两条交付路径字段漂移。
+        for key, value in {
+            "answer": result_state.get("answer", ""),
+            "image_urls": result_state.get("image_urls", []),
+            "trace_id": result_state.get("trace_id", state["trace_id"]),
+            "citations": [item.model_dump(mode="json") for item in citations],
+            "terminal_reason_code": terminal_reason_value,
+            "error": "",
+        }.items():
+            set_task_result(session_id, key, value)
+
         if is_stream:
             push_to_session(
                 session_id,
@@ -118,7 +164,10 @@ def query_graph_invoke(
                 {
                     "answer": result_state['answer'],
                     "status": "completed",
-                    "image_urls": result_state.get("image_urls", [])
+                    "image_urls": result_state.get("image_urls", []),
+                    "trace_id": result_state.get("trace_id", state["trace_id"]),
+                    "citations": [item.model_dump(mode="json") for item in citations],
+                    "terminal_reason_code": terminal_reason_value,
                 }
             )
         # 同步执行返回结果
@@ -126,7 +175,14 @@ def query_graph_invoke(
     except Exception as e:
         update_task_status(session_id, TASK_STATUS_FAILED, is_stream)
         push_to_session(session_id, SSEEvent.ERROR, {"error": str(e)})
-        logger.exception(f"执行失败,错误信息为:{e}")
+        set_task_result(session_id, "error", str(e))
+        set_task_result(session_id, "trace_id", state.get("trace_id", ""))
+        safe_fail_trace(state, e)
+        # 编程错误必须继续抛给 FastAPI/后台任务框架形成 500 和失败日志，不能返回 None 后
+        # 再被包装成“证据不足”。阶段 10 会在这里追加持久化 Trace failed；阶段 9 先保证
+        # 异常语义正确且日志始终携带本次独立 trace_id。
+        logger.exception(f"执行失败,trace_id={state.get('trace_id')},错误信息为:{e}")
+        raise
 
 @app.post("/query")
 def query(request: Request, back_ground_tasks: BackgroundTasks, request_param: QueryRequestParam):
@@ -172,8 +228,29 @@ def query(request: Request, back_ground_tasks: BackgroundTasks, request_param: Q
             answer=result.get("answer"),
             done_list=get_done_task_list(session_id),
             image_urls=result.get("image_urls", []),
+            trace_id=result.get("trace_id", ""),
+            citations=result.get("citations", []),
+            terminal_reason_code=result.get("terminal_reason_code"),
             message=f"{session_id}查询结束"
         )
+
+
+@app.get("/status/{session_id}", response_model=QueryTaskStatusResponse)
+def query_status(session_id: str):
+    """返回进程内查询任务快照；用于 SSE 断线后的轻量轮询兜底。"""
+    reason_value = get_task_result(session_id, "terminal_reason_code", "")
+    return QueryTaskStatusResponse(
+        session_id=session_id,
+        status=get_task_status(session_id),
+        done_list=get_done_task_list(session_id),
+        running_list=get_running_task_list(session_id),
+        answer=get_task_result(session_id, "answer", ""),
+        error=get_task_result(session_id, "error", ""),
+        image_urls=get_task_result(session_id, "image_urls", []),
+        trace_id=get_task_result(session_id, "trace_id", ""),
+        citations=get_task_result(session_id, "citations", []),
+        terminal_reason_code=(PlannerReasonCode(reason_value) if reason_value else None),
+    )
 
 @app.get("/history/{session_id}")
 def history(session_id: str, limit: int = 10):
@@ -188,6 +265,13 @@ def history(session_id: str, limit: int = 10):
             rewritten_query=message.get("rewritten_query", ""),
             standard_subject_names=message.get("standard_subject_names", []),
             image_urls=message.get("image_urls", []),
+            citations=message.get("citations", []),
+            trace_id=message.get("trace_id", ""),
+            terminal_reason_code=(
+                PlannerReasonCode(message["terminal_reason_code"])
+                if message.get("terminal_reason_code")
+                else None
+            ),
             ts=message.get("ts")
         )
         for message in message_list

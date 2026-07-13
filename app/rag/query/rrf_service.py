@@ -159,11 +159,9 @@ def check_params(state):
     hyde_embedding_chunks = state.get("hyde_embedding_chunks") or []
     web_search_docs = state.get("web_search_docs") or []
     if not any((embedding_chunks, hyde_embedding_chunks, web_search_docs)):
-        # Planner 尚未接入前保留编号追问安全出口；没有候选也允许空结构继续交付追问。
-        if identifier_requires_clarification(state.get("retrieval_observation")):
-            return embedding_chunks, hyde_embedding_chunks, web_search_docs
-        logger.error("所有已执行检索 Action 的候选都为空，业务无法继续进行")
-        raise ValueError("所有已执行检索 Action 的候选都为空，业务无法继续进行")
+        # 阶段 9 起“检索成功但零候选”是正常 Observation，而不是编程异常。返回三个空列表
+        # 让外层 RRF 产生 []，随后 Planner 可以根据 LOCAL_EMPTY/WEB_EMPTY 确定性 fallback。
+        logger.info("所有已执行检索 Action 的候选都为空，交由 Planner 判断下一步")
     return embedding_chunks, hyde_embedding_chunks, web_search_docs
 
 
@@ -172,8 +170,8 @@ def fuse_by_rrf(state: QueryGraphState) -> QueryGraphState:
     """
     汇总当前已执行的 original、HyDE、Web 原始排名并生成累计候选。
 
-    当前固定图仍并发执行三种检索；任务 9 接入 Planner 后，未执行 Action 的 State 字段
-    保持空列表，自然不会参与本函数。真正执行但返回空的 Action 由其 Observation/Trace
+    阶段 9 起只执行 Planner 选择的 Action；未执行 Action 的 State 字段保持空列表，
+    自然不会参与本函数。真正执行但返回空的 Action 由其 Observation/Trace
     记录，空列表本身不伪造候选或影响其他列表继续融合。
     """
     embedding_chunks, hyde_embedding_chunks, web_search_docs = check_params(state)

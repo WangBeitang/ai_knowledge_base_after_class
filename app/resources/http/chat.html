@@ -197,6 +197,21 @@
       text-decoration:none;
       word-break:break-all;
     }
+    .answer-citations{
+      margin-top:12px;
+      padding-top:10px;
+      border-top:1px dashed var(--border);
+      white-space:normal;
+    }
+    .answer-citations-title{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .answer-citations ol{margin:0;padding-left:20px}
+    .answer-citations li{margin:5px 0;font-size:12px;color:#56657a}
+    .answer-citations a{color:#2878c8;word-break:break-all}
+    .answer-trace{margin-top:6px;font-size:11px;color:var(--muted);word-break:break-all}
 
     .typing{
       display:inline-flex;gap:6px;align-items:center;
@@ -548,6 +563,49 @@
       }
     }
 
+    function renderCitations(containerEl, citations, traceId, terminalReasonCode){
+      const items = Array.isArray(citations) ? citations : [];
+      if(items.length === 0 && !traceId && !terminalReasonCode) return;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'answer-citations';
+      if(items.length > 0){
+        const title = document.createElement('div');
+        title.className = 'answer-citations-title';
+        title.textContent = '引用来源';
+        wrap.appendChild(title);
+        const list = document.createElement('ol');
+        for(const citation of items){
+          const row = document.createElement('li');
+          const sourceType = citation && citation.source_type;
+          if(sourceType === 'web'){
+            const link = document.createElement('a');
+            link.href = normalizeUrl(citation.source || '');
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = citation.title || citation.source || 'Web 来源';
+            row.appendChild(link);
+          }else{
+            const titleText = citation && (citation.title || citation.source) || '本地来源';
+            const identity = `document=${citation.document_id || '-'}, chunk=${citation.chunk_id ?? '-'}`;
+            row.textContent = `${titleText}（${identity}）`;
+          }
+          list.appendChild(row);
+        }
+        wrap.appendChild(list);
+      }
+      if(traceId || terminalReasonCode){
+        const trace = document.createElement('div');
+        trace.className = 'answer-trace';
+        trace.textContent = [
+          traceId ? `trace: ${traceId}` : '',
+          terminalReasonCode ? `reason: ${terminalReasonCode}` : ''
+        ].filter(Boolean).join(' · ');
+        wrap.appendChild(trace);
+      }
+      containerEl.appendChild(wrap);
+    }
+
     function addUserMsg(text){
       const html = `
         <div class="msg user">
@@ -576,7 +634,7 @@
       scrollToBottom();
     }
 
-    function addBotMsgWithTime(text, ts, imageUrls){
+    function addBotMsgWithTime(text, ts, imageUrls, citations, traceId, terminalReasonCode){
       const id = 'bot-his-' + Math.random().toString(36).slice(2);
       const html = `
         <div class="msg bot" id="${id}">
@@ -592,6 +650,7 @@
       if(el){
         const answerEl = el.querySelector('.answer');
         renderAnswerWithImages(answerEl, text || '', imageUrls || []);
+        renderCitations(answerEl, citations || [], traceId || '', terminalReasonCode || '');
       }
       scrollToBottom();
     }
@@ -651,7 +710,7 @@
       }
     }
 
-    function finalizeBotAnswer(botMsgEl, answer, error, imageUrls){
+    function finalizeBotAnswer(botMsgEl, answer, error, imageUrls, citations, traceId, terminalReasonCode){
       const bubble = botMsgEl.querySelector('.bubble');
       const progress = botMsgEl.querySelector('details.progress');
       const err = (error || '').trim();
@@ -681,6 +740,7 @@
       answerEl.className = 'answer';
       bubble.appendChild(answerEl);
       renderAnswerWithImages(answerEl, answer || '', imageUrls || []);
+      renderCitations(answerEl, citations || [], traceId || '', terminalReasonCode || '');
       if(progressEl) bubble.appendChild(progressEl);
     }
 
@@ -708,7 +768,14 @@
           if(item.role === 'user'){
             addUserMsgWithTime(item.text || '', item.ts);
           }else{
-            addBotMsgWithTime(item.text || '', item.ts, item.image_urls || []);
+            addBotMsgWithTime(
+              item.text || '',
+              item.ts,
+              item.image_urls || [],
+              item.citations || [],
+              item.trace_id || '',
+              item.terminal_reason_code || ''
+            );
           }
         }
         scrollToBottom();
@@ -743,12 +810,20 @@
 
           if(data.status === 'completed'){
             if(typing) typing.remove();
-            finalizeBotAnswer(botMsgEl, data.answer, data.error, data.image_urls || []);
+            finalizeBotAnswer(
+              botMsgEl,
+              data.answer,
+              data.error,
+              data.image_urls || [],
+              data.citations || [],
+              data.trace_id || '',
+              data.terminal_reason_code || ''
+            );
             clearInterval(interval);
             sendBtn.disabled = false;
           }else if(data.status === 'failed'){
             if(typing) typing.remove();
-            finalizeBotAnswer(botMsgEl, data.answer, data.error || 'failed', data.image_urls || []);
+            finalizeBotAnswer(botMsgEl, data.answer, data.error || 'failed', data.image_urls || [], [], data.trace_id || '', '');
             clearInterval(interval);
             sendBtn.disabled = false;
           }
@@ -780,7 +855,15 @@
           // 非流式：直接拿到结果
           // data: { session_id, answer, done_list, error, message }
           renderProgress(botMsgEl, data.done_list || [], [], 'completed');
-          finalizeBotAnswer(botMsgEl, data.answer, data.error, data.image_urls || []);
+          finalizeBotAnswer(
+            botMsgEl,
+            data.answer,
+            data.error,
+            data.image_urls || [],
+            data.citations || [],
+            data.trace_id || '',
+            data.terminal_reason_code || ''
+          );
           sendBtn.disabled = false;
           return;
         }
@@ -839,6 +922,7 @@
             // 流式 delta 可能不包含“【图片】/图片列表”，最终包的 d.answer 才是完整答案；优先使用 d.answer
             const finalText = (d && typeof d.answer === 'string' && d.answer.trim().length > 0) ? d.answer : (rawAnswerText || answerEl.textContent || '');
             renderAnswerWithImages(answerEl, finalText, d.image_urls || []);
+            renderCitations(answerEl, d.citations || [], d.trace_id || '', d.terminal_reason_code || '');
           }catch(_){}
           es.close();
           sendBtn.disabled = false;
@@ -855,6 +939,7 @@
             const d = JSON.parse(e.data || '{}');
             const finalText = (d && typeof d.answer === 'string' && d.answer.trim().length > 0) ? d.answer : (rawAnswerText || answerEl.textContent || '');
             renderAnswerWithImages(answerEl, finalText, d.image_urls || []);
+            renderCitations(answerEl, d.citations || [], d.trace_id || '', d.terminal_reason_code || '');
           }catch(_){}
           es.close();
           sendBtn.disabled = false;
@@ -922,4 +1007,3 @@
   </script>
 </body>
 </html>
-

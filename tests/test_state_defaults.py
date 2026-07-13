@@ -91,6 +91,11 @@ def test_query_default_state_fields_are_complete():
         "planner_action_history",
         "planner_type",
         "planner_runtime_metadata",
+        "planner_total_duration_ms",
+        "web_search_allowed",
+        "safe_guard_triggered",
+        "planner_max_steps",
+        "current_action_duration_ms",
         "retrieval_observation",
         "retrieval_mode",
         "retrieval_config_version",
@@ -103,6 +108,8 @@ def test_query_default_state_fields_are_complete():
         "citations",
         "terminal_reason_code",
         "answer_runtime_metadata",
+        "retrieval_config_snapshot",
+        "trace_persistence_enabled",
         "prompt",
         "answer",
         "image_urls",
@@ -118,9 +125,16 @@ def test_query_default_state_fields_are_complete():
     assert state["policy_version"] == ""
     assert state["current_planner_decision"] is None
     assert state["planner_type"] == ""
+    assert state["web_search_allowed"] is True
+    assert state["safe_guard_triggered"] is False
+    assert state["planner_max_steps"] == 6
+    assert state["current_action_duration_ms"] == 0
     assert state["retrieval_observation"] is None
     assert state["retrieval_mode"] == "dense_learned_sparse"
-    assert state["retrieval_config_version"] == ""
+    assert state["retrieval_config_version"] == "retrieval-stage5-dev-v1"
+    assert state["planner_total_duration_ms"] == 0
+    assert state["retrieval_config_snapshot"] == {}
+    assert state["trace_persistence_enabled"] is False
     assert state["terminal_reason_code"] is None
     assert isinstance(state["dataset_ids"], list)
     assert isinstance(state["subject_ids"], list)

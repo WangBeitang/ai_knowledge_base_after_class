@@ -1,12 +1,16 @@
 import re
+from time import perf_counter
+
 from app.infra.llm.providers import llm_provider
+from app.infra.config.providers import infra_config
 from app.process.query.agent.state import QueryGraphState
 from app.shared.runtime.load_prompt import load_prompt
 from app.shared.utils.task_utils import push_to_session, set_task_result
 from app.shared.utils.sse_utils import SSEEvent
 from app.shared.runtime.logger import logger
 from app.infra.persistence.history_repository import history_repository
-from app.rag.query.contracts import IdentifierResolutionStatus, PlannerReasonCode, RetrievalObservation
+from app.rag.query.citation_service import build_citations
+from app.rag.query.contracts import Citation, IdentifierResolutionStatus, PlannerReasonCode, RetrievalObservation
 from app.rag.query.query_identifier_service import identifier_requires_clarification
 
 
@@ -116,8 +120,32 @@ def build_answer_prompt(reranked_docs, rewritten_query, standard_subject_names, 
     return prompt_text
 
 
+ANSWER_PROMPT_VERSION = "answer-out-v1"
+
+
+def _extract_usage_metadata(message) -> dict[str, int]:
+    """兼容不同 LangChain provider 的 token 用量字段；缺失时诚实返回 0。"""
+    usage = getattr(message, "usage_metadata", None) or {}
+    response_metadata = getattr(message, "response_metadata", None) or {}
+    token_usage = response_metadata.get("token_usage") or response_metadata.get("usage") or {}
+    input_tokens = int(usage.get("input_tokens") or token_usage.get("prompt_tokens") or 0)
+    output_tokens = int(usage.get("output_tokens") or token_usage.get("completion_tokens") or 0)
+    total_tokens = int(
+        usage.get("total_tokens")
+        or token_usage.get("total_tokens")
+        or input_tokens + output_tokens
+    )
+    return {
+        "input_tokens": max(0, input_tokens),
+        "output_tokens": max(0, output_tokens),
+        "total_tokens": max(0, total_tokens),
+    }
+
+
 def generate_final_answer(state, prompt):
     final_answer = ""
+    usage_metadata = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
+    started_at = perf_counter()
     # 1.获取模型对象
     client = llm_provider.chat()
 
@@ -134,12 +162,30 @@ def generate_final_answer(state, prompt):
                 {"delta": current_content}
             )
             final_answer += current_content
+            chunk_usage = _extract_usage_metadata(chunk)
+            # 流式 provider 通常只在最后一个 chunk 返回累计 usage；取最大值可以兼容累计
+            # 和仅末包两种形态，又不会把累计 token 在每个 chunk 上重复相加。
+            for key, value in chunk_usage.items():
+                usage_metadata[key] = max(usage_metadata[key], value)
     else:
         result = client.invoke(prompt)
         logger.warning(f"大模型invoke返回结果为：======={str(result)}")
         final_answer = result.content
+        usage_metadata = _extract_usage_metadata(result)
 
     state["answer"] = final_answer
+    state["answer_runtime_metadata"] = {
+        # 当前客户端遵循 OpenAI-compatible 接口，但实际服务商可能是本地或云端代理；不从
+        # base_url 猜厂商名称，避免 Trace 把兼容协议误记为真实 provider。
+        "provider": "openai-compatible",
+        "model_id": infra_config.llm.llm_model,
+        "model_revision": None,
+        "prompt_version": ANSWER_PROMPT_VERSION,
+        **usage_metadata,
+        "duration_ms": max(0, int((perf_counter() - started_at) * 1000)),
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+    }
 
 
 def extract_image_urls(reranked_docs, state):
@@ -169,13 +215,24 @@ def extract_image_urls(reranked_docs, state):
 
 
 def save_assistant_message(state):
+    citations = [
+        item if isinstance(item, Citation) else Citation.model_validate(item)
+        for item in state.get("citations") or []
+    ]
     history_repository.save_message(
         session_id=state.get("session_id"),
         role="assistant",
         text=state.get("answer"),
         rewritten_query=state.get("rewritten_query"),
         standard_subject_names=state.get("standard_subject_names", []),
-        image_urls=state.get("image_urls", [])
+        image_urls=state.get("image_urls", []),
+        citations=[item.model_dump(mode="json") for item in citations],
+        trace_id=state.get("trace_id", ""),
+        terminal_reason_code=(
+            state.get("terminal_reason_code").value
+            if hasattr(state.get("terminal_reason_code"), "value")
+            else str(state.get("terminal_reason_code") or "")
+        ),
     )
 
 
@@ -198,8 +255,12 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
     if not try_return_existing_answer(state):
         # 校验输入
         reranked_docs, standard_subject_names, rewritten_query, history = check_params(state)
+        # citations 只从即将进入 Prompt 的最终 reranked_docs 生成，不能把所有召回候选或
+        # LLM 在答案中自行提到的来源当成正式引用。
+        state["citations"] = build_citations(reranked_docs)
         # 构建提示词
         prompt = build_answer_prompt(reranked_docs, rewritten_query, standard_subject_names, history)
+        state["prompt"] = prompt
         # 生成答案
         generate_final_answer(state, prompt)
         # 提取图片 URL

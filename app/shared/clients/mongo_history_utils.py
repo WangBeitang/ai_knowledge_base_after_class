@@ -109,7 +109,10 @@ def save_chat_message(
         rewritten_query: str = "",
         standard_subject_names: list[str] | None = None,
         image_urls: list[str] | None = None,
-        message_id: str | None = None
+        message_id: str | None = None,
+        citations: list[dict[str, Any]] | None = None,
+        trace_id: str = "",
+        terminal_reason_code: str = "",
 ) -> str:
     """
     写入/更新单条会话记录到MongoDB
@@ -134,7 +137,14 @@ def save_chat_message(
         "rewritten_query": rewritten_query or "",  # 重写查询，空值处理为空字符串
         "standard_subject_names": standard_subject_names,  # 关联标准主题名称列表
         "image_urls": image_urls,  # 关联图片URL列表
-        "ts": ts  # 时间戳，排序和时间筛选维度
+        "ts": ts,  # 时间戳，排序和时间筛选维度
+        # citations 是代码根据最终证据生成的结构化引用；用户消息通常为空列表。和图片
+        # URL 分开保存，刷新聊天页后仍能展示本次回答真正使用的来源。
+        "citations": list(citations or []),
+        # trace_id 关联一次查询执行；同一 session 内多轮消息不能复用它。
+        "trace_id": str(trace_id or ""),
+        # terminal_reason_code 保存 answer/追问/拒答的机器原因，不保存自由文本推理。
+        "terminal_reason_code": str(terminal_reason_code or ""),
     }
 
     # 获取全局的HistoryMongoTool实例，使用单例模式

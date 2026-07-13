@@ -1,8 +1,15 @@
 import sys
+from time import perf_counter
 
+from app.rag.query.contracts import QueryAction
 from app.shared.runtime.logger import node_log
 from app.rag.query.hyde_search_service import search_by_hyde
 from app.shared.utils.task_utils import add_done_task, add_running_task
+from app.process.query.agent.nodes.node_retrieval_observation import (
+    build_failed_observation,
+    current_decision,
+    is_expected_external_error,
+)
 
 @node_log("node_search_embedding_hyde")
 def node_search_embedding_hyde(state):
@@ -14,10 +21,28 @@ def node_search_embedding_hyde(state):
     整个 State 原样交回 LangGraph，避免并发检索节点用各自收到的旧 State 覆盖彼此结果。
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
-    result_state = search_by_hyde(state)
+    decision = current_decision(state)
+    if decision.action != QueryAction.HYDE_SEARCH:
+        raise ValueError("HyDE 检索节点只能执行 hyde_search Decision")
+    started_at = perf_counter()
+    try:
+        result_state = search_by_hyde(state)
+    except Exception as error:
+        if not is_expected_external_error(error):
+            raise
+        duration_ms = int((perf_counter() - started_at) * 1000)
+        observation = build_failed_observation(state, decision.action, error, duration_ms)
+        add_done_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
+        return {
+            "hyde_embedding_chunks": [],
+            "retrieval_observation": observation,
+            "current_action_duration_ms": duration_ms,
+        }
+    duration_ms = int((perf_counter() - started_at) * 1000)
     add_done_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
     return {
-        "hyde_embedding_chunks": result_state.get("hyde_embedding_chunks")
+        "hyde_embedding_chunks": result_state.get("hyde_embedding_chunks"),
+        "current_action_duration_ms": duration_ms,
     }
 
 

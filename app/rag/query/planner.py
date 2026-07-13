@@ -14,15 +14,16 @@ from app.rag.query.contracts import (
     QueryAction,
     SubjectResolutionStatus,
 )
+from app.rag.query.config import POLICY_VERSION, REALTIME_PATTERNS_VERSION
 
 
 # policy version 的中文含义是“策略版本”。只要规则顺序、阈值含义或实时判断发生变化，
 # 就应升级版本，使 Trace 和后续训练数据能准确知道当时使用了哪套决策策略。
-RULE_BASED_POLICY_VERSION = "rule-v1"
+RULE_BASED_POLICY_VERSION = POLICY_VERSION
 
 # realtime rule version 的中文含义是“实时问题识别规则版本”。它与 Planner 总策略版本
 # 分开，是因为实时关键词可以独立迭代；后续 Trace 应同时记录两个版本。
-REALTIME_RULE_VERSION = "realtime-keywords-v1"
+REALTIME_RULE_VERSION = REALTIME_PATTERNS_VERSION
 
 # 这里只识别“明显需要外部最新信息”的保守模式。单独出现“当前报警”或“最新维修方法”
 # 不足以认定必须联网，避免设备本地知识问题被关键词误导到 Web。

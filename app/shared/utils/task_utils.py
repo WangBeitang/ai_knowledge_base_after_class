@@ -5,7 +5,7 @@
 阶段 3 只是在导入任务上增加一层 Mongo 同步：已经注册过 document_id/dataset_id
 的导入 task 会把状态快照写入 Mongo，查询链路复用 task_utils 时不会写入导入元数据表。
 """
-from typing import Dict, List
+from typing import Any, Dict, List
 from app.infra.persistence.import_metadata_repository import (
     safe_update_task_nodes,
     safe_update_task_status,
@@ -26,7 +26,7 @@ _tasks_status: Dict[str, str] = {}
 
 # key: task_id
 # value: 任务结果（例如 query 的 answer）
-_tasks_result: Dict[str, Dict[str, str]] = {}
+_tasks_result: Dict[str, Dict[str, Any]] = {}
 
 # key: task_id
 # value: 持久化任务元数据。
@@ -181,7 +181,7 @@ def add_done_task(task_id: str, node_name: str, is_stream: bool = False) -> None
         task_push_queue(task_id)
 
 
-def set_task_result(task_id: str, key: str, value: str) -> None:
+def set_task_result(task_id: str, key: str, value: Any) -> None:
     """
     存储任务结果字段（如 answer / error）。
     """
@@ -189,7 +189,7 @@ def set_task_result(task_id: str, key: str, value: str) -> None:
     _tasks_result[task_id][key] = value
 
 
-def get_task_result(task_id: str, key: str, default: str = "") -> str:
+def get_task_result(task_id: str, key: str, default: Any = "") -> Any:
     """
     获取任务结果字段（如 answer / error）。
     """

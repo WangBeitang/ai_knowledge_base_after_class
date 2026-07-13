@@ -22,12 +22,15 @@ def test_query_graph_compiles():
 
     assert {
         "node_subject_name_confirm",
+        "node_query_planner",
         "node_search_embedding",
         "node_search_embedding_hyde",
         "node_web_search_mcp",
         "node_rrf",
         "node_rerank",
-        "node_answer_output",
+        "node_retrieval_observation",
+        "node_terminal_response",
+        "node_trace_finalize",
     }.issubset(graph.nodes)
 
 import os

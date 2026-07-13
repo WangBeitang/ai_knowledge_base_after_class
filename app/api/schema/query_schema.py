@@ -2,6 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.rag.query.contracts import Citation, PlannerReasonCode
 from app.shared.config.knowledge_base_config import DEFAULT_DATASET_ID
 
 
@@ -57,6 +58,27 @@ class QueryNotStreamResponse(BaseModel):
     answer: str
     done_list: list
     image_urls: list
+    # trace_id 唯一标识这一次查询执行，便于日志和 Mongo Retrieval Trace 对照。
+    trace_id: str
+    # citations 只包含真正进入答案上下文的最终证据；追问和拒答为空列表。
+    citations: list[Citation]
+    # terminal_reason_code 说明为什么最终回答、追问或拒答，不包含自由文本思维链。
+    terminal_reason_code: PlannerReasonCode
+
+
+class QueryTaskStatusResponse(BaseModel):
+    """流式后台任务的轮询快照；FINAL SSE 与该结构共享最终交付字段。"""
+
+    session_id: str
+    status: str
+    done_list: list[str]
+    running_list: list[str]
+    answer: str = ""
+    error: str = ""
+    image_urls: list[str] = Field(default_factory=list)
+    trace_id: str = ""
+    citations: list[Citation] = Field(default_factory=list)
+    terminal_reason_code: PlannerReasonCode | None = None
 
 
 class ClearHistoryResponse(BaseModel):
@@ -72,6 +94,9 @@ class HistoryItem(BaseModel):
     rewritten_query: str
     standard_subject_names: list[str]
     image_urls: list[str]
+    citations: list[Citation] = Field(default_factory=list)
+    trace_id: str = ""
+    terminal_reason_code: PlannerReasonCode | None = None
     ts: Any
 
 

@@ -9,7 +9,7 @@ def node_subject_name_confirm(state):
     """
     节点功能：确认用户问题中的核心主体名称。
     输入：state['original_query']
-    输出：更新 state['subject_ids'] 和 state['standard_subject_names']
+    输出：主体状态、候选、稳定 ID、标准名称、改写问题和历史快照。
 
     返回值只列出主体确认节点真正负责写入的字段，也就是 partial state（局部状态）。
     LangGraph 会负责与主 State 合并，节点不能返回收到的完整 State 副本。
@@ -25,7 +25,9 @@ def node_subject_name_confirm(state):
         "standard_subject_names": result_state.get("standard_subject_names", []),
         "rewritten_query": result_state.get("rewritten_query", ""),
         "history": result_state.get("history", []),
-        "answer": result_state.get("answer", ""),
+        "subject_resolution_status": result_state.get("subject_resolution_status"),
+        "subject_candidates": result_state.get("subject_candidates", []),
+        "clarification_question": result_state.get("clarification_question"),
     }
 
 

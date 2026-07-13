@@ -524,3 +524,152 @@ class Citation(QueryContractModel):
         elif self.document_id is not None or self.chunk_id is not None:
             raise ValueError("Web 引用的 document_id 和 chunk_id 必须为空")
         return self
+
+
+class RetrievalTraceStatus(str, Enum):
+    """一次完整查询 Trace 的持久化终态。"""
+
+    RUNNING = "running"  # 运行中：入口已创建 Trace，但查询图尚未终止。
+    COMPLETED = "completed"  # 已完成：answer、追问或业务拒答已经正常交付。
+    FAILED = "failed"  # 已失败：出现未被 Planner 收口的编程错误或基础设施异常。
+
+
+class TraceStepStatus(str, Enum):
+    """Trace 中单个 Planner Action 的执行状态。"""
+
+    PENDING = "pending"  # 待执行：Planner 已做出 Decision，对应 Action 尚未返回。
+    COMPLETED = "completed"  # 已完成：Action 已正常执行，可能得到 SUCCESS 或 EMPTY Observation。
+    FAILED = "failed"  # 已失败：Action 得到 FAILED Observation，或答案模型执行失败。
+
+
+class UsageMetrics(QueryContractModel):
+    """
+    Planner 或答案模型的一次调用开销。
+
+    规则 Planner 不调用模型，所以 token 和成本均为 0；答案 provider 没有返回 token 时也
+    只能诚实记录 0，不能根据文本长度伪造精确 token 数。
+    """
+
+    input_tokens: NonNegativeInt = 0  # 输入 token 数；provider 未返回时为 0。
+    output_tokens: NonNegativeInt = 0  # 输出 token 数；provider 未返回时为 0。
+    total_tokens: NonNegativeInt = 0  # 总 token 数；通常等于输入与输出之和。
+    duration_ms: NonNegativeInt = 0  # 本次 Planner 或答案调用的墙钟耗时，单位毫秒。
+    estimated_cost: float = Field(default=0.0, ge=0)  # 估算费用；未配置计价规则时为 0。
+    currency: str = "CNY"  # 费用币种。当前仅固化契约，不代表已经配置模型计价。
+
+
+class RetrievalConfigSnapshot(QueryContractModel):
+    """本次查询真正生效的检索参数快照；与版本字符串一起保存。"""
+
+    retrieval_mode: RetrievalMode  # 单次 local/HyDE Action 内启用的召回通道组合。
+    per_channel_topk: PositiveStep  # 每条 Milvus 底层通道最多返回的候选数。
+    fusion_topk: PositiveStep  # 跨 Action RRF 融合后最多保留的累计候选数。
+    rerank_min_topk: PositiveStep  # 动态 rerank 至少保留的证据数。
+    rerank_max_topk: PositiveStep  # 动态 rerank 最多保留的证据数。
+    rrf_k: PositiveStep  # RRF 公式中的平滑参数 k，不是最终候选数量。
+    evidence_threshold: float = Field(ge=0, le=1)  # 允许进入 answer 的最低归一化 rerank 分数。
+    web_fallback_enabled: bool  # 本地/HyDE 不足时是否允许 Planner 调用 Web。
+
+
+class TraceEvidenceSummary(QueryContractModel):
+    """Observation 的持久化证据摘要；只留身份、分数和正文 hash，不保存正文片段。"""
+
+    document_id: str | None = None  # 本地文档 ID；Web 证据为空。
+    chunk_id: str | int | None = None  # 本地 chunk ID；Web 证据为空。
+    title: str = Field(min_length=1)  # 可读标题，用于人工排查 Trace。
+    source_type: EvidenceSourceType  # local 或 web，决定身份字段语义。
+    rerank_score: float | None = Field(default=None, ge=0, le=1)  # 统一 reranker 相关性分数。
+    matched_identifiers: dict[str, list[str]] = Field(default_factory=dict)  # 证据实际命中的设备标识。
+    content_excerpt_hash: str = Field(min_length=64, max_length=64)  # 摘要正文 SHA-256，用于核验而非还原正文。
+
+
+class TraceObservation(QueryContractModel):
+    """运行时 RetrievalObservation 去除正文后的可持久化投影。"""
+
+    action: QueryAction  # 产生本 Observation 的检索 Action。
+    status: ObservationStatus  # success、empty 或 failed。
+    channel_counts: dict[str, NonNegativeInt] = Field(default_factory=dict)  # 已执行 Action 的候选数量。
+    candidate_count: NonNegativeInt = 0  # 外层 RRF 前后参与判断的候选总数。
+    reranked_count: NonNegativeInt = 0  # 通过编号保护并完成 rerank 的证据数。
+    top_rerank_score: float | None = Field(default=None, ge=0, le=1)  # 第一名归一化 rerank 分数。
+    requested_identifiers: dict[str, list[str]] = Field(default_factory=dict)  # 用户原始问题中的规范化标识。
+    matched_identifiers: dict[str, list[str]] = Field(default_factory=dict)  # 证据命中的同编号标识。
+    identifier_resolution_status: IdentifierResolutionStatus = IdentifierResolutionStatus.NOT_APPLICABLE
+    suggested_identifiers: dict[str, list[str]] = Field(default_factory=dict)  # 只能用于追问的不同编号候选。
+    citation_count: NonNegativeInt = 0  # 本轮形成的最终引用数；检索 Observation 通常为 0。
+    evidence_summaries: list[TraceEvidenceSummary] = Field(default_factory=list)  # 不含正文的证据摘要。
+    evidence_ambiguous: bool = False  # 是否存在必须由用户补充信息解决的证据冲突。
+    clarification_question: str | None = None  # 可直接交付用户的确定性追问文本。
+    duration_ms: NonNegativeInt = 0  # 当前检索 Action 与 rerank 的累计耗时。
+    error_code: str | None = None  # failed 时的机器错误码，不保存异常堆栈和敏感正文。
+    used_structured_filter: bool = False  # 是否尝试过设备标识精确过滤。
+    filter_fallback: bool = False  # 精确过滤零命中后是否执行过宽松同码降级。
+
+
+class TracePlannerStep(QueryContractModel):
+    """一次 Planner Decision 及对应 Action/Observation 的持久化轨迹单元。"""
+
+    step: PositiveStep  # 从 1 开始的稳定步骤号。
+    input_observation: TraceObservation | None = None  # Planner 做决定前能看到的最近 Observation。
+    decision: PlannerDecision  # 本步选择的 Action、实际 query 和 reason_code。
+    execution_status: TraceStepStatus  # pending/completed/failed。
+    output_observation: TraceObservation | None = None  # 检索 Action 完成后的结构化结果；终止 Action 为空。
+    duration_ms: NonNegativeInt = 0  # 对应 Action 的耗时；pending 时先记录 Planner 决策耗时。
+    planner_usage: UsageMetrics = Field(default_factory=UsageMetrics)  # 本步 Planner 的 token、耗时和成本。
+
+
+class TraceChannelHit(QueryContractModel):
+    """各真实检索 Action 返回的候选摘要，不复制完整 chunk 正文。"""
+
+    channel: RetrievalChannel  # original、HyDE、Web 或本地底层模式通道。
+    document_id: str | None = None  # 本地文档 ID；Web 为空。
+    chunk_id: str | int | None = None  # 本地 chunk ID；Web 为空。
+    index_version: int | None = Field(default=None, ge=0)  # 本地索引版本；Web 为空。
+    rank: PositiveStep  # 候选在该 Action 原始列表中的排名。
+    retrieval_score: float = Field(ge=0)  # 召回/RRF 分，仅用于排序记录。
+    rerank_score: float | None = Field(default=None, ge=0, le=1)  # 最终统一 rerank 分，未入选时可为空。
+    matched_identifiers: dict[str, list[str]] = Field(default_factory=dict)  # 候选文本/metadata 命中的标识。
+    content_excerpt_hash: str = Field(min_length=64, max_length=64)  # 候选正文 SHA-256。
+
+
+class RetrievalTrace(QueryContractModel):
+    """Mongo ``retrieval_traces`` collection 中一条完整查询轨迹。"""
+
+    trace_id: str = Field(min_length=1)  # 一次查询执行 ID；全局唯一，不等于 session_id。
+    session_id: str = Field(min_length=1)  # 聊天会话 ID；一个会话可关联多条 Trace。
+    owner_user_id: str = Field(min_length=1)  # 发起查询的用户，用于归属和后续权限查询。
+    tenant_id: str = Field(min_length=1)  # 当前租户范围；现阶段通常为 tenant_default。
+    dataset_ids: list[str] = Field(min_length=1)  # 本次允许查询的知识库范围快照。
+    original_query: str = Field(min_length=1)  # 用户未经改写的原始问题。
+    rewritten_query: str = ""  # 主体确认后用于检索的改写问题。
+    subject_ids: list[str] = Field(default_factory=list)  # 已确认的稳定主题 ID。
+    standard_subject_names: list[str] = Field(default_factory=list)  # 主题可读名称。
+    query_identifiers: dict[str, list[str]] = Field(default_factory=dict)  # 用户输入的型号/报警码等标识。
+    identifier_resolution_status: IdentifierResolutionStatus = IdentifierResolutionStatus.NOT_APPLICABLE
+    suggested_identifiers: dict[str, list[str]] = Field(default_factory=dict)  # 需用户确认的不同编号候选。
+    policy_version: str = Field(min_length=1)  # Planner 规则/模型策略版本。
+    planner_type: str = Field(min_length=1)  # rule 或 model，不能从类名猜测。
+    provider: str | None = None  # Planner 模型服务方；规则 Planner 为 null。
+    model_id: str | None = None  # Planner 模型 ID；规则 Planner 为 null。
+    model_revision: str | None = None  # Planner 模型修订版本；规则 Planner 为 null。
+    prompt_version: str | None = None  # Planner 提示词版本；规则 Planner 为 null。
+    planner_usage: UsageMetrics = Field(default_factory=UsageMetrics)  # 全部 Planner 步骤累计开销。
+    answer_provider: str | None = None  # 最终答案模型服务方；追问/拒答时为 null。
+    answer_model_id: str | None = None  # 最终答案模型 ID；追问/拒答时为 null。
+    answer_model_revision: str | None = None  # 最终答案模型修订版本。
+    answer_prompt_version: str | None = None  # 答案 Prompt 版本，只记版本不保存完整 Prompt。
+    answer_usage: UsageMetrics = Field(default_factory=UsageMetrics)  # 答案模型 token、耗时和成本。
+    retrieval_config_version: str = Field(min_length=1)  # 检索配置版本名。
+    retrieval_mode: RetrievalMode  # 本次 local/HyDE 使用的召回组合。
+    retrieval_config_snapshot: RetrievalConfigSnapshot  # 本次真正生效的完整参数快照。
+    index_versions: list[int] = Field(default_factory=list)  # 最终候选涉及的本地索引版本集合。
+    status: RetrievalTraceStatus  # running/completed/failed。
+    terminal_action: QueryAction | None = None  # 最终 answer、追问或拒答动作。
+    terminal_reason_code: PlannerReasonCode | None = None  # 最终命中的机器可读规则原因。
+    planner_steps: list[TracePlannerStep] = Field(default_factory=list)  # 按执行顺序保存的 Action Trace。
+    channel_hits: list[TraceChannelHit] = Field(default_factory=list)  # 各 Action 候选的无正文投影。
+    final_citations: list[Citation] = Field(default_factory=list)  # 最终实际进入答案上下文的引用。
+    started_at: str = Field(min_length=1)  # 查询入口 UTC ISO 时间。
+    completed_at: str | None = None  # completed/failed 的 UTC ISO 时间；running 时为空。
+    total_duration_ms: NonNegativeInt = 0  # 从查询入口到终态的总墙钟耗时。
+    error_code: str | None = None  # 未处理异常的类型码；不保存敏感异常正文。

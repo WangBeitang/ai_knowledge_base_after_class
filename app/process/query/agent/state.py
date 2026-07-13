@@ -11,6 +11,12 @@ from app.rag.query.contracts import (
     RetrievalObservation,
     SubjectResolutionStatus,
 )
+from app.rag.query.config import (
+    PLANNER_MAX_STEPS,
+    RETRIEVAL_CONFIG_VERSION,
+    RETRIEVAL_DEFAULT_MODE,
+    WEB_FALLBACK_ENABLED,
+)
 
 
 class QueryGraphState(TypedDict):
@@ -81,7 +87,7 @@ class QueryGraphState(TypedDict):
 
     # subject resolution status 的中文含义是“主体确认状态”。使用关闭枚举表达已确认、
     # 有歧义、未找到或问题没有主体；它让 Planner 不再通过 answer 是否为空猜测结果。
-    # 默认 None 表示当前旧主体节点尚未产出该契约；任务 9 接图前由主体确认改造写入。
+    # 默认 None 表示主体节点尚未执行；阶段 9 主体节点完成后必须写入四种枚举之一。
     subject_resolution_status: SubjectResolutionStatus | None
 
     # subject candidates 的中文含义是“候选标准主题”。当主体匹配分数不足以直接确认时，
@@ -115,17 +121,17 @@ class QueryGraphState(TypedDict):
 
     # planner step 的中文含义是“Planner 决策步数”。记录当前已经进行到第几次决策，
     # 用于最大步骤保护和轨迹排序；0 表示尚未执行任何 Planner 决策。
-    # 当前主链路还未接入 Planner，因此默认并保持 0，后续 Planner 节点递增。
+    # 初始为 0；阶段 9 在每个 Action 真正执行结束后随 Action history 一起递增。
     planner_step: int
 
     # policy version 的中文含义是“策略版本”。用于区分 rule-v1、后续模型版本和灰度策略，
     # 使同一 query 的 Action Trace 能关联到明确决策规则。
-    # 默认空字符串，因为当前主链路尚未真正运行 RuleBasedPlanner，不能提前写 rule-v1。
+    # 默认空字符串；阶段 9 Planner 节点首次执行时写入 rule-v1。
     policy_version: str
 
     # current planner decision 的中文含义是“当前 Planner 决策”。保存最近一次经过 Pydantic
     # 校验的 action/query/reason_code，后续路由只读取 decision.action。
-    # 默认 None；具体 RuleBasedPlanner 和 Planner 节点接入后才会写入。
+    # 默认 None；阶段 9 Planner 节点每轮决策后覆盖为最新 Decision。
     current_planner_decision: PlannerDecision | None
 
     # planner action history 的中文含义是“Planner 动作历史”。按步骤保存已经执行过的
@@ -135,7 +141,7 @@ class QueryGraphState(TypedDict):
 
     # planner type 的中文含义是“Planner 类型”。预期值如 rule（规则）或 model（模型），
     # 用于 Trace/评测区分决策来源，不应通过类名或 provider 名称推断。
-    # 默认空字符串，因为当前固定查询图尚未由 Planner 驱动。
+    # 默认空字符串；阶段 9 规则 Planner 执行后写入 rule。
     planner_type: str
 
     # planner runtime metadata 的中文含义是“Planner 运行元数据”。后续记录 provider
@@ -143,12 +149,33 @@ class QueryGraphState(TypedDict):
     # 默认空字典；规则 Planner 的模型相关值应为空/0，且这里不保存思维链。
     planner_runtime_metadata: dict[str, object]
 
+    # planner total duration 的中文含义是“本次查询全部 Planner 决策累计耗时”。每次进入
+    # node_query_planner 都累加本轮纯决策耗时，Trace 顶层据此统计规则或模型 Planner 成本。
+    planner_total_duration_ms: int
+
+    # web search allowed 的中文含义是“本次查询是否允许联网检索”。来源应是 API、租户或
+    # 部署策略；Planner 只能读取并收紧，不能自行把 False 改成 True。阶段 9 默认允许，
+    # 后续接入更细权限策略时由查询入口显式覆盖。
+    web_search_allowed: bool
+
+    # safe guard triggered 的中文含义是“是否已经触发安全保护”。一旦为 True，Planner
+    # 必须直接 refuse，不再执行检索或答案生成。默认 False，只在上游安全规则确认风险时写入。
+    safe_guard_triggered: bool
+
+    # planner max steps 的中文含义是“本次查询最多允许完成多少个 Action”。它是运行时
+    # 防循环边界，不是模型参数；达到上限后即使还有候选也必须安全终止。
+    planner_max_steps: int
+
+    # current action duration 的中文含义是“最近一次检索 Action 的累计耗时”。检索节点先
+    # 写入外部调用耗时，rerank 节点继续累加模型耗时，Observation 消费后供 Trace 投影。
+    # 该值只存在于当前 State，不单独持久化，默认 0 毫秒。
+    current_action_duration_ms: int
+
     # ==================== Observation 与检索配置 ====================
 
     # retrieval observation 的中文含义是“检索观察结果”。它是最近一个检索 Action 执行后
     # 返回给 Planner 的结构化事实，包含数量、分数、标识命中、耗时和错误。
-    # 默认 None；阶段 5 第五部分的普通本地检索已生成编号确认 Observation，其他 Action
-    # 的完整 Observation、分数和证据摘要仍由后续 Planner/统一召回任务补齐。
+    # 默认 None；阶段 9 每个 local/HyDE/Web Action 完成后统一生成或更新该字段。
     retrieval_observation: RetrievalObservation | None
 
     # retrieval mode 的中文含义是“召回组合模式”。阶段 5 第六部分固定三种关闭枚举，
@@ -158,7 +185,7 @@ class QueryGraphState(TypedDict):
 
     # retrieval config version 的中文含义是“检索配置版本”。它关联 top-k、RRF k、rerank
     # 阈值等一整套配置快照，避免只看到 mode 却不知道具体参数。
-    # 默认空字符串；后续配置版本化任务写入。
+    # 默认空字符串；阶段 9 Planner 节点写入当前冻结的开发基线版本。
     retrieval_config_version: str
 
     # retrieval channel results 的中文含义是“各召回通道原始结果”。key 表示 dense、
@@ -200,7 +227,7 @@ class QueryGraphState(TypedDict):
 
     # terminal reason code 的中文含义是“流程终止原因码”。记录为什么最终 answer、追问或
     # refuse，使用与 Planner 决策一致的机器可读枚举，不能写自由文本思维过程。
-    # 默认 None；当前旧主链路尚未产出该字段。
+    # 默认 None；阶段 9 终态节点固定为最后一个 Planner Decision 的 reason_code。
     terminal_reason_code: PlannerReasonCode | None
 
     # answer runtime metadata 的中文含义是“答案模型运行元数据”。后续记录答案模型的
@@ -208,13 +235,22 @@ class QueryGraphState(TypedDict):
     # 默认空字典；它和 planner_runtime_metadata 分开，便于区分策略成本与生成成本。
     answer_runtime_metadata: dict[str, object]
 
+    # retrieval config snapshot 的中文含义是“本次查询实际使用的检索配置快照”。与只表示
+    # 名称的 retrieval_config_version 不同，这里直接保存 mode、top-k、RRF k、证据阈值
+    # 和 Web 开关等真实数值；查询入口创建后不得在同一条 Trace 中途修改。
+    retrieval_config_snapshot: dict[str, object]
+
+    # trace persistence enabled 的中文含义是“是否由查询入口负责持久化 Trace”。默认 False
+    # 让纯图单元测试和离线 Planner 重放不依赖 Mongo；真实 HTTP 查询入口会显式写 True。
+    trace_persistence_enabled: bool
+
     # prompt 的中文含义是“提交给答案模型的完整提示词”。当前 answer_service 构造它，
     # 主要用于运行时调用和排查；后续 Trace 是否保存全文必须单独评估隐私与存储成本。
     # 默认空字符串。
     prompt: str
 
-    # answer 的中文含义是“最终返回文本”。当前也暂时承载主体不明确时的追问/拒答文本；
-    # 后续 Planner 接入后，终止 Action 与最终答案生成会进一步分离。
+    # answer 的中文含义是“最终交付文本”。阶段 9 由 terminal response 节点统一写入，
+    # 可能是答案、追问或拒答；具体终止类型必须结合 current decision/terminal reason 判断。
     # 默认空字符串。
     answer: str
 
@@ -249,9 +285,14 @@ query_graph_default_state: QueryGraphState = {
     "planner_action_history": [],
     "planner_type": "",
     "planner_runtime_metadata": {},
+    "planner_total_duration_ms": 0,
+    "web_search_allowed": WEB_FALLBACK_ENABLED,
+    "safe_guard_triggered": False,
+    "planner_max_steps": PLANNER_MAX_STEPS,
+    "current_action_duration_ms": 0,
     "retrieval_observation": None,
-    "retrieval_mode": RetrievalMode.DENSE_LEARNED_SPARSE.value,
-    "retrieval_config_version": "",
+    "retrieval_mode": RETRIEVAL_DEFAULT_MODE.value,
+    "retrieval_config_version": RETRIEVAL_CONFIG_VERSION,
     "retrieval_channel_results": {},
     "embedding_chunks": [],
     "hyde_embedding_chunks": [],
@@ -261,6 +302,8 @@ query_graph_default_state: QueryGraphState = {
     "citations": [],
     "terminal_reason_code": None,
     "answer_runtime_metadata": {},
+    "retrieval_config_snapshot": {},
+    "trace_persistence_enabled": False,
     "prompt": "",
     "answer": "",
     "image_urls": [],

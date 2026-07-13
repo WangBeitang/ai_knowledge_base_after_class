@@ -135,6 +135,12 @@ def rerank_documents(state: QueryGraphState) -> QueryGraphState:
         state["reranked_docs"] = []
         return state
 
+    # 空候选是 Planner 可判断的业务结果，不应抛 ValueError 冒充系统故障。只有候选非空
+    # 时才加载/调用 reranker，避免 local empty 路径产生无意义模型开销。
+    if not (state.get("rrf_chunks") or []):
+        state["reranked_docs"] = []
+        return state
+
     candidates, rewritten_query = check_params(state)
     qa_pairs = build_qa_pairs(rewritten_query, candidates)
     scores = reranker_score(qa_pairs)
