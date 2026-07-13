@@ -472,8 +472,22 @@ class PlannerContext(QueryContractModel):
     query_identifiers: dict[str, list[str]] = Field(default_factory=dict)
     latest_observation: RetrievalObservation | None = None
     action_history: list[PlannerHistoryItem] = Field(default_factory=list)
+    # web_search_allowed 的中文含义是“本次查询是否允许联网检索”。它由 API、租户策略
+    # 或后续图入口写入，不由 Planner 自行放宽。False 时即使本地证据不足，Planner 也
+    # 只能安全拒答，不能为了提高回答率绕过调用方的联网边界。
+    web_search_allowed: bool = True
+    # safe_guard_triggered 的中文含义是“安全约束是否已经触发”。例如敏感操作规则、
+    # 非法 Action 转移或上游防护节点发现风险时写 True；Planner 必须优先选择 refuse，
+    # 不能继续执行检索或 answer。
+    safe_guard_triggered: bool = False
+    # planner_step 表示已经完成了多少次 Planner 决策。第八部分只读取并执行最大步数
+    # 保护；真正递增和写入 Action history 由后续 LangGraph Planner/Action 节点负责。
     planner_step: NonNegativeInt = 0
+    # max_steps 是单次查询允许的 Planner 决策上限。达到上限后必须安全终止，防止
+    # local -> HyDE -> Web 等路径因状态错误产生无限循环。
     max_steps: PositiveStep
+    # allowed_actions 是运行环境允许路由的 Action 白名单。REFUSE 必须始终存在，确保
+    # 目标 Action 不合法或不可用时仍有确定性的安全出口。
     allowed_actions: list[QueryAction] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -481,6 +495,8 @@ class PlannerContext(QueryContractModel):
         """允许动作列表必须保序且无重复，避免路由白名单自身存在歧义。"""
         if len(self.allowed_actions) != len(set(self.allowed_actions)):
             raise ValueError("allowed_actions 不能包含重复 Action")
+        if QueryAction.REFUSE not in self.allowed_actions:
+            raise ValueError("allowed_actions 必须包含 refuse，保证 Planner 始终有安全出口")
         return self
 
 

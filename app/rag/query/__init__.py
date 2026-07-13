@@ -14,7 +14,13 @@ from app.rag.query.contracts import (
     RetrievalObservation,
     SubjectResolutionStatus,
 )
-from app.rag.query.planner import QueryPlanner, RULE_BASED_POLICY_VERSION
+from app.rag.query.planner import (
+    QueryPlanner,
+    REALTIME_RULE_VERSION,
+    RULE_BASED_POLICY_VERSION,
+    RuleBasedPlanner,
+    RuleBasedPlannerConfig,
+)
 
 
 __all__ = [
@@ -29,7 +35,10 @@ __all__ = [
     "PlannerReasonCode",
     "QueryAction",
     "QueryPlanner",
+    "REALTIME_RULE_VERSION",
     "RetrievalObservation",
     "RULE_BASED_POLICY_VERSION",
+    "RuleBasedPlanner",
+    "RuleBasedPlannerConfig",
     "SubjectResolutionStatus",
 ]

@@ -435,6 +435,17 @@ def test_planner_context_rejects_duplicate_allowed_actions():
         )
 
 
+def test_planner_context_requires_refuse_as_safe_exit():
+    with pytest.raises(ValidationError, match="必须包含 refuse"):
+        PlannerContext(
+            original_query="问题",
+            current_query="问题",
+            subject_resolution_status="confirmed",
+            max_steps=4,
+            allowed_actions=["local_search"],
+        )
+
+
 def test_planner_history_requires_positive_step_and_closed_execution_status():
     decision = PlannerDecision(
         action="local_search",
@@ -504,7 +515,7 @@ def test_query_planner_protocol_accepts_structural_implementation():
         current_query="问题",
         subject_resolution_status="confirmed",
         max_steps=4,
-        allowed_actions=["local_search"],
+        allowed_actions=["local_search", "refuse"],
     )
 
     assert isinstance(planner, QueryPlanner)
