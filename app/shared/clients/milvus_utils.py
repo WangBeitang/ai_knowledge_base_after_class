@@ -43,6 +43,8 @@ def create_hybrid_search_requests(
         *,
         retrieval_mode="dense_learned_sparse",
         query_text=None,
+        # 共享工具还服务于标准主题/别名 collection，因此默认字段继续叫 sparse_vector；
+        # chunk 检索会显式传入 learned_sparse_vector，不能在这里全局改名。
         learned_sparse_field="sparse_vector",
         bm25_sparse_field="bm25_sparse_vector",
         bm25_params=None,

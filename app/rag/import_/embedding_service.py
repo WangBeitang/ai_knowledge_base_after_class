@@ -31,7 +31,9 @@ def generate_embeddings(chunks,step:int=EMBEDDING_BATCH_SIZE):
         # 将向量结果补充回chunk
         for j,chunk in enumerate(chunk_batch):
             chunk["dense_vector"] = batch_embedding_dict["dense"][j]
-            chunk["sparse_vector"] = batch_embedding_dict["sparse"][j]
+            # learned_sparse_vector（学习式稀疏向量）由 BGE-M3 模型生成。字段名显式带
+            # learned，是为了与 Milvus 根据 lexical_text 自动生成的 BM25 稀疏向量区分。
+            chunk["learned_sparse_vector"] = batch_embedding_dict["sparse"][j]
 
     logger.info(f"已完成chunks向量化，原始数据：{pre_first},向量化结果：{chunks[0]}")
     return chunks
@@ -44,7 +46,7 @@ def generate_chunk_embeddings(state: ImportGraphState) -> ImportGraphState:
     """
     向量化服务：
     1. 读取 chunks
-    2. 生成 dense_vector / sparse_vector
+    2. 生成 dense_vector / learned_sparse_vector
     3. 将向量结果补充回 chunks
     """
     # 1.参数校验

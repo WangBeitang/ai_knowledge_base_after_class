@@ -53,7 +53,8 @@ class ImportGraphState(TypedDict):
     # 切片结果：由 split 节点生成，后续主体识别、向量化、入库都围绕 chunks 增量补字段
     chunks: list  # 文档切片列表，每个 chunk 至少包含 content/title/file_title 等字段
 
-    # 向量化结果：当前实现把 dense_vector / sparse_vector 回写到 chunks 内
+    # 向量化结果：当前实现把 dense_vector / learned_sparse_vector 回写到 chunks 内。
+    # bm25_sparse_vector 不进入 State，它由 Milvus 根据 lexical_text 在服务端生成。
     embedding_content: list  # 如保留独立字段，统一使用单数 embedding_content；不要再用 embeddings_content
 
 

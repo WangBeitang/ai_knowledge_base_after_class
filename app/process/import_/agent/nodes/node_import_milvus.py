@@ -69,7 +69,7 @@ if __name__ == '__main__':
                 "part":1,
                 "file_title": "test.pdf",
                 "dense_vector": [0.1] * dim,  # 模拟 Dense Vector
-                "sparse_vector": {1: 0.5, 10: 0.8}  # 模拟 Sparse Vector
+                "learned_sparse_vector": {1: 0.5, 10: 0.8}  # 模拟 BGE-M3 学习式稀疏向量
             }
 ,
             {
@@ -81,7 +81,7 @@ if __name__ == '__main__':
                 "part": 1,
                 "file_title": "test.pdf2",
                 "dense_vector": [0.1] * dim,  # 模拟 Dense Vector
-                "sparse_vector": {1: 0.5, 10: 0.8}  # 模拟 Sparse Vector
+                "learned_sparse_vector": {1: 0.5, 10: 0.8}  # 模拟 BGE-M3 学习式稀疏向量
             }
         ]
     }

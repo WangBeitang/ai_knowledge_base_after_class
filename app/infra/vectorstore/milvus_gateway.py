@@ -32,6 +32,8 @@ class MilvusGateway:
             limit: int = 5,
             retrieval_mode: str = "dense_learned_sparse",
             query_text: str | None = None,
+            # 这里保留 sparse_vector 默认值，是因为标准主题/别名 collection 仍使用旧字段名；
+            # chunk 检索必须由调用方显式传入 config.LEARNED_SPARSE_FIELD。
             learned_sparse_field: str = "sparse_vector",
             bm25_sparse_field: str = "bm25_sparse_vector",
     ):

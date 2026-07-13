@@ -111,7 +111,10 @@ if __name__ == "__main__":
                 chunk_count = len(chunks)
                 md_content = final_state.get("md_content", "")[:150]  # MD内容前150字符
                 standard_subject_name = final_state.get("standard_subject_name", "未识别")  # 标准主题名称
-                has_embedding = all("dense_vector" in c and "sparse_vector" in c for c in chunks) if chunks else False
+                has_embedding = all(
+                    "dense_vector" in c and "learned_sparse_vector" in c
+                    for c in chunks
+                ) if chunks else False
                 has_chunk_id = all("chunk_id" in c for c in chunks) if chunks else False
 
                 # 打印核心指标

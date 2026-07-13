@@ -67,11 +67,11 @@ def _web_candidate(url, *, rank=1, title="厂家公告", content="最新维修�
 @pytest.mark.parametrize(
     ("mode", "expected_fields"),
     [
-        (RetrievalMode.DENSE_LEARNED_SPARSE, ["dense_vector", "sparse_vector"]),
+        (RetrievalMode.DENSE_LEARNED_SPARSE, ["dense_vector", "learned_sparse_vector"]),
         (RetrievalMode.DENSE_BM25, ["dense_vector", "bm25_sparse_vector"]),
         (
             RetrievalMode.DENSE_LEARNED_SPARSE_BM25,
-            ["dense_vector", "sparse_vector", "bm25_sparse_vector"],
+            ["dense_vector", "learned_sparse_vector", "bm25_sparse_vector"],
         ),
     ],
 )
@@ -83,6 +83,7 @@ def test_retrieval_modes_create_correct_ann_requests_with_same_filter(mode, expe
         expr=expr,
         retrieval_mode=mode.value,
         query_text="HAK 180 E020",
+        learned_sparse_field="learned_sparse_vector",
     )
 
     assert [request.anns_field for request in requests] == expected_fields

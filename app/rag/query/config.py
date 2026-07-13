@@ -17,16 +17,15 @@ RETRIEVAL_DEFAULT_LIMIT = 5
 # 标准主题/别名 collection 仍使用加权融合时的 dense/sparse 权重。chunk 检索从阶段 5
 # 第六部分起显式使用 RRF，不再直接相加不同量级的 dense、learned sparse、BM25 分数。
 RETRIEVAL_RANKER_WEIGHTS = (0.9, 0.1)
-# 当前线上默认仍只使用已存在 schema 的 dense + learned sparse。任务 7 重建 BM25 字段
-# 和 Function 后，才允许把默认值切换到包含 BM25 的模式。
+# 阶段 5A 的三种实验模式已具备 schema/请求能力，但默认仍保持 dense + learned sparse，
+# 避免在固定评测结论出来前把实验通道直接当成线上最优方案。
 RETRIEVAL_DEFAULT_MODE = RetrievalMode.DENSE_LEARNED_SPARSE
 # 单次本地 Action 内 Milvus RRF 和跨 Action RRF 使用同一个可版本化 k 基线。
 RETRIEVAL_RRF_K = 60
-# 当前 schema 的 BGE-M3 学习式稀疏字段名。任务 7 若收口改名为 learned_sparse_vector，
-# 必须同步这里、入库 schema、数据字典和固定评测配置。
-LEARNED_SPARSE_FIELD = "sparse_vector"
-# 任务 7 计划新增的 BM25 Function 输出字段。本轮只允许显式 BM25 模式创建请求，默认
-# 模式不会访问该字段，因此 schema 尚未重建时现有线上查询仍可运行。
+# chunk collection 的 BGE-M3 学习式稀疏字段名。标准主题/别名 collection 仍使用它们
+# 自己历史上的 sparse_vector，二者不是同一个 schema，不能做全局机械替换。
+LEARNED_SPARSE_FIELD = "learned_sparse_vector"
+# Milvus BM25 Function 输出字段。查询侧只向该字段提交原始文本；应用不生成或写入向量。
 BM25_SPARSE_FIELD = "bm25_sparse_vector"
 
 

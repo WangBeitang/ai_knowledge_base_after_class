@@ -15,6 +15,9 @@ def test_prepare_chunks_collection_includes_stage2_subject_fields(monkeypatch):
             self.field_names.append(field_name)
             self.field_descriptions[field_name] = kwargs.get("description", "")
 
+        def add_function(self, function):
+            pass
+
     class FakeIndexParams:
         def add_index(self, **kwargs):
             pass
@@ -33,6 +36,9 @@ def test_prepare_chunks_collection_includes_stage2_subject_fields(monkeypatch):
 
         def prepare_index_params(self):
             return FakeIndexParams()
+
+        def run_analyzer(self, texts, analyzer_params):
+            return [["hak180", "报警", "e021", "温度传感器", "故障"]]
 
         def create_collection(self, **kwargs):
             self.created_collection = kwargs["collection_name"]

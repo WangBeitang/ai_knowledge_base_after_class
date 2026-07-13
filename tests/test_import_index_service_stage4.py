@@ -8,22 +8,32 @@ class FakeSchema:
         self.field_names = []
         self.field_types = {}
         self.field_descriptions = {}
+        self.field_kwargs = {}
+        self.functions = []
 
     def add_field(self, *, field_name, datatype, **kwargs):
         self.field_names.append(field_name)
         self.field_types[field_name] = datatype
         self.field_descriptions[field_name] = kwargs.get("description", "")
+        self.field_kwargs[field_name] = kwargs
+
+    def add_function(self, function):
+        self.functions.append(function)
 
 
 class FakeIndexParams:
+    def __init__(self):
+        self.indexes = []
+
     def add_index(self, **kwargs):
-        pass
+        self.indexes.append(kwargs)
 
 
 def test_prepare_chunks_collection_includes_stage4_document_fields(monkeypatch):
     class FakeClient:
         def __init__(self):
             self.schema = FakeSchema()
+            self.index_params = FakeIndexParams()
             self.created_collection = None
             self.loaded_collection = None
 
@@ -34,7 +44,10 @@ def test_prepare_chunks_collection_includes_stage4_document_fields(monkeypatch):
             return self.schema
 
         def prepare_index_params(self):
-            return FakeIndexParams()
+            return self.index_params
+
+        def run_analyzer(self, texts, analyzer_params):
+            return [["hak180", "报警", "e021", "温度传感器", "故障"]]
 
         def create_collection(self, **kwargs):
             self.created_collection = kwargs["collection_name"]
@@ -68,6 +81,25 @@ def test_prepare_chunks_collection_includes_stage4_document_fields(monkeypatch):
     assert fake_gateway.client.schema.field_types["chunk_index"] == index_service.DataType.INT64
     assert fake_gateway.client.schema.field_types["enabled"] == index_service.DataType.BOOL
     assert "不再作为导入幂等删除条件" in fake_gateway.client.schema.field_descriptions["file_title"]
+    assert {
+        "learned_sparse_vector",
+        "lexical_text",
+        "bm25_sparse_vector",
+    }.issubset(field_names)
+    assert "sparse_vector" not in field_names
+    assert fake_gateway.client.schema.field_kwargs["lexical_text"]["enable_analyzer"] is True
+    assert fake_gateway.client.schema.field_kwargs["lexical_text"]["analyzer_params"] == (
+        index_service.LEXICAL_ANALYZER_PARAMS
+    )
+    [bm25_function] = fake_gateway.client.schema.functions
+    assert bm25_function.type == index_service.FunctionType.BM25
+    assert bm25_function.input_field_names == ["lexical_text"]
+    assert bm25_function.output_field_names == ["bm25_sparse_vector"]
+    index_by_field = {
+        item["field_name"]: item for item in fake_gateway.client.index_params.indexes
+    }
+    assert index_by_field["learned_sparse_vector"]["metric_type"] == "IP"
+    assert index_by_field["bm25_sparse_vector"]["metric_type"] == "BM25"
 
 
 def test_normalize_chunk_document_fields_backfills_stage4_metadata():
@@ -98,6 +130,8 @@ def test_normalize_chunk_document_fields_backfills_stage4_metadata():
     assert result[0]["source_title"] == "HAK180说明书"
     assert result[0]["file_title"] == "HAK180说明书"
     assert result[1]["file_title"] == "chunk旧标题"
+    assert "HAK180说明书" in result[0]["lexical_text"]
+    assert "开机前检查急停按钮" in result[0]["lexical_text"]
 
 
 def test_index_chunks_deletes_by_document_id_and_inserts_stage4_metadata(monkeypatch):
@@ -108,6 +142,12 @@ def test_index_chunks_deletes_by_document_id_and_inserts_stage4_metadata(monkeyp
 
         def has_collection(self, collection_name):
             return True
+
+        def describe_collection(self, collection_name):
+            return {
+                "fields": [{"name": name} for name in index_service.CHUNK_SCHEMA_REQUIRED_FIELDS],
+                "functions": [{"name": name} for name in index_service.CHUNK_SCHEMA_REQUIRED_FUNCTIONS],
+            }
 
         def delete(self, *, collection_name, filter):
             self.deleted_filter = filter
@@ -133,8 +173,8 @@ def test_index_chunks_deletes_by_document_id_and_inserts_stage4_metadata(monkeyp
         "index_version": 2,
         "file_title": "同名说明书",
         "chunks": [
-            {"content": "第一段", "title": "标题1", "dense_vector": [0.1], "sparse_vector": {1: 0.5}},
-            {"content": "第二段", "title": "标题2", "dense_vector": [0.2], "sparse_vector": {2: 0.4}},
+            {"content": "第一段", "title": "标题1", "dense_vector": [0.1], "learned_sparse_vector": {1: 0.5}},
+            {"content": "第二段", "title": "标题2", "dense_vector": [0.2], "learned_sparse_vector": {2: 0.4}},
         ],
     }
 
@@ -148,6 +188,8 @@ def test_index_chunks_deletes_by_document_id_and_inserts_stage4_metadata(monkeyp
     assert fake_gateway.client.inserted_data[1]["chunk_index"] == 1
     assert fake_gateway.client.inserted_data[0]["enabled"] is True
     assert fake_gateway.client.inserted_data[0]["source_title"] == "同名说明书"
+    assert "lexical_text" in fake_gateway.client.inserted_data[0]
+    assert "bm25_sparse_vector" not in fake_gateway.client.inserted_data[0]
     assert result["chunks"][0]["chunk_id"] == 101
     assert result["chunks"][1]["chunk_id"] == 102
 
@@ -164,6 +206,12 @@ def test_index_chunks_replaces_only_current_document(monkeypatch):
 
         def has_collection(self, collection_name):
             return True
+
+        def describe_collection(self, collection_name):
+            return {
+                "fields": [{"name": name} for name in index_service.CHUNK_SCHEMA_REQUIRED_FIELDS],
+                "functions": [{"name": name} for name in index_service.CHUNK_SCHEMA_REQUIRED_FUNCTIONS],
+            }
 
         def delete(self, *, collection_name, filter):
             document_id = filter.split("==", 1)[1].strip("'\"")
@@ -191,8 +239,8 @@ def test_index_chunks_replaces_only_current_document(monkeypatch):
         "index_version": 2,
         "file_title": "同名说明书",
         "chunks": [
-            {"content": "新内容1", "dense_vector": [0.1], "sparse_vector": {1: 0.5}},
-            {"content": "新内容2", "dense_vector": [0.2], "sparse_vector": {2: 0.4}},
+            {"content": "新内容1", "dense_vector": [0.1], "learned_sparse_vector": {1: 0.5}},
+            {"content": "新内容2", "dense_vector": [0.2], "learned_sparse_vector": {2: 0.4}},
         ],
     }
 
@@ -216,6 +264,12 @@ def test_index_chunks_does_not_restore_old_chunks_when_insert_fails(monkeypatch)
         def has_collection(self, collection_name):
             return True
 
+        def describe_collection(self, collection_name):
+            return {
+                "fields": [{"name": name} for name in index_service.CHUNK_SCHEMA_REQUIRED_FIELDS],
+                "functions": [{"name": name} for name in index_service.CHUNK_SCHEMA_REQUIRED_FUNCTIONS],
+            }
+
         def delete(self, *, collection_name, filter):
             document_id = filter.split("==", 1)[1].strip("'\"")
             self.rows = [row for row in self.rows if row.get("document_id") != document_id]
@@ -237,7 +291,7 @@ def test_index_chunks_does_not_restore_old_chunks_when_insert_fails(monkeypatch)
         "index_version": 2,
         "file_title": "HAK180说明书",
         "chunks": [
-            {"content": "新内容", "dense_vector": [0.1], "sparse_vector": {1: 0.5}},
+            {"content": "新内容", "dense_vector": [0.1], "learned_sparse_vector": {1: 0.5}},
         ],
     }
 

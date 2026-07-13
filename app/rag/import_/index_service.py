@@ -1,9 +1,15 @@
-from pymilvus import DataType
+from pymilvus import DataType, Function, FunctionType
 
 from app.infra.vectorstore.milvus_gateway import milvus_gateway
 from app.infra.persistence.import_metadata_repository import DEFAULT_INDEX_VERSION, DEFAULT_TENANT_ID, DEFAULT_VISIBILITY
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.config import MILVUS_DEFAULT_VARCHAR_MAX_LENGTH
+from app.rag.import_.lexical_text_service import (
+    LEXICAL_ANALYZER_PARAMS,
+    LEXICAL_TEXT_MAX_LENGTH,
+    build_chunk_lexical_text,
+    validate_lexical_analyzer,
+)
 from app.rag.import_.subject_name_service import SUBJECT_DOMAIN_FIELD_DESCRIPTIONS
 from app.shared.runtime.logger import logger,step_log
 from app.shared.utils.escape_milvus_string_utils import escape_milvus_string
@@ -18,6 +24,46 @@ CHUNK_SUBJECT_FIELDS = (
     "safety_level",
     "maintenance_stage",
 )
+
+# 阶段 5 第七部分重建后的 chunk collection 必须同时具备三种召回载体：
+# dense_vector（稠密语义）、learned_sparse_vector（BGE-M3 学习式稀疏）和
+# bm25_sparse_vector（Milvus BM25 Function 输出）。旧 collection 不做字段兼容；
+# 如果检测到旧 schema，要求显式删库重建，避免把新代码静默跑在旧数据结构上。
+CHUNK_SCHEMA_REQUIRED_FIELDS = {
+    "dense_vector",
+    "learned_sparse_vector",
+    "lexical_text",
+    "bm25_sparse_vector",
+}
+CHUNK_SCHEMA_REQUIRED_FUNCTIONS = {"chunk_lexical_text_bm25"}
+
+
+def _validate_existing_chunk_collection_schema(client, collection_name: str) -> None:
+    """已有 collection 必须是阶段 5 新 schema，否则给出明确的删库重建错误。"""
+    description = client.describe_collection(collection_name=collection_name)
+    actual_fields = {
+        str(field.get("name") or field.get("field_name") or "")
+        for field in description.get("fields", [])
+    }
+    missing_fields = sorted(CHUNK_SCHEMA_REQUIRED_FIELDS - actual_fields)
+    actual_functions = {
+        str(function.get("name") or "")
+        for function in description.get("functions", [])
+    }
+    missing_functions = sorted(CHUNK_SCHEMA_REQUIRED_FUNCTIONS - actual_functions)
+    if missing_fields or missing_functions:
+        missing_parts = []
+        if missing_fields:
+            missing_parts.append("字段：" + ", ".join(missing_fields))
+        if missing_functions:
+            missing_parts.append("Function：" + ", ".join(missing_functions))
+        raise RuntimeError(
+            "chunk collection 仍是阶段 5 之前的旧 schema，缺少"
+            + "；".join(missing_parts)
+            + "。当前只有可丢弃测试数据，请删除该 collection 后重新导入；"
+              "本阶段不保留 sparse_vector 兼容分支。"
+        )
+
 
 def _add_varchar_field(schema, field_name, description, max_length=MILVUS_DEFAULT_VARCHAR_MAX_LENGTH):
     schema.add_field(
@@ -57,8 +103,13 @@ def prepare_chunks_collection(state):
     # 2.检查集合是否已存在
     collection_name = milvus_gateway.chunk_collection_name
     if client.has_collection(collection_name=collection_name):
-        logger.info(f"集合{collection_name}已存在，无需创建")
+        _validate_existing_chunk_collection_schema(client, collection_name)
+        logger.info(f"集合{collection_name}已存在且符合阶段5 BM25 schema，无需创建")
         return
+
+    # Analyzer 由 Milvus 服务端执行。先用真实 token 验证中文与设备编号，再创建 schema；
+    # 这样错误配置会在空 collection 阶段失败，不会等全量导入后才暴露。
+    validate_lexical_analyzer(client)
 
     # 3.schema构建
     schema = client.create_schema(
@@ -129,6 +180,20 @@ def prepare_chunks_collection(state):
         "maintenance_stage",
     ):
         _add_varchar_field(schema, field_name, SUBJECT_DOMAIN_FIELD_DESCRIPTIONS[field_name])
+
+    # lexical_text（词法检索文本）是 BM25 唯一输入。应用负责按固定规则拼接纯文本；
+    # enable_analyzer 表示由 Milvus 对插入文本和查询文本使用同一套分词规则。
+    schema.add_field(
+        field_name="lexical_text",
+        datatype=DataType.VARCHAR,
+        max_length=LEXICAL_TEXT_MAX_LENGTH,
+        enable_analyzer=True,
+        analyzer_params=LEXICAL_ANALYZER_PARAMS,
+        description=(
+            "BM25 词法检索输入。按固定顺序拼接主题、设备标识、标题和正文，并追加编号变体；"
+            "应用写入该文本，Milvus Analyzer/Function 负责生成 BM25 稀疏向量。"
+        ),
+    )
     # 稠密向量
     schema.add_field(
         field_name="dense_vector",
@@ -136,12 +201,29 @@ def prepare_chunks_collection(state):
         dim=1024,
         description="chunk 检索文本的稠密向量。用于语义相似度召回。",
     )
-    # 稀疏向量
+    # learned sparse 的中文含义是“模型学习式稀疏向量”。它由 BGE-M3 生成，
+    # 与依赖词频统计的 BM25 是两条不同召回通道，因此必须使用独立字段。
     schema.add_field(
-        field_name="sparse_vector",
+        field_name="learned_sparse_vector",
         datatype=DataType.SPARSE_FLOAT_VECTOR,
-        description="chunk 检索文本的稀疏向量。用于型号、报警码、关键词等字面匹配召回。",
+        description="BGE-M3 生成的学习式稀疏向量。用于关键词与模型学习权重结合的召回。",
     )
+    # bm25_sparse_vector 是 Function 输出字段。应用插入 chunk 时绝不能手动写该字段；
+    # Milvus 会根据 lexical_text 和当前 collection 的词频统计自动生成。
+    schema.add_field(
+        field_name="bm25_sparse_vector",
+        datatype=DataType.SPARSE_FLOAT_VECTOR,
+        description="Milvus BM25 Function 自动生成的稀疏向量，应用侧禁止直接写入。",
+    )
+
+    bm25_function = Function(
+        name="chunk_lexical_text_bm25",
+        function_type=FunctionType.BM25,
+        input_field_names=["lexical_text"],
+        output_field_names=["bm25_sparse_vector"],
+        description="把 chunk.lexical_text 转换为 BM25 稀疏表示。",
+    )
+    schema.add_function(bm25_function)
 
     # 4.索引构建
     index_params = client.prepare_index_params()
@@ -152,9 +234,15 @@ def prepare_chunks_collection(state):
         params={"M": 64, "efConstruction": 100}
     )
     index_params.add_index(
-        field_name="sparse_vector",
+        field_name="learned_sparse_vector",
         index_type="SPARSE_INVERTED_INDEX",
         metric_type="IP",
+        params={"inverted_index_algo": "DAAT_MAXSCORE"},
+    )
+    index_params.add_index(
+        field_name="bm25_sparse_vector",
+        index_type="SPARSE_INVERTED_INDEX",
+        metric_type="BM25",
         params={"inverted_index_algo": "DAAT_MAXSCORE"},
     )
 
@@ -221,6 +309,9 @@ def normalize_chunk_document_fields(chunks, state: ImportGraphState, file_title:
         chunk["enabled"] = True
         chunk["source_title"] = file_title
         chunk.setdefault("file_title", file_title)
+        # 必须在 source_title、权限字段和主体字段补齐后生成 lexical_text，确保重复导入
+        # 的同一 chunk 得到稳定 BM25 输入。bm25_sparse_vector 由 Milvus Function 生成。
+        chunk["lexical_text"] = build_chunk_lexical_text(chunk)
     return chunks
 
 
@@ -243,6 +334,21 @@ def remove_old_chunks(document_id):
 def insert_chunks(chunks):
     client = milvus_gateway.client
     chunks = normalize_chunk_subject_fields(chunks)
+    for chunk in chunks:
+        if "sparse_vector" in chunk:
+            raise ValueError(
+                "chunk 仍包含旧字段 sparse_vector；阶段5已改为 learned_sparse_vector，"
+                "请重新执行 BGE-M3 向量化，不保留旧 schema 兼容写入"
+            )
+        if "bm25_sparse_vector" in chunk:
+            raise ValueError(
+                "bm25_sparse_vector 是 Milvus Function 输出字段，应用侧只能写 lexical_text"
+            )
+        # 这三个字段分别归应用向量化、应用词法文本构造负责。与 Function 输出不同，
+        # 任一缺失都表示导入节点顺序或 partial state 已损坏，应在调用 Milvus 前报清楚。
+        for required_field in ("dense_vector", "learned_sparse_vector", "lexical_text"):
+            if required_field not in chunk or chunk[required_field] in (None, ""):
+                raise ValueError(f"chunk 缺少必填入库字段 {required_field}")
     result = client.insert(
         collection_name=milvus_gateway.chunk_collection_name,
         data=chunks,
@@ -276,7 +382,9 @@ def index_chunks(state: ImportGraphState) -> ImportGraphState:
     document_id = _require_state_text(state, "document_id")
     remove_old_chunks(document_id)
 
-    # 4.补齐阶段4元数据并插入新数据
+    # 4.先补齐主体字段，再补齐 document 元数据并构造 lexical_text。顺序不能颠倒，
+    # 否则设备型号、报警码等 metadata 会缺席于 BM25 输入。
+    chunks = normalize_chunk_subject_fields(chunks)
     chunks = normalize_chunk_document_fields(chunks, state, file_title)
     insert_chunks(chunks)
 

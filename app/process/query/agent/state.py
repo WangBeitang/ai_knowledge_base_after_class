@@ -152,7 +152,7 @@ class QueryGraphState(TypedDict):
     retrieval_observation: RetrievalObservation | None
 
     # retrieval mode 的中文含义是“召回组合模式”。阶段 5 第六部分固定三种关闭枚举，
-    # 当前默认 dense_learned_sparse；包含 BM25 的模式只有任务 7 schema 重建后才可启用。
+    # 当前默认 dense_learned_sparse；阶段5A也允许显式选择 dense_bm25 或三路实验模式。
     # 来源：查询 State 或评测覆盖值；普通检索和 HyDE 必须读取同一个值。
     retrieval_mode: str
 
