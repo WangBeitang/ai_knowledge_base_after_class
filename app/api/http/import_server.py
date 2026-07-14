@@ -1,5 +1,6 @@
 import shutil
 import uuid
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -22,6 +23,7 @@ from app.infra.persistence.import_metadata_repository import (
     DEFAULT_TENANT_ID,
     DEFAULT_VISIBILITY,
     get_import_metadata_repository,
+    safe_reconcile_interrupted_tasks,
     safe_mark_import_completed,
     safe_mark_import_failed,
 )
@@ -49,10 +51,30 @@ from app.shared.utils.task_utils import (
     update_task_status, add_running_task, add_done_task,
 )
 
+
+@asynccontextmanager
+async def import_service_lifespan(_app: FastAPI):
+    """
+    导入服务生命周期边界。
+
+    lifespan 的中文含义是“应用生命周期”。这里在开始接收 HTTP 请求前
+    收口旧进程遗留的 pending/processing 导入任务。收口函数内部已捕获
+    Mongo 异常，所以可观测数据库暂时不可用不会阻止 API 进程启动。
+
+    当前规则依赖“单进程、单实例”部署假设；未来切换多 worker 或独立
+    任务队列时，必须升级为 worker_instance_id + heartbeat/lease，不能继续
+    在启动时收口全部非终态任务。
+    """
+    summary = safe_reconcile_interrupted_tasks()
+    logger.info(f"导入服务启动收口结果: {summary}")
+    yield
+
+
 app = FastAPI(
     title=settings.import_app_name,
     description="企业化 RAG 导入服务，负责文件上传、导入执行与状态查询。",
     version="0.3.0",
+    lifespan=import_service_lifespan,
 )
 app.add_middleware(
     CORSMiddleware,
@@ -77,6 +99,7 @@ def _task_status_from_record(task: dict, code: int = 200) -> TaskStatusSchema:
         document_id=task.get("document_id", ""),
         dataset_id=task.get("dataset_id", ""),
         failed_node=task.get("failed_node", ""),
+        error_code=task.get("error_code", ""),
         error_message=task.get("error_message", ""),
         created_at=task.get("created_at", ""),
         updated_at=task.get("updated_at", ""),
@@ -105,6 +128,7 @@ def _document_status_from_record(document: dict, code: int = 200) -> DocumentSta
         parse_result_dir=document.get("parse_result_dir", ""),
         deleted_at=document.get("deleted_at", ""),
         failed_node=document.get("failed_node", ""),
+        error_code=document.get("error_code", ""),
         error_message=document.get("error_message", ""),
         created_at=document.get("created_at", ""),
         updated_at=document.get("updated_at", ""),

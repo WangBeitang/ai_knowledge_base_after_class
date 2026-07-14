@@ -157,8 +157,18 @@ def _upload_pdf_and_poll(pdf_path_obj):
                 raise RuntimeError(f"轮询获取zip_url,MinerU服务器返回结果异常，zip_url为空")
             return zip_url
         if result_state == MinerUExtractState.FAILED:
-            logger.error(f"轮询获取zip_url,MinerU服务器返回结果异常，解析失败")
-            raise RuntimeError(f"轮询获取zip_url,MinerU服务器返回结果异常，解析失败")
+            # err_msg 是 MinerU 在 extract_result.state=failed 时返回的具体失败原因。
+            # 这里把它放进异常文本，后续 invoke_graph 的统一失败收口会将该文本写入
+            # task/document.error_message，状态 API 和前端详情因而能展示真实原因。
+            # 它是上游自然语言说明，不作为稳定机器码写入 error_code。
+            err_msg = str(result_dict.get("err_msg") or "").strip()
+            if err_msg:
+                failure_message = f"MinerU解析失败：{err_msg}"
+            else:
+                # 兼容 MinerU 未返回 err_msg 的情况，避免最终持久化为空错误信息。
+                failure_message = "轮询获取zip_url,MinerU服务器返回结果异常，解析失败"
+            logger.error(failure_message)
+            raise RuntimeError(failure_message)
 
         if is_running_state(result_state):
             logger.warning(f"轮询获取zip_url,{pdf_path_obj.name}业务结果信息{result_state},正在解析中......")

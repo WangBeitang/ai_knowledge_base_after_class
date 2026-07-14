@@ -22,7 +22,8 @@ def test_import_page_loads_and_renders_document_history():
 
     assert "loadDocumentHistory()" in html
     assert "fetch(`${API_BASE}/documents`" in html
-    assert "renderDocumentHistory(data.items || [])" in html
+    assert "const documents = Array.isArray(data.items) ? data.items : []" in html
+    assert "renderDocumentHistory(documents)" in html
     assert "documentRecord.file_name" in html
     assert "documentRecord.created_at" in html
     assert "documentRecord.parse_status" in html
@@ -40,3 +41,32 @@ def test_import_page_maps_failed_nodes_to_friendly_messages():
     assert "导入失败，请稍后重试或联系管理员" in html
     assert "failed_node" in html
     assert "error_message" in html
+
+
+def test_import_page_auto_refreshes_active_history_with_single_timer():
+    """历史列表只能有一个定时器，避免多次上传后叠加并发轮询。"""
+    html = read_import_html()
+
+    assert "let historyRefreshTimer = null" in html
+    assert "clearTimeout(historyRefreshTimer)" in html
+    assert "historyRefreshTimer = setTimeout" in html
+    assert "['uploaded', 'processing'].includes(item?.status)" in html
+    assert "scheduleHistoryRefresh(hasActiveDocument)" in html
+    assert "HISTORY_REFRESH_INTERVAL_MS = 2000" in html
+    assert "pollStatus(taskId, itemEl);" in html
+    assert "loadDocumentHistory();" in html
+
+
+def test_import_page_distinguishes_restart_failure_from_connection_loss():
+    """浏览器断网只是状态未知；只有后端机器码才能确认服务重启中断。"""
+    html = read_import_html()
+
+    assert "ERROR_CODE_MESSAGES" in html
+    assert (
+        "import_service_restarted: "
+        "'服务重启导致导入中断，请重新上传或重建索引'"
+    ) in html
+    assert "ERROR_CODE_MESSAGES[errorCode]" in html
+    assert "服务连接中断，任务状态暂时无法确认，正在重试" in html
+    assert "if (!res.ok)" in html
+    assert "showConnectionUnknownNotice()" in html

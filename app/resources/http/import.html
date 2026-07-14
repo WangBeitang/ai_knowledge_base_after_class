@@ -348,6 +348,10 @@
     const API_BASE = location.origin.startsWith('http') ? location.origin : 'http://127.0.0.1:8000';
     const USER_ID_STORAGE_KEY = 'kb_user_id';
     const currentUserId = getOrCreateUserId();
+    const HISTORY_REFRESH_INTERVAL_MS = 2000;
+    // 历史列表只允许一个延时刷新器。使用 setTimeout 而不是 setInterval，
+    // 可以确保上一次 /documents 请求完成后才调度下一次，避免网络较慢时并发堆积。
+    let historyRefreshTimer = null;
     const STATUS_LABELS = {
         pending: '等待中',
         uploaded: '已上传',
@@ -364,6 +368,11 @@
         node_subject_name_recognition: '文档主题识别失败',
         node_bge_embedding: '文档向量化失败，请稍后重试',
         node_import_milvus: '文档索引入库失败，请稍后重试',
+    };
+    const ERROR_CODE_MESSAGES = {
+        // import_service_restarted 表示后台进程已退出，不是 failed_node
+        // 对应的 PDF/Milvus 节点自身报错，因此必须优先于节点文案展示。
+        import_service_restarted: '服务重启导致导入中断，请重新上传或重建索引',
     };
 
     function createUserId() {
@@ -404,6 +413,19 @@
     function clearHistoryNotice() {
         historyNotice.textContent = '';
         historyNotice.className = 'history-notice';
+        delete historyNotice.dataset.connectionError;
+    }
+
+    function showConnectionUnknownNotice() {
+        showHistoryNotice('服务连接中断，任务状态暂时无法确认，正在重试', 'error');
+        historyNotice.dataset.connectionError = 'true';
+    }
+
+    function clearConnectionUnknownNotice() {
+        // 只清理由轮询写入的断线提示，不覆盖“已提交重建”等用户操作结果。
+        if (historyNotice.dataset.connectionError === 'true') {
+            clearHistoryNotice();
+        }
     }
 
     function escapeHtml(value) {
@@ -436,6 +458,8 @@
     }
 
     function failureSummary(record) {
+        const errorCode = record?.error_code || '';
+        if (ERROR_CODE_MESSAGES[errorCode]) return ERROR_CODE_MESSAGES[errorCode];
         const failedNode = record?.failed_node || '';
         if (!failedNode && record?.status !== 'failed') return '';
         return FAILED_NODE_MESSAGES[failedNode] || '导入失败，请稍后重试或联系管理员';
@@ -462,13 +486,29 @@
             detailLine('document_id', data.document_id),
             detailLine('dataset_id', data.dataset_id),
             detailLine('failed_node', data.failed_node),
+            detailLine('error_code', data.error_code),
             detailLine('error_message', data.error_message),
         ];
         detailListEl.innerHTML = lines.join('');
     }
 
-    async function loadDocumentHistory() {
-        refreshHistoryBtn.disabled = true;
+    function scheduleHistoryRefresh(shouldContinue) {
+        if (historyRefreshTimer !== null) {
+            clearTimeout(historyRefreshTimer);
+            historyRefreshTimer = null;
+        }
+        if (!shouldContinue) return;
+
+        historyRefreshTimer = setTimeout(() => {
+            historyRefreshTimer = null;
+            loadDocumentHistory({ automatic: true });
+        }, HISTORY_REFRESH_INTERVAL_MS);
+    }
+
+    async function loadDocumentHistory({ automatic = false } = {}) {
+        // 手动刷新或上一次延时器触发时，先取消旧计时器，始终只保留一条轮询链。
+        scheduleHistoryRefresh(false);
+        if (!automatic) refreshHistoryBtn.disabled = true;
         try {
             const response = await fetch(`${API_BASE}/documents`, {
                 headers: userHeaders(),
@@ -477,14 +517,28 @@
                 throw new Error(`Load documents failed: ${response.status}`);
             }
             const data = await response.json();
-            renderDocumentHistory(data.items || []);
+            const documents = Array.isArray(data.items) ? data.items : [];
+            renderDocumentHistory(documents);
+            clearConnectionUnknownNotice();
+            // uploaded/processing 都是非终态 document。只要历史中仍有任意一条，
+            // 页面就继续刷新；全部进入 completed/failed 后自动停止。
+            const hasActiveDocument = documents.some(
+                (item) => ['uploaded', 'processing'].includes(item?.status)
+            );
+            scheduleHistoryRefresh(hasActiveDocument);
             return true;
         } catch (error) {
             console.error(error);
-            fileList.innerHTML = '<div class="empty-state">导入记录加载失败</div>';
+            // 网络断开不等于后台任务失败。保留上一次成功渲染的状态，
+            // 只告知用户“当前无法确认”，并继续尝试连接恢复后的后端终态。
+            if (!fileList.children.length) {
+                fileList.innerHTML = '<div class="empty-state">导入记录暂时无法加载</div>';
+            }
+            showConnectionUnknownNotice();
+            scheduleHistoryRefresh(true);
             return false;
         } finally {
-            refreshHistoryBtn.disabled = false;
+            if (!automatic) refreshHistoryBtn.disabled = false;
         }
     }
 
@@ -517,6 +571,7 @@
             detailLine('standard_subject_name', documentRecord.standard_subject_name),
             detailLine('md_path', documentRecord.md_path),
             detailLine('failed_node', documentRecord.failed_node),
+            detailLine('error_code', documentRecord.error_code),
             detailLine('error_message', documentRecord.error_message),
         ].join('');
 
@@ -762,6 +817,9 @@
 
             // 2. 轮询状态
             pollStatus(taskId, itemEl);
+            // 新任务已经写入 Mongo，立即刷新一次“我的导入记录”，让历史列表的
+            // 单一定时器也开始跟踪该 uploaded/processing document。
+            loadDocumentHistory();
 
         } catch (error) {
             console.error(error);
@@ -833,7 +891,11 @@
                 const res = await fetch(`${API_BASE}/status/${taskId}`, {
                     headers: userHeaders()
                 });
+                if (!res.ok) {
+                    throw new Error(`Load task status failed: ${res.status}`);
+                }
                 const data = await res.json();
+                clearConnectionUnknownNotice();
 
                 // 渲染日志（done/running）
                 renderLogs(itemEl, data.done_list, data.running_list);
@@ -863,6 +925,9 @@
                 }
             } catch (e) {
                 console.error('Polling error', e);
+                // 断线时保留卡片上最后一次的“处理中”状态，不由浏览器伪造 failed。
+                // 服务恢复后，下一次轮询会读到启动收口写入的真实终态。
+                showConnectionUnknownNotice();
             }
         }, 2000); // 每2秒轮询一次
     }

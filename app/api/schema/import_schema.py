@@ -22,6 +22,9 @@ class TaskStatusSchema(BaseModel):
     document_id:str = ""
     dataset_id:str = ""
     failed_node:str = ""
+    # error_code 是机器可读错误码。旧数据和普通节点异常默认为空；
+    # import_service_restarted 表示该任务随旧服务进程退出而中断。
+    error_code:str = ""
     error_message:str = ""
     created_at:str = ""
     updated_at:str = ""
@@ -48,6 +51,9 @@ class DocumentStatusSchema(BaseModel):
     parse_result_dir:str = ""
     deleted_at:str = ""
     failed_node:str = ""
+    # document.error_code 投影最新一次导入的机器失败原因，
+    # 用于前端稳定区分服务重启中断和普通节点失败。
+    error_code:str = ""
     error_message:str = ""
     created_at:str = ""
     updated_at:str = ""

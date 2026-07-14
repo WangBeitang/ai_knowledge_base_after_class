@@ -137,6 +137,7 @@ def test_status_prefers_mongo_task_record(monkeypatch):
                 "done_nodes": ["upload_file", "node_entry"],
                 "running_nodes": ["node_import_milvus"],
                 "failed_node": "node_import_milvus",
+                "error_code": "import_service_restarted",
                 "error_message": "Milvus 入库失败",
                 "created_at": "2026-07-08T08:00:00+00:00",
                 "updated_at": "2026-07-08T08:01:00+00:00",
@@ -157,6 +158,7 @@ def test_status_prefers_mongo_task_record(monkeypatch):
     assert data["done_list"] == ["开始上传文件", "检查文件"]
     assert data["running_list"] == ["导入向量库"]
     assert data["failed_node"] == "node_import_milvus"
+    assert data["error_code"] == "import_service_restarted"
     assert data["error_message"] == "Milvus 入库失败"
     assert data["created_at"] == "2026-07-08T08:00:00+00:00"
     assert data["updated_at"] == "2026-07-08T08:01:00+00:00"
@@ -238,6 +240,7 @@ def test_document_status_returns_mongo_document(monkeypatch):
                 "parse_result_dir": "/tmp/task_1/extract",
                 "deleted_at": "",
                 "failed_node": "",
+                "error_code": "",
                 "error_message": "",
                 "created_at": "2026-07-08T08:00:00+00:00",
                 "updated_at": "2026-07-08T08:01:00+00:00",
@@ -262,6 +265,7 @@ def test_document_status_returns_mongo_document(monkeypatch):
     assert data["parse_result_zip_path"] == "/tmp/task_1/result.zip"
     assert data["parse_result_dir"] == "/tmp/task_1/extract"
     assert data["deleted_at"] == ""
+    assert data["error_code"] == ""
     assert data["created_at"] == "2026-07-08T08:00:00+00:00"
     assert data["updated_at"] == "2026-07-08T08:01:00+00:00"
 
@@ -334,6 +338,7 @@ def test_document_tasks_filters_by_owner_user_id(monkeypatch):
                 "status": "completed",
                 "done_nodes": ["upload_file"],
                 "running_nodes": [],
+                "error_code": "",
             },
             "task_user_b": {
                 "task_id": "task_user_b",
@@ -356,6 +361,29 @@ def test_document_tasks_filters_by_owner_user_id(monkeypatch):
     assert response.status_code == 200
     data = response.json()
     assert [item["task_id"] for item in data["items"]] == ["task_user_a"]
+    assert data["items"][0]["error_code"] == ""
+
+
+def test_import_service_lifespan_reconciles_interrupted_tasks_once(monkeypatch):
+    calls = []
+    summary = {
+        "examined_task_count": 2,
+        "failed_task_count": 2,
+        "completed_task_count": 0,
+        "failed_document_count": 2,
+    }
+    monkeypatch.setattr(
+        import_server,
+        "safe_reconcile_interrupted_tasks",
+        lambda: calls.append("reconciled") or summary,
+    )
+
+    # TestClient 作为上下文管理器时会真正进入 FastAPI lifespan。
+    # 不发起业务请求即可验证收口发生在服务启动边界。
+    with TestClient(import_server.app):
+        assert calls == ["reconciled"]
+
+    assert calls == ["reconciled"]
 
 
 def test_document_status_returns_404_for_missing_document(monkeypatch):

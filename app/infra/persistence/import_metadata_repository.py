@@ -39,6 +39,14 @@ STATUS_COMPLETED = "completed"
 STATUS_FAILED = "failed"
 STATUS_DELETED = "deleted"
 
+# error_code 是“机器可读错误码”，前端使用它区分“节点自身执行失败”
+# 和“后台服务重启导致任务中断”。旧数据没有该字段时按空字符串处理，
+# 不需要历史数据迁移。
+ERROR_CODE_IMPORT_SERVICE_RESTARTED = "import_service_restarted"
+IMPORT_SERVICE_RESTARTED_MESSAGE = (
+    "导入服务重启，旧进程中的后台任务已中断，请重新上传或重建索引"
+)
+
 # 失败时用节点名判断失败阶段：这些节点属于“解析阶段”，其它后续节点默认归为
 # “索引阶段”。这样 document.status 负责表达整体成功/失败，parse_status 和
 # index_status 负责表达失败落在哪个阶段，便于列表筛选和问题排查。
@@ -91,6 +99,9 @@ class ImportMetadataRepository:
         self.documents.create_index([("owner_user_id", ASCENDING), ("document_id", ASCENDING)])
         self.documents.create_index([("owner_user_id", ASCENDING), ("status", ASCENDING)])
         self.tasks.create_index([("task_id", ASCENDING)], unique=True)
+        # 导入服务启动时需要按状态找出 pending/processing 遗留任务。
+        # 该索引避免任务历史增长后每次启动都全表扫描。
+        self.tasks.create_index([("status", ASCENDING)])
         self.tasks.create_index([("document_id", ASCENDING), ("created_at", DESCENDING)])
         self.tasks.create_index([("dataset_id", ASCENDING), ("status", ASCENDING)])
         self.tasks.create_index([("owner_user_id", ASCENDING), ("task_id", ASCENDING)])
@@ -181,6 +192,7 @@ class ImportMetadataRepository:
             "parse_result_dir": "",
             "deleted_at": "",
             "failed_node": "",
+            "error_code": "",
             "error_message": "",
             "created_at": now,
             "updated_at": now,
@@ -196,6 +208,7 @@ class ImportMetadataRepository:
             "running_nodes": [],
             "done_nodes": [],
             "failed_node": "",
+            "error_code": "",
             "error_message": "",
             "created_at": now,
             "updated_at": now,
@@ -240,6 +253,7 @@ class ImportMetadataRepository:
             "running_nodes": [],
             "done_nodes": [],
             "failed_node": "",
+            "error_code": "",
             "error_message": "",
             "created_at": now,
             "updated_at": now,
@@ -252,6 +266,7 @@ class ImportMetadataRepository:
             "parse_status": STATUS_PENDING,
             "index_status": STATUS_PENDING,
             "failed_node": "",
+            "error_code": "",
             "error_message": "",
             "updated_at": now,
         }
@@ -398,6 +413,127 @@ class ImportMetadataRepository:
             },
         )
 
+    def reconcile_interrupted_tasks(self) -> dict[str, int]:
+        """
+        在单进程导入服务启动时收口旧进程遗留的任务。
+
+        FastAPI ``BackgroundTasks`` 属于当前 Python 进程，不是可持久任务队列。
+        新服务实例启动时，Mongo 中仍是 pending/processing 的任务已经没有
+        执行者，必须转为终态，否则前端会永久显示“处理中”。
+
+        返回值是启动日志使用的计数摘要：
+        - examined_task_count：本次检查的非终态 task 数。
+        - failed_task_count：确认已中断并转为 failed 的 task 数。
+        - completed_task_count：document 已成功、仅 task 终态漏写时修复为 completed 的数量。
+        - failed_document_count：仍由中断 task 持有并转为 failed 的 document 数。
+
+        方法只处理 pending/processing，并且更新时再次附带状态条件，因此
+        重复启动是幂等的。当前方案仅适用于单进程/单实例导入服务。
+        """
+        in_flight_statuses = [STATUS_PENDING, STATUS_PROCESSING]
+        tasks = list(self.tasks.find({"status": {"$in": in_flight_statuses}}))
+        summary = {
+            "examined_task_count": len(tasks),
+            "failed_task_count": 0,
+            "completed_task_count": 0,
+            "failed_document_count": 0,
+        }
+
+        for task in tasks:
+            task_id = str(task.get("task_id") or "")
+            document_id = str(task.get("document_id") or "")
+            if not task_id:
+                # task_id 是任务主键；历史脏数据缺少主键时只记日志，
+                # 不使用宽泛条件批量更新其他任务。
+                logger.warning("发现缺少 task_id 的非终态导入任务，已跳过启动收口")
+                continue
+
+            document = self.documents.find_one({"document_id": document_id}) if document_id else None
+            is_latest_task = bool(
+                document
+                and str(document.get("latest_task_id") or "") == task_id
+            )
+            now = _now_iso()
+
+            # 最后的 Milvus 入库节点会先把 document/index 写成 completed，
+            # invoke_graph 随后才收口 task。如果服务恰好在两步之间退出，
+            # 应修复 task 为成功，而不是把已经提交的索引误报为失败。
+            if (
+                is_latest_task
+                and document.get("status") == STATUS_COMPLETED
+                and document.get("index_status") == STATUS_COMPLETED
+            ):
+                result = self.tasks.update_one(
+                    {"task_id": task_id, "status": {"$in": in_flight_statuses}},
+                    {
+                        "$set": {
+                            "status": STATUS_COMPLETED,
+                            "running_nodes": [],
+                            "failed_node": "",
+                            "error_code": "",
+                            "error_message": "",
+                            "completed_at": now,
+                            "updated_at": now,
+                        }
+                    },
+                )
+                summary["completed_task_count"] += int(result.modified_count > 0)
+                continue
+
+            running_nodes = list(task.get("running_nodes") or [])
+            failed_node = str(running_nodes[-1]) if running_nodes else ""
+            # 只有当前 task 仍是 document.latest_task_id 时才可更新 document。
+            # 这个条件防止旧进程遗留的 task 把后续新建、已成功的索引状态覆盖回 failed。
+            should_fail_document = is_latest_task and document.get("status") in {
+                STATUS_UPLOADED,
+                STATUS_PROCESSING,
+            }
+            if should_fail_document:
+                document_payload: dict[str, Any] = {
+                    "status": STATUS_FAILED,
+                    "failed_node": failed_node,
+                    "error_code": ERROR_CODE_IMPORT_SERVICE_RESTARTED,
+                    "error_message": IMPORT_SERVICE_RESTARTED_MESSAGE,
+                    "updated_at": now,
+                }
+                if failed_node in PARSE_NODE_NAMES:
+                    document_payload["parse_status"] = STATUS_FAILED
+                elif failed_node:
+                    # 有明确的非解析节点时，延续现有阶段归类，记为索引阶段失败。
+                    # 如果尚未进入任何节点，则不猜测阶段，保留原有 pending/processing。
+                    document_payload["index_status"] = STATUS_FAILED
+
+                # document 先于 task 收口：如果进程在两次 Mongo 写入之间再次中断，
+                # task 仍为非终态，下次启动会重试。反过来先写 task 会导致下次
+                # 扫描不到它，从而留下永久 processing 的 document。
+                document_result = self.documents.update_one(
+                    {
+                        "document_id": document_id,
+                        "latest_task_id": task_id,
+                        "status": {"$in": [STATUS_UPLOADED, STATUS_PROCESSING]},
+                    },
+                    {"$set": document_payload},
+                )
+                summary["failed_document_count"] += int(document_result.modified_count > 0)
+
+            result = self.tasks.update_one(
+                {"task_id": task_id, "status": {"$in": in_flight_statuses}},
+                {
+                    "$set": {
+                        "status": STATUS_FAILED,
+                        "running_nodes": [],
+                        "failed_node": failed_node,
+                        "error_code": ERROR_CODE_IMPORT_SERVICE_RESTARTED,
+                        "error_message": IMPORT_SERVICE_RESTARTED_MESSAGE,
+                        "failed_at": now,
+                        "updated_at": now,
+                    }
+                },
+            )
+            summary["failed_task_count"] += int(result.modified_count > 0)
+
+        return summary
+
     def mark_import_completed(self, task_id: str) -> None:
         task = self._get_task_by_id(task_id)
         if not task:
@@ -411,6 +547,7 @@ class ImportMetadataRepository:
                     "status": STATUS_COMPLETED,
                     "running_nodes": [],
                     "failed_node": "",
+                    "error_code": "",
                     "error_message": "",
                     "completed_at": now,
                     "updated_at": now,
@@ -425,6 +562,7 @@ class ImportMetadataRepository:
                     "parse_status": STATUS_COMPLETED,
                     "index_status": STATUS_COMPLETED,
                     "failed_node": "",
+                    "error_code": "",
                     "error_message": "",
                     "updated_at": now,
                 }
@@ -444,6 +582,7 @@ class ImportMetadataRepository:
                     "status": STATUS_FAILED,
                     "running_nodes": [],
                     "failed_node": failed_node,
+                    "error_code": "",
                     "error_message": error_message,
                     "failed_at": now,
                     "updated_at": now,
@@ -454,6 +593,7 @@ class ImportMetadataRepository:
         document_payload: dict[str, Any] = {
             "status": STATUS_FAILED,
             "failed_node": failed_node,
+            "error_code": "",
             "error_message": error_message,
             "updated_at": now,
         }
@@ -515,3 +655,23 @@ def safe_mark_import_failed(task_id: str, failed_node: str, error_message: str) 
         get_import_metadata_repository().mark_import_failed(task_id, failed_node, error_message)
     except Exception as e:
         logger.warning(f"标记导入失败失败，task_id={task_id}, error={e}")
+
+
+def safe_reconcile_interrupted_tasks() -> dict[str, int]:
+    """
+    安全执行导入服务启动收口。
+
+    这是可观测/状态修复侧路：Mongo 暂时不可用时记录完整日志并返回零计数，
+    不阻止 FastAPI 进程启动。后续重启时会再次执行幂等收口。
+    """
+    empty_summary = {
+        "examined_task_count": 0,
+        "failed_task_count": 0,
+        "completed_task_count": 0,
+        "failed_document_count": 0,
+    }
+    try:
+        return get_import_metadata_repository().reconcile_interrupted_tasks()
+    except Exception:
+        logger.exception("导入服务启动时收口遗留任务失败，本次启动继续")
+        return empty_summary

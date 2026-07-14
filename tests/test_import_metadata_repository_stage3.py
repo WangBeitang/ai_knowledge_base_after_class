@@ -4,8 +4,9 @@ from app.infra.persistence import import_metadata_repository as repo_module
 
 
 class FakeUpdateResult:
-    matched_count = 1
-    modified_count = 1
+    def __init__(self, matched_count=1, modified_count=1):
+        self.matched_count = matched_count
+        self.modified_count = modified_count
 
 
 class FakeInsertResult:
@@ -38,18 +39,40 @@ class FakeCollection:
     def create_index(self, index_fields, unique=False):
         self.indexes.append((index_fields, unique))
 
+    @staticmethod
+    def _matches(document, query):
+        for field_name, value in query.items():
+            document_value = document.get(field_name)
+            if isinstance(value, dict) and "$regex" in value:
+                if value["$regex"].lower() not in str(document_value).lower():
+                    return False
+            elif isinstance(value, dict) and "$ne" in value:
+                if document_value == value["$ne"]:
+                    return False
+            elif isinstance(value, dict) and "$in" in value:
+                if document_value not in value["$in"]:
+                    return False
+            elif document_value != value:
+                return False
+        return True
+
     def update_one(self, query, update, upsert=False):
-        key = query[self.key_field]
-        if key not in self.items:
+        matched_key = next(
+            (key for key, document in self.items.items() if self._matches(document, query)),
+            None,
+        )
+        if matched_key is None:
             if not upsert:
-                return FakeUpdateResult()
+                return FakeUpdateResult(matched_count=0, modified_count=0)
+            key = query[self.key_field]
             self.items[key] = {self.key_field: key}
+            matched_key = key
 
         if "$setOnInsert" in update:
             for field_name, value in update["$setOnInsert"].items():
-                self.items[key].setdefault(field_name, value)
+                self.items[matched_key].setdefault(field_name, value)
         if "$set" in update:
-            self.items[key].update(update["$set"])
+            self.items[matched_key].update(update["$set"])
         return FakeUpdateResult()
 
     def insert_one(self, document):
@@ -58,28 +81,14 @@ class FakeCollection:
 
     def find_one(self, query):
         for document in self.items.values():
-            if all(document.get(field_name) == value for field_name, value in query.items()):
+            if self._matches(document, query):
                 return dict(document)
         return None
 
     def find(self, query):
         result = []
         for document in self.items.values():
-            is_match = True
-            for field_name, value in query.items():
-                document_value = document.get(field_name)
-                if isinstance(value, dict) and "$regex" in value:
-                    if value["$regex"].lower() not in str(document_value).lower():
-                        is_match = False
-                        break
-                elif isinstance(value, dict) and "$ne" in value:
-                    if document_value == value["$ne"]:
-                        is_match = False
-                        break
-                elif document_value != value:
-                    is_match = False
-                    break
-            if is_match:
+            if self._matches(document, query):
                 result.append(dict(document))
         return FakeCursor(result)
 
@@ -110,6 +119,9 @@ def test_ensure_indexes_includes_owner_user_id_indexes():
         (tuple(index_fields), unique) for index_fields, unique in repo.tasks.indexes
     ]
     assert ((("owner_user_id", repo_module.ASCENDING), ("document_id", repo_module.ASCENDING), ("created_at", repo_module.DESCENDING)), False) in [
+        (tuple(index_fields), unique) for index_fields, unique in repo.tasks.indexes
+    ]
+    assert ((("status", repo_module.ASCENDING),), False) in [
         (tuple(index_fields), unique) for index_fields, unique in repo.tasks.indexes
     ]
 
@@ -143,11 +155,13 @@ def test_create_import_metadata_creates_default_dataset_document_and_task():
     assert document["status"] == repo_module.STATUS_UPLOADED
     assert document["parse_status"] == repo_module.STATUS_PENDING
     assert document["index_status"] == repo_module.STATUS_PENDING
+    assert document["error_code"] == ""
     assert task["task_id"] == "task_1"
     assert task["document_id"] == "doc_1"
     assert task["owner_user_id"] == "user_a"
     assert task["tenant_id"] == repo_module.DEFAULT_TENANT_ID
     assert task["task_type"] == repo_module.TASK_TYPE_IMPORT
+    assert task["error_code"] == ""
 
 
 def test_create_rebuild_task_metadata_reuses_document_and_increments_index_version():
@@ -177,9 +191,11 @@ def test_create_rebuild_task_metadata_reuses_document_and_increments_index_versi
     assert document["index_version"] == repo_module.DEFAULT_INDEX_VERSION + 1
     assert document["status"] == repo_module.STATUS_PROCESSING
     assert document["parse_status"] == repo_module.STATUS_PENDING
+    assert document["error_code"] == ""
     assert document["local_dir"] == "/tmp/task_rebuild"
     assert task["task_type"] == repo_module.TASK_TYPE_REBUILD_INDEX
     assert task["status"] == repo_module.STATUS_PENDING
+    assert task["error_code"] == ""
     assert stored_document["latest_task_id"] == "task_rebuild"
     assert stored_document["index_version"] == repo_module.DEFAULT_INDEX_VERSION + 1
     assert stored_task["task_type"] == repo_module.TASK_TYPE_REBUILD_INDEX
@@ -449,3 +465,165 @@ def test_repository_queries_filter_by_owner_user_id():
 
     assert [document["document_id"] for document in documents] == ["doc_user_a"]
     assert [task["task_id"] for task in tasks] == ["task_user_a"]
+
+
+@pytest.mark.parametrize(
+    ("running_node", "expected_parse_status", "expected_index_status"),
+    [
+        ("node_pdf_to_md", repo_module.STATUS_FAILED, repo_module.STATUS_PENDING),
+        ("node_bge_embedding", repo_module.STATUS_COMPLETED, repo_module.STATUS_FAILED),
+        ("", repo_module.STATUS_PENDING, repo_module.STATUS_PENDING),
+    ],
+)
+def test_reconcile_interrupted_tasks_marks_task_and_latest_document_failed(
+        running_node,
+        expected_parse_status,
+        expected_index_status,
+):
+    repo = build_fake_repository()
+    repo.create_import_metadata(
+        dataset_id=repo_module.DEFAULT_DATASET_ID,
+        document_id="doc_1",
+        task_id="task_1",
+        owner_user_id="user_a",
+        file_name="HAK180说明书.pdf",
+        file_path="/tmp/HAK180说明书.pdf",
+        local_dir="/tmp/task_1",
+    )
+    if running_node == "node_bge_embedding":
+        repo.update_document("doc_1", parse_status=repo_module.STATUS_COMPLETED)
+    repo.tasks.items["task_1"].update({
+        "status": repo_module.STATUS_PROCESSING,
+        "running_nodes": [running_node] if running_node else [],
+        "done_nodes": ["node_entry"],
+    })
+    repo.documents.items["doc_1"]["status"] = repo_module.STATUS_PROCESSING
+
+    summary = repo.reconcile_interrupted_tasks()
+    task = repo.get_task("task_1", "user_a")
+    document = repo.get_document("doc_1", "user_a")
+
+    assert summary == {
+        "examined_task_count": 1,
+        "failed_task_count": 1,
+        "completed_task_count": 0,
+        "failed_document_count": 1,
+    }
+    assert task["status"] == repo_module.STATUS_FAILED
+    assert task["running_nodes"] == []
+    assert task["done_nodes"] == ["node_entry"]
+    assert task["failed_node"] == running_node
+    assert task["error_code"] == repo_module.ERROR_CODE_IMPORT_SERVICE_RESTARTED
+    assert task["error_message"] == repo_module.IMPORT_SERVICE_RESTARTED_MESSAGE
+    assert task["failed_at"]
+    assert document["status"] == repo_module.STATUS_FAILED
+    assert document["failed_node"] == running_node
+    assert document["error_code"] == repo_module.ERROR_CODE_IMPORT_SERVICE_RESTARTED
+    assert document["parse_status"] == expected_parse_status
+    assert document["index_status"] == expected_index_status
+
+    # 第二次启动不应重复修改已经收口的终态记录。
+    assert repo.reconcile_interrupted_tasks() == {
+        "examined_task_count": 0,
+        "failed_task_count": 0,
+        "completed_task_count": 0,
+        "failed_document_count": 0,
+    }
+
+
+def test_reconcile_interrupted_old_task_does_not_overwrite_newer_document():
+    repo = build_fake_repository()
+    repo.create_import_metadata(
+        dataset_id=repo_module.DEFAULT_DATASET_ID,
+        document_id="doc_1",
+        task_id="task_old",
+        owner_user_id="user_a",
+        file_name="HAK180说明书.pdf",
+        file_path="/tmp/HAK180说明书.pdf",
+        local_dir="/tmp/task_old",
+    )
+    repo.tasks.items["task_old"].update({
+        "status": repo_module.STATUS_PROCESSING,
+        "running_nodes": ["node_import_milvus"],
+    })
+    repo.documents.items["doc_1"].update({
+        "latest_task_id": "task_new",
+        "status": repo_module.STATUS_COMPLETED,
+        "parse_status": repo_module.STATUS_COMPLETED,
+        "index_status": repo_module.STATUS_COMPLETED,
+    })
+
+    summary = repo.reconcile_interrupted_tasks()
+
+    assert summary["failed_task_count"] == 1
+    assert summary["failed_document_count"] == 0
+    assert repo.get_task("task_old", "user_a")["status"] == repo_module.STATUS_FAILED
+    assert repo.get_document("doc_1", "user_a")["status"] == repo_module.STATUS_COMPLETED
+
+
+def test_reconcile_repairs_task_when_latest_document_was_already_committed():
+    repo = build_fake_repository()
+    repo.create_import_metadata(
+        dataset_id=repo_module.DEFAULT_DATASET_ID,
+        document_id="doc_1",
+        task_id="task_1",
+        owner_user_id="user_a",
+        file_name="HAK180说明书.pdf",
+        file_path="/tmp/HAK180说明书.pdf",
+        local_dir="/tmp/task_1",
+    )
+    repo.tasks.items["task_1"].update({
+        "status": repo_module.STATUS_PROCESSING,
+        "running_nodes": ["node_import_milvus"],
+    })
+    repo.documents.items["doc_1"].update({
+        "status": repo_module.STATUS_COMPLETED,
+        "parse_status": repo_module.STATUS_COMPLETED,
+        "index_status": repo_module.STATUS_COMPLETED,
+    })
+
+    summary = repo.reconcile_interrupted_tasks()
+    task = repo.get_task("task_1", "user_a")
+
+    assert summary["completed_task_count"] == 1
+    assert summary["failed_task_count"] == 0
+    assert task["status"] == repo_module.STATUS_COMPLETED
+    assert task["running_nodes"] == []
+    assert task["error_code"] == ""
+    assert task["completed_at"]
+
+
+def test_reconcile_leaves_existing_terminal_tasks_unchanged():
+    repo = build_fake_repository()
+    repo.create_import_metadata(
+        dataset_id=repo_module.DEFAULT_DATASET_ID,
+        document_id="doc_1",
+        task_id="task_1",
+        owner_user_id="user_a",
+        file_name="HAK180说明书.pdf",
+        file_path="/tmp/HAK180说明书.pdf",
+        local_dir="/tmp/task_1",
+    )
+    repo.mark_import_completed("task_1")
+    before_task = repo.get_task("task_1", "user_a")
+    before_document = repo.get_document("doc_1", "user_a")
+
+    summary = repo.reconcile_interrupted_tasks()
+
+    assert summary["examined_task_count"] == 0
+    assert repo.get_task("task_1", "user_a") == before_task
+    assert repo.get_document("doc_1", "user_a") == before_document
+
+
+def test_safe_reconcile_does_not_block_startup_when_mongo_is_unavailable(monkeypatch):
+    def raise_mongo_error():
+        raise RuntimeError("mongo unavailable")
+
+    monkeypatch.setattr(repo_module, "get_import_metadata_repository", raise_mongo_error)
+
+    assert repo_module.safe_reconcile_interrupted_tasks() == {
+        "examined_task_count": 0,
+        "failed_task_count": 0,
+        "completed_task_count": 0,
+        "failed_document_count": 0,
+    }
