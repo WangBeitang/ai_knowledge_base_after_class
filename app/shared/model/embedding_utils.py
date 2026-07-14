@@ -1,6 +1,8 @@
 """
 工具模块，负责提供 embedding 相关的辅助能力。
 """
+from threading import Lock
+
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
 from app.shared.config.embedding_config import embedding_config
@@ -9,6 +11,18 @@ from app.shared.runtime.logger import logger
 _DEFAULT_EMBEDDING_MODEL = "BAAI/bge-m3"
 _DEFAULT_EMBEDDING_DEVICE = "cpu"
 _bge_m3_ef: BGEM3EmbeddingFunction | None = None
+
+# initialization 的中文含义是“初始化”。导入服务会用后台线程同时处理多份文档，
+# 如果多个线程在模型单例仍为空时一起执行 Transformers.from_pretrained，可能让
+# 某个线程拿到尚未装载真实权重的 meta tensor（只有形状、没有数据的占位张量）。
+# 初始化锁保证同一 Python 进程内只有一个线程负责构造完整模型。
+_bge_m3_initialization_lock = Lock()
+
+# encoding 的中文含义是“编码/生成向量”。FlagEmbedding 每次编码内部会调用
+# model.to(device)、model.eval() 等会接触模型状态的方法，因此同一进程内复用
+# 一个模型时串行执行编码，避免多份导入任务同时操作同一个 PyTorch Module。
+# 该锁不限制 MinerU、Markdown 处理等其它导入步骤，也不跨 Uvicorn worker 生效。
+_bge_m3_encoding_lock = Lock()
 
 
 def get_bge_m3_ef() -> BGEM3EmbeddingFunction:
@@ -22,36 +36,46 @@ def get_bge_m3_ef() -> BGEM3EmbeddingFunction:
         logger.debug("BGE-M3模型单例已存在，直接返回实例")
         return _bge_m3_ef
 
-    # 从环境变量加载配置，无配置则使用默认值
-    # 本地有可以使用本地地址！ 没有使用 "BAAI/bge-m3" 会自动下载！ 如果云端部署也可以使用url地址！
-    model_name = embedding_config.bge_m3_path or embedding_config.bge_m3 or _DEFAULT_EMBEDDING_MODEL
-    device = embedding_config.bge_device or _DEFAULT_EMBEDDING_DEVICE
-    use_fp16 = embedding_config.bge_fp16
+    # 锁内再次判空是“双重检查”：当前线程等待锁期间，前一个线程可能已经完成初始化。
+    # 如果不做第二次判断，排队线程仍会重复加载一次大模型。
+    with _bge_m3_initialization_lock:
+        if _bge_m3_ef is not None:
+            logger.debug("等待初始化锁期间BGE-M3模型已加载，直接复用实例")
+            return _bge_m3_ef
 
-    # 打印模型初始化配置，便于问题排查
-    logger.info(
-        "开始初始化BGE-M3模型",
-        extra={
-            "model_name": model_name,
-            "device": device,
-            "use_fp16": use_fp16,
-            "normalize_embeddings": True
-        }
-    )
+        # 从环境变量加载配置，无配置则使用默认值。
+        # 本地有模型时优先使用本地地址，否则使用模型名交给底层依赖下载。
+        model_name = embedding_config.bge_m3_path or embedding_config.bge_m3 or _DEFAULT_EMBEDDING_MODEL
+        device = embedding_config.bge_device or _DEFAULT_EMBEDDING_DEVICE
+        use_fp16 = embedding_config.bge_fp16
 
-    try:
-        # 初始化 BGE-M3 模型，开启原生 L2 归一化（适配 Milvus IP 内积检索）
-        _bge_m3_ef = BGEM3EmbeddingFunction(
-            model_name=model_name,
-            device=device,
-            use_fp16=use_fp16,
-            normalize_embeddings=True  # 模型原生对稠密+稀疏向量做L2归一化
+        logger.info(
+            "开始初始化BGE-M3模型",
+            extra={
+                "model_name": model_name,
+                "device": device,
+                "use_fp16": use_fp16,
+                "normalize_embeddings": True
+            }
         )
+
+        try:
+            # 先构造局部变量，确认完整成功后再发布到全局单例。
+            # 如果构造期间异常，全局值仍为 None，后续重建任务可以重新尝试初始化，
+            # 不会复用半初始化或仍含 meta tensor 的损坏模型。
+            initialized_model = BGEM3EmbeddingFunction(
+                model_name=model_name,
+                device=device,
+                use_fp16=use_fp16,
+                normalize_embeddings=True  # 模型原生对稠密+稀疏向量做L2归一化
+            )
+        except Exception as e:
+            logger.error(f"BGE-M3模型初始化失败：{str(e)}", exc_info=True)
+            raise  # 向上抛出异常，由调用方处理
+
+        _bge_m3_ef = initialized_model
         logger.success("BGE-M3模型初始化成功，已开启原生L2归一化")
         return _bge_m3_ef
-    except Exception as e:
-        logger.error(f"BGE-M3模型初始化失败：{str(e)}", exc_info=True)
-        raise  # 向上抛出异常，由调用方处理
 
 
 def generate_embeddings(texts: list[str]) -> dict[str, list]:
@@ -73,8 +97,10 @@ def generate_embeddings(texts: list[str]) -> dict[str, list]:
     try:
         # 加载BGE-M3模型单例
         model = get_bge_m3_ef()
-        # 模型编码生成向量，返回dense（稠密向量）+sparse（CSR格式稀疏向量）
-        embeddings = model.encode_documents(texts)
+        # 模型编码生成向量，返回 dense（稠密向量）+ sparse（CSR 格式稀疏向量）。
+        # 同一个模型实例的编码过程使用独立锁；初始化锁只保护首次构造，二者职责分离。
+        with _bge_m3_encoding_lock:
+            embeddings = model.encode_documents(texts)
         logger.debug(f"模型编码完成，开始解析稀疏向量格式，共{len(texts)}条")
 
         # 初始化稀疏向量处理结果，解析为字典格式（适配序列化/存储）
@@ -116,5 +142,4 @@ def generate_embeddings(texts: list[str]) -> dict[str, list]:
     except Exception as e:
         logger.error(f"文本向量生成失败：{str(e)}", exc_info=True)
         raise  # 不吞异常，向上传递让调用方做重试/降级处理
-
 
