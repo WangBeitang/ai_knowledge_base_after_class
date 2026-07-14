@@ -130,8 +130,8 @@ def test_query_default_state_fields_are_complete():
     assert state["planner_max_steps"] == 6
     assert state["current_action_duration_ms"] == 0
     assert state["retrieval_observation"] is None
-    assert state["retrieval_mode"] == "dense_learned_sparse"
-    assert state["retrieval_config_version"] == "retrieval-stage5-dev-v1"
+    assert state["retrieval_mode"] == "dense_learned_sparse_bm25"
+    assert state["retrieval_config_version"] == "retrieval-stage5-final-v1"
     assert state["planner_total_duration_ms"] == 0
     assert state["retrieval_config_snapshot"] == {}
     assert state["trace_persistence_enabled"] is False

@@ -43,20 +43,20 @@ RETRIEVAL_DEFAULT_LIMIT = RETRIEVAL_PER_CHANNEL_TOPK
 # 标准主题/别名 collection 仍使用加权融合时的 dense/sparse 权重。chunk 检索从阶段 5
 # 第六部分起显式使用 RRF，不再直接相加不同量级的 dense、learned sparse、BM25 分数。
 RETRIEVAL_RANKER_WEIGHTS = (0.9, 0.1)
-# 阶段 5A 的三种实验模式已具备 schema/请求能力，但默认仍保持 dense + learned sparse，
-# 避免在固定评测结论出来前把实验通道直接当成线上最优方案。
+# 阶段 5 的 60 条固定样本已完成四轮公平对比。三路模式在 50 条核心集上四轮 Recall@K
+# 和引用命中率均为 1.0，因此阶段 5B 将它冻结为默认模式；环境变量只用于受控回退和诊断。
 RETRIEVAL_DEFAULT_MODE = RetrievalMode(
-    os.getenv("RETRIEVAL_MODE", RetrievalMode.DENSE_LEARNED_SPARSE.value).strip()
+    os.getenv("RETRIEVAL_MODE", RetrievalMode.DENSE_LEARNED_SPARSE_BM25.value).strip()
 )
 # 单次本地 Action 内 Milvus RRF 和跨 Action RRF 使用同一个可版本化 k 基线。
 RETRIEVAL_RRF_K = 60
 # retrieval config version 的中文含义是“检索配置版本”。阶段 9 把 Planner 接入真实链路
-# 后，每次决策都必须能说明自己使用的是哪组召回、RRF、rerank 参数；因此这里先冻结一版
-# 可运行的开发基线。固定评测完成后如果阈值或召回参数变化，必须同步升级版本字符串。
-RETRIEVAL_CONFIG_VERSION = "retrieval-stage5-dev-v1"
+# 后，每次决策都必须能说明自己使用的是哪组召回、RRF、rerank 参数。阶段 5B 选择三路
+# 模式后升级为 final-v1；以后只要阈值或召回参数变化，仍必须同步升级版本字符串。
+RETRIEVAL_CONFIG_VERSION = "retrieval-stage5-final-v1"
 # 证据充分阈值：最终累计候选经过统一 reranker 后，最高分达到该值才允许进入 answer。
-# 0.75 是阶段 8 专项测试使用的开发基线，不冒充已经完成的最终线上评测结论；阶段 5 后续
-# 固定评测应重新标定，并与上面的 retrieval_config_version 一起更新。
+# 本次检索 schema 评测只比较候选排名，没有独立优化答案门槛，因此继续冻结 0.75 作为
+# 当前运行基线；后续若用答案级开发集重新标定，必须升级 retrieval_config_version。
 RERANK_EVIDENCE_THRESHOLD = 0.75
 # 单次查询最多允许完成的 Planner Action 数。当前最长合法路径为 local -> HyDE -> Web
 # -> 终止，6 步保留少量扩展空间，同时能在状态异常时阻止无限循环。

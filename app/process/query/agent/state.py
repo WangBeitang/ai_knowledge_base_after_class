@@ -179,13 +179,13 @@ class QueryGraphState(TypedDict):
     retrieval_observation: RetrievalObservation | None
 
     # retrieval mode 的中文含义是“召回组合模式”。阶段 5 第六部分固定三种关闭枚举，
-    # 当前默认 dense_learned_sparse；阶段5A也允许显式选择 dense_bm25 或三路实验模式。
+    # 阶段 5B 评测后默认 dense_learned_sparse_bm25；另外两种模式保留用于回归和诊断。
     # 来源：查询 State 或评测覆盖值；普通检索和 HyDE 必须读取同一个值。
     retrieval_mode: str
 
     # retrieval config version 的中文含义是“检索配置版本”。它关联 top-k、RRF k、rerank
     # 阈值等一整套配置快照，避免只看到 mode 却不知道具体参数。
-    # 默认空字符串；阶段 9 Planner 节点写入当前冻结的开发基线版本。
+    # 默认空字符串；阶段 9 Planner 节点写入当前冻结的检索配置版本。
     retrieval_config_version: str
 
     # retrieval channel results 的中文含义是“各召回通道原始结果”。key 表示 dense、

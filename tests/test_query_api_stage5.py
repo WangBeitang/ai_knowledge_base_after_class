@@ -218,7 +218,7 @@ def test_query_graph_state_keeps_different_owner_context_for_same_query(monkeypa
     # Planner 尚未真正做出第一步 Decision。
     assert all(state["planner_step"] == 0 for state in captured_states)
     assert all(state["policy_version"] == "rule-v1" for state in captured_states)
-    assert all(state["retrieval_config_version"] == "retrieval-stage5-dev-v1" for state in captured_states)
+    assert all(state["retrieval_config_version"] == "retrieval-stage5-final-v1" for state in captured_states)
     assert all(state["retrieval_config_snapshot"]["rrf_k"] == 60 for state in captured_states)
     # 标识提取在进入 LangGraph 前完成，并且不同用户得到彼此独立但内容一致的字典。
     assert all(
