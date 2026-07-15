@@ -215,11 +215,14 @@ def extract_image_urls(reranked_docs, state):
 
 
 def save_assistant_message(state):
+    if not state.get("history_persistence_enabled", True):
+        return
     citations = [
         item if isinstance(item, Citation) else Citation.model_validate(item)
         for item in state.get("citations") or []
     ]
     history_repository.save_message(
+        user_id=str(state.get("owner_user_id") or ""),
         session_id=state.get("session_id"),
         role="assistant",
         text=state.get("answer"),

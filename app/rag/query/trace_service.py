@@ -25,6 +25,7 @@ from app.rag.query.contracts import (
     RetrievalTrace,
     RetrievalTraceStatus,
     TraceChannelHit,
+    TraceExecutionSource,
     TraceEvidenceSummary,
     TraceObservation,
     TracePlannerStep,
@@ -144,9 +145,14 @@ def _config_snapshot(state: dict[str, Any]) -> RetrievalConfigSnapshot:
 def build_running_trace(state: dict[str, Any]) -> RetrievalTrace:
     """创建查询入口的 running Trace；此时主体、步骤和最终引用尚为空。"""
     planner_metadata = dict(state.get("planner_runtime_metadata") or {})
+    execution_source = TraceExecutionSource(str(state.get("execution_source") or TraceExecutionSource.CHAT.value))
     return RetrievalTrace(
         trace_id=str(state["trace_id"]),
         session_id=str(state["session_id"]),
+        execution_source=execution_source,
+        replay_of_trace_id=state.get("replay_of_trace_id"),
+        config_match_status=str(state.get("config_match_status") or "unknown"),
+        corpus_match_status=str(state.get("corpus_match_status") or "unknown"),
         owner_user_id=str(state["owner_user_id"]),
         tenant_id=str(state["tenant_id"]),
         dataset_ids=list(state["dataset_ids"]),

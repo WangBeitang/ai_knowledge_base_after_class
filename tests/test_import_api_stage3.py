@@ -167,6 +167,12 @@ def test_status_prefers_mongo_task_record(monkeypatch):
 def test_status_falls_back_to_memory_when_mongo_unavailable(monkeypatch):
     task_id = "task_memory_fallback"
     task_utils.clear_task(task_id)
+    task_utils.register_persistent_task(
+        task_id,
+        "doc_memory_fallback",
+        "dataset_default_equipment_ops",
+        "user_a",
+    )
     task_utils.add_running_task(task_id, "node_entry")
     task_utils.add_done_task(task_id, "node_entry")
     task_utils.add_running_task(task_id, "node_pdf_to_md")
@@ -182,8 +188,24 @@ def test_status_falls_back_to_memory_when_mongo_unavailable(monkeypatch):
     assert data["status"] == task_utils.TASK_STATUS_PROCESSING
     assert data["done_list"] == ["检查文件"]
     assert data["running_list"] == ["PDF转Markdown"]
-    assert data["document_id"] == ""
-    assert data["dataset_id"] == ""
+    assert data["document_id"] == "doc_memory_fallback"
+    assert data["dataset_id"] == "dataset_default_equipment_ops"
+
+    task_utils.clear_task(task_id)
+
+
+def test_status_refuses_unregistered_memory_fallback_when_mongo_unavailable(monkeypatch):
+    task_id = "task_memory_unregistered"
+    task_utils.clear_task(task_id)
+    task_utils.add_running_task(task_id, "node_entry")
+    task_utils.update_task_status(task_id, task_utils.TASK_STATUS_PROCESSING)
+    fake_repo = FakeImportMetadataRepository(should_raise=True)
+    monkeypatch.setattr(import_server, "get_import_metadata_repository", lambda: fake_repo)
+
+    response = TestClient(import_server.app).get(f"/status/{task_id}", headers={"X-User-Id": "user_a"})
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == f"task_id={task_id} 不存在"
 
     task_utils.clear_task(task_id)
 

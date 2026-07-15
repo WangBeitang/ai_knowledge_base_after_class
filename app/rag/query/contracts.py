@@ -539,6 +539,14 @@ class RetrievalTraceStatus(str, Enum):
     FAILED = "failed"  # 已失败：出现未被 Planner 收口的编程错误或基础设施异常。
 
 
+class TraceExecutionSource(str, Enum):
+    """Trace 来源。"""
+
+    CHAT = "chat"  # 真实聊天查询。
+    RETRIEVAL_TEST = "retrieval_test"  # 检索测试入口，不写聊天历史。
+    REPLAY = "replay"  # 基于历史 trace_id 的重放。
+
+
 class TraceStepStatus(str, Enum):
     """Trace 中单个 Planner Action 的执行状态。"""
 
@@ -648,6 +656,10 @@ class RetrievalTrace(QueryContractModel):
 
     trace_id: str = Field(min_length=1)  # 一次查询执行 ID；全局唯一，不等于 session_id。
     session_id: str = Field(min_length=1)  # 聊天会话 ID；一个会话可关联多条 Trace。
+    execution_source: TraceExecutionSource = TraceExecutionSource.CHAT  # chat、retrieval_test 或 replay。
+    replay_of_trace_id: str | None = None  # 重放来源 Trace；非 replay 为空。
+    config_match_status: str = "unknown"  # 重放时记录配置是否与原 Trace 一致。
+    corpus_match_status: str = "unknown"  # 重放时记录语料/index version/enabled 快照是否一致。
     owner_user_id: str = Field(min_length=1)  # 发起查询的用户，用于归属和后续权限查询。
     tenant_id: str = Field(min_length=1)  # 当前租户范围；现阶段通常为 tenant_default。
     dataset_ids: list[str] = Field(min_length=1)  # 本次允许查询的知识库范围快照。

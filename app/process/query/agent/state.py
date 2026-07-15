@@ -255,6 +255,23 @@ class QueryGraphState(TypedDict):
     # 让纯图单元测试和离线 Planner 重放不依赖 Mongo；真实 HTTP 查询入口会显式写 True。
     trace_persistence_enabled: bool
 
+    # history persistence enabled 的中文含义是“是否写入聊天历史”。真实聊天为 True；
+    # Retrieval Test 为 False，因为它只用于调试/评测，不应污染用户对话记录。
+    history_persistence_enabled: bool
+
+    # execution source 的中文含义是“Trace 来源”。chat 表示真实聊天，retrieval_test 表示
+    # 检索测试，replay 表示基于历史 Trace 的重放。它只影响可观测归类，不改变权限过滤。
+    execution_source: str
+
+    # replay of trace id 的中文含义是“重放来源 Trace ID”。非重放查询为空；重放时用于
+    # 说明本次 Trace 是哪条历史记录的复现尝试。
+    replay_of_trace_id: str | None
+
+    # config/corpus match status 分别表示“配置是否一致”和“语料快照是否一致”。普通聊天
+    # 为 unknown；Trace replay 会根据原 Trace 的配置、index_version 和启停快照更新。
+    config_match_status: str
+    corpus_match_status: str
+
     # prompt 的中文含义是“提交给答案模型的完整提示词”。当前 answer_service 构造它，
     # 主要用于运行时调用和排查；后续 Trace 是否保存全文必须单独评估隐私与存储成本。
     # 默认空字符串。
@@ -317,6 +334,11 @@ query_graph_default_state: QueryGraphState = {
     "chunk_status_filter_enabled": False,
     "disabled_chunk_ids": [],
     "trace_persistence_enabled": False,
+    "history_persistence_enabled": True,
+    "execution_source": "chat",
+    "replay_of_trace_id": None,
+    "config_match_status": "unknown",
+    "corpus_match_status": "unknown",
     "prompt": "",
     "answer": "",
     "image_urls": [],

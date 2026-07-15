@@ -283,7 +283,7 @@ def test_expected_external_timeout_becomes_failed_observation_but_programming_er
 def test_subject_confirmation_writes_structured_status_and_saves_user_message_for_every_branch(monkeypatch):
     saved_messages = []
     monkeypatch.setattr(subject_service, "params_check", lambda state: (state["original_query"], state["session_id"]))
-    monkeypatch.setattr(subject_service, "load_history", lambda session_id: [])
+    monkeypatch.setattr(subject_service, "load_history", lambda session_id, user_id: [])
     monkeypatch.setattr(
         subject_service.history_repository,
         "save_message",

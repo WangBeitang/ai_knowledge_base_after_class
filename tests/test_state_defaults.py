@@ -112,6 +112,11 @@ def test_query_default_state_fields_are_complete():
         "chunk_status_filter_enabled",
         "disabled_chunk_ids",
         "trace_persistence_enabled",
+        "history_persistence_enabled",
+        "execution_source",
+        "replay_of_trace_id",
+        "config_match_status",
+        "corpus_match_status",
         "prompt",
         "answer",
         "image_urls",
@@ -139,6 +144,11 @@ def test_query_default_state_fields_are_complete():
     assert state["chunk_status_filter_enabled"] is False
     assert state["disabled_chunk_ids"] == []
     assert state["trace_persistence_enabled"] is False
+    assert state["history_persistence_enabled"] is True
+    assert state["execution_source"] == "chat"
+    assert state["replay_of_trace_id"] is None
+    assert state["config_match_status"] == "unknown"
+    assert state["corpus_match_status"] == "unknown"
     assert state["terminal_reason_code"] is None
     assert isinstance(state["dataset_ids"], list)
     assert isinstance(state["subject_ids"], list)

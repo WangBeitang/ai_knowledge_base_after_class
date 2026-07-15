@@ -17,7 +17,25 @@ from app.api.schema.import_schema import (
     TaskStatusSchema,
     UploadSchema,
 )
+from app.api.schema.dataset_schema import (
+    DatasetCreateRequest,
+    DatasetListSchema,
+    DatasetMemberDeleteSchema,
+    DatasetMemberListSchema,
+    DatasetMemberSchema,
+    DatasetMemberUpsertRequest,
+    DatasetSchema,
+    DatasetUpdateRequest,
+)
+from app.api.schema.document_management_schema import (
+    DocumentAccessUpdateRequest,
+    DocumentAccessUpdateResponse,
+    FailedRecordCleanupRequest,
+    FailedRecordCleanupResponse,
+)
 from app.api.schema.chunk_schema import (
+    ChunkBatchStatusChangeRequest,
+    ChunkBatchStatusChangeResponse,
     ChunkDetailSchema,
     ChunkEnabledFilter,
     ChunkEventListSchema,
@@ -52,6 +70,18 @@ from app.rag.import_.chunk_management_service import (
     ChunkStateError,
     ChunkVersionConflictError,
     get_chunk_management_service,
+)
+from app.rag.management.access_control_service import (
+    AccessControlService,
+    AccessControlError,
+    PermissionDeniedError,
+)
+from app.rag.management.dataset_management_service import DatasetManagementService
+from app.rag.management.document_management_service import (
+    DocumentManagementError,
+    DocumentStateManagementError,
+    DocumentVersionConflictError,
+    DocumentManagementService,
 )
 from app.shared.utils.task_utils import (
     TASK_STATUS_COMPLETED,
@@ -114,6 +144,8 @@ def _task_status_from_record(task: dict, code: int = 200) -> TaskStatusSchema:
         running_list=to_display_node_list(task.get("running_nodes", [])),
         document_id=task.get("document_id", ""),
         dataset_id=task.get("dataset_id", ""),
+        owner_user_id=task.get("owner_user_id", ""),
+        tenant_id=task.get("tenant_id", ""),
         failed_node=task.get("failed_node", ""),
         error_code=task.get("error_code", ""),
         error_message=task.get("error_message", ""),
@@ -127,6 +159,9 @@ def _document_status_from_record(document: dict, code: int = 200) -> DocumentSta
         code=code,
         document_id=document.get("document_id", ""),
         dataset_id=document.get("dataset_id", ""),
+        owner_user_id=document.get("owner_user_id", ""),
+        tenant_id=document.get("tenant_id", ""),
+        visibility=document.get("visibility", ""),
         latest_task_id=document.get("latest_task_id", ""),
         file_name=document.get("file_name", ""),
         file_path=document.get("file_path", ""),
@@ -143,6 +178,13 @@ def _document_status_from_record(document: dict, code: int = 200) -> DocumentSta
         parse_result_zip_path=document.get("parse_result_zip_path", ""),
         parse_result_dir=document.get("parse_result_dir", ""),
         deleted_at=document.get("deleted_at", ""),
+        hidden_at=document.get("hidden_at", ""),
+        record_kind=document.get("record_kind", "active"),
+        history_group_key=document.get("history_group_key", ""),
+        history_record_count=document.get("history_record_count", 0),
+        superseded_by_document_id=document.get("superseded_by_document_id", ""),
+        access_sync_status=document.get("access_sync_status", "none"),
+        access_sync_task_id=document.get("access_sync_task_id", ""),
         failed_node=document.get("failed_node", ""),
         error_code=document.get("error_code", ""),
         error_message=document.get("error_message", ""),
@@ -153,7 +195,9 @@ def _document_status_from_record(document: dict, code: int = 200) -> DocumentSta
 
 def _memory_task_status(task_id: str, owner_user_id: str) -> TaskStatusSchema:
     metadata = get_persistent_task_metadata(task_id)
-    if metadata and metadata.get("owner_user_id") != owner_user_id:
+    if not metadata:
+        raise HTTPException(status_code=404, detail=f"task_id={task_id} 不存在")
+    if metadata.get("owner_user_id") != owner_user_id:
         raise HTTPException(status_code=404, detail=f"task_id={task_id} 不存在")
 
     return TaskStatusSchema(
@@ -161,8 +205,172 @@ def _memory_task_status(task_id: str, owner_user_id: str) -> TaskStatusSchema:
         task_id=task_id,
         status=get_task_status(task_id),
         done_list=get_done_task_list(task_id),
-        running_list=get_running_task_list(task_id)
+        running_list=get_running_task_list(task_id),
+        document_id=metadata.get("document_id", ""),
+        dataset_id=metadata.get("dataset_id", ""),
+        owner_user_id=metadata.get("owner_user_id", ""),
     )
+
+
+def _raise_management_http_exception(error: Exception) -> None:
+    if isinstance(error, PermissionDeniedError):
+        raise HTTPException(status_code=403, detail=str(error)) from error
+    if isinstance(error, AccessControlError):
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    if isinstance(error, DocumentVersionConflictError):
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    if isinstance(error, DocumentStateManagementError):
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    if isinstance(error, DocumentManagementError):
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+def _access_control_service() -> AccessControlService:
+    repo = get_import_metadata_repository()
+    return AccessControlService(metadata_repository=repo)
+
+
+def _dataset_management_service() -> DatasetManagementService:
+    repo = get_import_metadata_repository()
+    access = AccessControlService(metadata_repository=repo)
+    return DatasetManagementService(metadata_repository=repo, access_control_service=access)
+
+
+def _document_management_service() -> DocumentManagementService:
+    repo = get_import_metadata_repository()
+    access = AccessControlService(metadata_repository=repo)
+    return DocumentManagementService(metadata_repository=repo, access_control_service=access)
+
+
+def _resolve_document_owner_for_write(document_id: str, user_id: str) -> str:
+    try:
+        document, _role = _access_control_service().require_document_write(
+            document_id=document_id,
+            user_id=user_id,
+            tenant_id=DEFAULT_TENANT_ID,
+        )
+        return str(document.get("owner_user_id") or user_id)
+    except Exception as error:
+        logger.warning(
+            f"document 写权限预校验不可用，回退旧 owner 调用，document_id={document_id}, "
+            f"owner_user_id={user_id}, error={error}"
+        )
+        return user_id
+
+
+@app.post("/datasets", response_model=DatasetSchema)
+def create_dataset(request: Request, payload: DatasetCreateRequest):
+    owner_user_id = get_current_user_id(request)
+    return DatasetSchema(**_dataset_management_service().create_dataset(
+        user_id=owner_user_id,
+        dataset_id=payload.dataset_id,
+        name=payload.name,
+        description=payload.description,
+        visibility=payload.visibility.value,
+    ))
+
+
+@app.get("/datasets", response_model=DatasetListSchema)
+def list_datasets(
+        request: Request,
+        visibility: str | None = None,
+        limit: int = Query(default=50, ge=1, le=100),
+):
+    owner_user_id = get_current_user_id(request)
+    return DatasetListSchema(**_dataset_management_service().list_datasets(
+        user_id=owner_user_id,
+        visibility=visibility,
+        limit=limit,
+    ))
+
+
+@app.get("/datasets/{dataset_id}", response_model=DatasetSchema)
+def dataset_detail(request: Request, dataset_id: str):
+    owner_user_id = get_current_user_id(request)
+    try:
+        return DatasetSchema(**_dataset_management_service().get_dataset(
+            dataset_id=dataset_id,
+            user_id=owner_user_id,
+        ))
+    except Exception as error:
+        _raise_management_http_exception(error)
+
+
+@app.patch("/datasets/{dataset_id}", response_model=DatasetSchema)
+def update_dataset(request: Request, dataset_id: str, payload: DatasetUpdateRequest):
+    owner_user_id = get_current_user_id(request)
+    try:
+        return DatasetSchema(**_dataset_management_service().update_dataset(
+            dataset_id=dataset_id,
+            user_id=owner_user_id,
+            fields=payload.model_dump(exclude_none=True),
+        ))
+    except Exception as error:
+        _raise_management_http_exception(error)
+
+
+@app.get("/datasets/{dataset_id}/members", response_model=DatasetMemberListSchema)
+def list_dataset_members(
+        request: Request,
+        dataset_id: str,
+        limit: int = Query(default=100, ge=1, le=200),
+):
+    owner_user_id = get_current_user_id(request)
+    try:
+        return DatasetMemberListSchema(**_dataset_management_service().list_members(
+            dataset_id=dataset_id,
+            user_id=owner_user_id,
+            limit=limit,
+        ))
+    except Exception as error:
+        _raise_management_http_exception(error)
+
+
+@app.post("/datasets/{dataset_id}/members", response_model=DatasetMemberSchema)
+def add_dataset_member(request: Request, dataset_id: str, payload: DatasetMemberUpsertRequest):
+    owner_user_id = get_current_user_id(request)
+    try:
+        return DatasetMemberSchema(**_dataset_management_service().upsert_member(
+            dataset_id=dataset_id,
+            operator_user_id=owner_user_id,
+            member_user_id=payload.user_id,
+            role=payload.role.value,
+        ))
+    except Exception as error:
+        _raise_management_http_exception(error)
+
+
+@app.patch("/datasets/{dataset_id}/members/{member_user_id}", response_model=DatasetMemberSchema)
+def update_dataset_member(
+        request: Request,
+        dataset_id: str,
+        member_user_id: str,
+        payload: DatasetMemberUpsertRequest,
+):
+    owner_user_id = get_current_user_id(request)
+    try:
+        return DatasetMemberSchema(**_dataset_management_service().upsert_member(
+            dataset_id=dataset_id,
+            operator_user_id=owner_user_id,
+            member_user_id=member_user_id,
+            role=payload.role.value,
+        ))
+    except Exception as error:
+        _raise_management_http_exception(error)
+
+
+@app.delete("/datasets/{dataset_id}/members/{member_user_id}", response_model=DatasetMemberDeleteSchema)
+def delete_dataset_member(request: Request, dataset_id: str, member_user_id: str):
+    owner_user_id = get_current_user_id(request)
+    try:
+        return DatasetMemberDeleteSchema(**_dataset_management_service().remove_member(
+            dataset_id=dataset_id,
+            operator_user_id=owner_user_id,
+            member_user_id=member_user_id,
+        ))
+    except Exception as error:
+        _raise_management_http_exception(error)
 
 
 # 返回task_id对应的任务状态列表
@@ -186,19 +394,39 @@ def list_documents(
         dataset_id: str = DEFAULT_DATASET_ID,
         status: str | None = None,
         keyword: str | None = None,
+        fold_history: bool = True,
         limit: int = Query(default=20, ge=1, le=100),
 ) -> DocumentListSchema:
     owner_user_id = get_current_user_id(request)
-    documents = get_import_metadata_repository().list_documents(
-        owner_user_id=owner_user_id,
-        dataset_id=dataset_id,
-        status=status,
-        keyword=keyword,
-        limit=limit,
-    )
+    try:
+        documents = _document_management_service().list_documents(
+            user_id=owner_user_id,
+            dataset_id=dataset_id,
+            status=status,
+            keyword=keyword,
+            fold_history=fold_history,
+            limit=limit,
+        )
+    except Exception as error:
+        _raise_management_http_exception(error)
     return DocumentListSchema(
         items=[_document_status_from_record(document) for document in documents],
     )
+
+
+@app.post("/documents/failed-records/cleanup", response_model=FailedRecordCleanupResponse)
+def cleanup_failed_records(request: Request, payload: FailedRecordCleanupRequest):
+    owner_user_id = get_current_user_id(request)
+    try:
+        return FailedRecordCleanupResponse(**_document_management_service().cleanup_failed_records(
+            user_id=owner_user_id,
+            dataset_id=payload.dataset_id,
+            document_ids=payload.document_ids,
+            only_superseded=payload.only_superseded,
+            dry_run=payload.dry_run,
+        ))
+    except Exception as error:
+        _raise_management_http_exception(error)
 
 
 @app.get("/documents/{document_id}/tasks")
@@ -222,10 +450,63 @@ def list_document_tasks(
 @app.get("/documents/{document_id}")
 def document_status(request: Request, document_id: str) -> DocumentStatusSchema:
     owner_user_id = get_current_user_id(request)
-    document = get_import_metadata_repository().get_document(document_id, owner_user_id)
-    if not document:
-        raise HTTPException(status_code=404, detail=f"document_id={document_id} 不存在")
+    try:
+        document, _role = _access_control_service().require_document_read(
+            document_id=document_id,
+            user_id=owner_user_id,
+            tenant_id=DEFAULT_TENANT_ID,
+        )
+    except Exception as error:
+        _raise_management_http_exception(error)
     return _document_status_from_record(document)
+
+
+@app.patch("/documents/{document_id}/access", response_model=DocumentAccessUpdateResponse)
+def update_document_access(
+        request: Request,
+        background_tasks: BackgroundTasks,
+        document_id: str,
+        payload: DocumentAccessUpdateRequest,
+):
+    owner_user_id = get_current_user_id(request)
+    try:
+        result = _document_management_service().update_document_access(
+            document_id=document_id,
+            user_id=owner_user_id,
+            expected_index_version=payload.expected_index_version,
+            owner_user_id=payload.owner_user_id,
+            visibility=payload.visibility.value if payload.visibility else None,
+        )
+    except Exception as error:
+        _raise_management_http_exception(error)
+
+    if result.get("requires_rebuild"):
+        task_id = str(result["task_id"])
+        register_persistent_task(
+            task_id,
+            str(result["document_id"]),
+            str(result["dataset_id"]),
+            str(result["owner_user_id"]),
+        )
+        background_tasks.add_task(
+            invoke_graph,
+            task_id=task_id,
+            dataset_id=str(result["dataset_id"]),
+            document_id=str(result["document_id"]),
+            index_version=int(result["index_version"]),
+            owner_user_id=str(result["owner_user_id"]),
+            tenant_id=str(result.get("tenant_id") or DEFAULT_TENANT_ID),
+            visibility=str(result["visibility"]),
+            local_file_path_obj=result["source_file_path"],
+            local_dir_path_obj=result["local_dir"],
+        )
+
+    public_result = {
+        key: value
+        for key, value in result.items()
+        if key not in {"source_file_path", "local_dir", "dataset_id", "tenant_id"}
+    }
+    return DocumentAccessUpdateResponse(**public_result)
 
 
 def _raise_chunk_management_http_exception(
@@ -275,6 +556,55 @@ def list_document_chunks(
             f"查询 document chunk 列表失败，document_id={document_id}, owner_user_id={owner_user_id}, error={e}"
         )
         raise HTTPException(status_code=500, detail="查询 chunk 列表失败") from e
+
+
+@app.get("/chunks", response_model=ChunkListSchema)
+def list_chunks(
+        request: Request,
+        dataset_id: str = DEFAULT_DATASET_ID,
+        document_id: str | None = None,
+        enabled: ChunkEnabledFilter = Query(default=ChunkEnabledFilter.ALL),
+        limit: int = Query(default=100, ge=1, le=100),
+) -> ChunkListSchema:
+    owner_user_id = get_current_user_id(request)
+    try:
+        _access_control_service().require_dataset_read(
+            dataset_id=dataset_id,
+            user_id=owner_user_id,
+            tenant_id=DEFAULT_TENANT_ID,
+        )
+        return ChunkListSchema(**get_chunk_management_service().list_chunks(
+            dataset_id=dataset_id,
+            document_id=document_id,
+            user_id=owner_user_id,
+            tenant_id=DEFAULT_TENANT_ID,
+            enabled=enabled.to_bool(),
+            limit=limit,
+        ))
+    except ChunkManagementError as e:
+        _raise_chunk_management_http_exception(
+            e,
+            document_id=document_id or "",
+            owner_user_id=owner_user_id,
+        )
+    except Exception as error:
+        _raise_management_http_exception(error)
+
+
+@app.patch("/chunks/enabled", response_model=ChunkBatchStatusChangeResponse)
+def change_chunks_enabled(request: Request, payload: ChunkBatchStatusChangeRequest):
+    owner_user_id = get_current_user_id(request)
+    try:
+        return ChunkBatchStatusChangeResponse(**get_chunk_management_service().change_chunks_enabled(
+            items=[item.model_dump(mode="json") for item in payload.items],
+            user_id=owner_user_id,
+            tenant_id=DEFAULT_TENANT_ID,
+            enabled=payload.enabled,
+            reason_type=payload.reason_type,
+            reason_detail=payload.reason_detail,
+        ))
+    except Exception as error:
+        _raise_management_http_exception(error)
 
 
 @app.get("/documents/{document_id}/chunks/{chunk_id}")
@@ -424,7 +754,10 @@ def delete_document(
 ) -> DeleteDocumentSchema:
     owner_user_id = get_current_user_id(request)
     try:
-        document = delete_document_service(document_id, owner_user_id)
+        document = delete_document_service(
+            document_id,
+            _resolve_document_owner_for_write(document_id, owner_user_id),
+        )
     except DocumentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except DocumentStateError as e:
@@ -451,7 +784,10 @@ def rebuild_document(
 ) -> RebuildDocumentSchema:
     owner_user_id = get_current_user_id(request)
     try:
-        preparation = prepare_document_rebuild(document_id, owner_user_id)
+        preparation = prepare_document_rebuild(
+            document_id,
+            _resolve_document_owner_for_write(document_id, owner_user_id),
+        )
     except DocumentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except DocumentStateError as e:
@@ -499,9 +835,19 @@ def upload(
         background_tasks: BackgroundTasks,
         files: UploadFile = File(...),
         dataset_id: str = Form(DEFAULT_DATASET_ID),
+        visibility: str = Form(DEFAULT_VISIBILITY),
 ):
     # 1.相关参数
     owner_user_id = get_current_user_id(request)
+    try:
+        _access_control_service().require_dataset_write(
+            dataset_id=dataset_id,
+            user_id=owner_user_id,
+            tenant_id=DEFAULT_TENANT_ID,
+            allow_default_upload=True,
+        )
+    except Exception as error:
+        _raise_management_http_exception(error)
     task_id = str(uuid.uuid4())
     document_id = f"doc_{uuid.uuid4().hex}"
     local_dir_path_obj = PROJECT_ROOT / "output" / datetime.now().strftime("%Y%m%d") / task_id
@@ -516,6 +862,7 @@ def upload(
             file_name=files.filename,
             file_path=str(file_path_obj),
             local_dir=str(local_dir_path_obj),
+            visibility=visibility,
         )
         dataset_id = document["dataset_id"]
         index_version = document.get("index_version", 0)

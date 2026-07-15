@@ -99,6 +99,47 @@ class RetrievalTraceRepository:
         """写入未处理异常终态；fields 只能包含结构化错误码，不能包含异常正文。"""
         self.collection.update_one({"trace_id": trace_id}, {"$set": dict(fields)})
 
+    def get_trace(self, trace_id: str, owner_user_id: str | None = None) -> dict[str, Any]:
+        """
+        读取单条 Trace。
+
+        owner_user_id 不为空时必须匹配，用于 API 层避免用户通过 trace_id 枚举别人的记录。
+        """
+        query: dict[str, Any] = {"trace_id": trace_id}
+        if owner_user_id:
+            query["owner_user_id"] = owner_user_id
+        trace = self.collection.find_one(query)
+        if not trace:
+            return {}
+        result = dict(trace)
+        result.pop("_id", None)
+        return result
+
+    def list_traces(
+            self,
+            *,
+            owner_user_id: str,
+            session_id: str | None = None,
+            dataset_id: str | None = None,
+            execution_source: str | None = None,
+            limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """按用户列出 Trace 摘要，默认按开始时间倒序。"""
+        query: dict[str, Any] = {"owner_user_id": owner_user_id}
+        if session_id:
+            query["session_id"] = session_id
+        if dataset_id:
+            query["dataset_ids"] = dataset_id
+        if execution_source:
+            query["execution_source"] = execution_source
+        cursor = self.collection.find(query).sort("started_at", DESCENDING).limit(limit)
+        traces: list[dict[str, Any]] = []
+        for trace in cursor:
+            item = dict(trace)
+            item.pop("_id", None)
+            traces.append(item)
+        return traces
+
 
 _retrieval_trace_repository: RetrievalTraceRepository | None = None
 
@@ -109,4 +150,3 @@ def get_retrieval_trace_repository() -> RetrievalTraceRepository:
     if _retrieval_trace_repository is None:
         _retrieval_trace_repository = RetrievalTraceRepository()
     return _retrieval_trace_repository
-

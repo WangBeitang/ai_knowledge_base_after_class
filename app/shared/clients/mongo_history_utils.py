@@ -3,7 +3,7 @@
 """
 import os
 from typing import Any
-from datetime import datetime
+from datetime import datetime, timezone
 from pymongo import MongoClient
 from bson import ObjectId
 from dotenv import load_dotenv
@@ -42,6 +42,11 @@ class HistoryMongoTool:
             # 索引规则：session_id升序 + ts降序，适配"按会话查最新记录"的核心查询场景
             # create_index自带幂等性：索引已存在时不会重复创建，无需额外判断
             self.chat_message.create_index([("session_id", 1), ("ts", -1)])
+            # 阶段 7 起聊天历史按 user_id + session_id 隔离。旧 session_id 索引保留用于
+            # 本地排查历史数据，但 API 和 RAG 节点必须优先走新复合索引。
+            self.chat_message.create_index([("user_id", 1), ("session_id", 1), ("ts", -1)])
+            self.chat_message.create_index([("user_id", 1), ("hidden_at", 1), ("updated_at", -1)])
+            self.chat_message.create_index([("trace_id", 1)])
 
             # 记录成功日志，确认数据库连接和初始化完成
             logger.info(f"Successfully connected to MongoDB: {self.db_name}")
@@ -80,7 +85,11 @@ def get_history_mongo_tool() -> HistoryMongoTool:
 
 
 
-def clear_history(session_id: str) -> int:
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def clear_history(session_id: str, user_id: str | None = None, hidden_at: str | None = None) -> int:
     """
     清空指定会话的所有历史对话记录
     :param session_id: 会话唯一标识，用于筛选要删除的记录
@@ -89,12 +98,15 @@ def clear_history(session_id: str) -> int:
     # 获取全局的HistoryMongoTool实例，使用单例模式避免重复创建数据库连接
     mongo_tool = get_history_mongo_tool()
     try:
-        # 执行批量删除操作：删除所有session_id匹配的文档
-        result = mongo_tool.chat_message.delete_many({"session_id": session_id})
+        # 阶段 7 之后用户侧删除使用软隐藏，避免误删其他用户同名 session 的消息。
+        query = {"session_id": session_id}
+        if user_id:
+            query["user_id"] = user_id
+        result = mongo_tool.chat_message.update_many(query, {"$set": {"hidden_at": hidden_at or _now_iso()}})
         # 记录删除成功日志，包含删除数量和会话ID，便于问题排查
-        logger.info(f"Deleted {result.deleted_count} messages for session {session_id}")
-        # 返回实际删除的数量（delete_many的返回对象包含deleted_count属性）
-        return result.deleted_count
+        logger.info(f"Hidden {result.modified_count} messages for session {session_id}")
+        # 软隐藏使用 update_many，返回实际被修改的消息数量。
+        return result.modified_count
     except Exception as e:
         # 捕获删除异常，记录错误日志，包含会话ID
         logger.error(f"Error clearing history for session {session_id}: {e}")
@@ -103,6 +115,7 @@ def clear_history(session_id: str) -> int:
 
 
 def save_chat_message(
+        user_id: str,
         session_id: str,
         role: str,
         text: str,
@@ -130,7 +143,11 @@ def save_chat_message(
     ts = datetime.now().timestamp()
 
     # 构造要插入/更新的文档数据（MongoDB的基本数据单元是文档，类似Python字典）
+    now_iso = _now_iso()
     document = {
+        # user_id 是阶段 7 的聊天历史权限主键。session_id 可以由前端生成，不具备权限含义，
+        # 因此读写历史都必须同时带 user_id，不能只按 session_id 查询。
+        "user_id": str(user_id or ""),
         "session_id": session_id,  # 会话ID，关联维度
         "role": role,  # 消息角色
         "text": text,  # 消息内容
@@ -138,6 +155,8 @@ def save_chat_message(
         "standard_subject_names": standard_subject_names,  # 关联标准主题名称列表
         "image_urls": image_urls,  # 关联图片URL列表
         "ts": ts,  # 时间戳，排序和时间筛选维度
+        "updated_at": now_iso,
+        "hidden_at": "",
         # citations 是代码根据最终证据生成的结构化引用；用户消息通常为空列表。和图片
         # URL 分开保存，刷新聊天页后仍能展示本次回答真正使用的来源。
         "citations": list(citations or []),
@@ -196,7 +215,7 @@ def update_message_standard_subject_names(ids: list[str], standard_subject_names
         return 0
 
 
-def get_recent_messages(session_id: str, limit: int = 10) -> list[dict[str, Any]]:
+def get_recent_messages(session_id: str, limit: int = 10, user_id: str | None = None) -> list[dict[str, Any]]:
     """
     查询指定会话的最近N条对话记录，返回原始字典格式
     结果按时间正序排列，可直接喂给LLM作为上下文
@@ -207,8 +226,13 @@ def get_recent_messages(session_id: str, limit: int = 10) -> list[dict[str, Any]
     # 获取全局的HistoryMongoTool实例，使用单例模式
     mongo_tool = get_history_mongo_tool()
     try:
-        # 构造查询条件：仅查询指定session_id的记录
-        query = {"session_id": session_id}
+        query = {"session_id": session_id, "hidden_at": ""}
+        if user_id:
+            query["user_id"] = user_id
+        else:
+            # 阶段 7 边界：新业务调用必须传 user_id。没有 user_id 的旧调用只返回旧数据，
+            # 避免把无归属历史错误当作当前用户的上下文。
+            query["user_id"] = {"$in": ["", None]}
 
         # 执行查询：按时间戳倒序取最近记录，限制返回条数
         # find(query)：获取符合条件的游标（惰性加载，不立即查询）
@@ -223,6 +247,40 @@ def get_recent_messages(session_id: str, limit: int = 10) -> list[dict[str, Any]
         # 捕获查询异常，记录错误日志
         logger.error(f"Error getting recent messages: {e}")
         # 异常时返回空列表，避免上层处理None报错
+        return []
+
+
+def list_user_conversations(user_id: str, limit: int = 50) -> list[dict[str, Any]]:
+    """按 user_id 聚合会话列表；返回轻量摘要供 API 展示。"""
+    mongo_tool = get_history_mongo_tool()
+    try:
+        cursor = mongo_tool.chat_message.find({
+            "user_id": user_id,
+            "hidden_at": "",
+        }).sort("ts", -1).limit(max(limit * 20, limit))
+        sessions: dict[str, dict[str, Any]] = {}
+        for message in cursor:
+            session_id = str(message.get("session_id") or "")
+            if not session_id:
+                continue
+            item = sessions.setdefault(session_id, {
+                "session_id": session_id,
+                "title": "",
+                "latest_message_preview": "",
+                "message_count": 0,
+                "latest_trace_id": "",
+                "updated_at": message.get("updated_at") or message.get("ts"),
+            })
+            item["message_count"] += 1
+            if not item["latest_message_preview"]:
+                item["latest_message_preview"] = str(message.get("text") or "")[:80]
+                item["latest_trace_id"] = str(message.get("trace_id") or "")
+                item["updated_at"] = message.get("updated_at") or message.get("ts")
+            if not item["title"] and message.get("role") == "user":
+                item["title"] = str(message.get("text") or "")[:40]
+        return list(sessions.values())[:limit]
+    except Exception as e:
+        logger.error(f"Error listing conversations for user {user_id}: {e}")
         return []
 
 

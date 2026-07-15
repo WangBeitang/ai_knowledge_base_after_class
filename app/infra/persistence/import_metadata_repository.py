@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import os
+import uuid
 from datetime import datetime, timezone
 from typing import Any
 
@@ -27,10 +28,12 @@ from app.shared.runtime.logger import logger
 load_dotenv()
 
 DEFAULT_DATASET_NAME = "设备运维知识库"
+DEFAULT_DATASET_OWNER_USER_ID = "system_demo"
 DEFAULT_INDEX_VERSION = 1
 
 TASK_TYPE_IMPORT = "import"
 TASK_TYPE_REBUILD_INDEX = "rebuild_index"
+TASK_TYPE_ACCESS_SYNC = "access_sync"
 
 STATUS_PENDING = "pending"
 STATUS_UPLOADED = "uploaded"
@@ -38,6 +41,13 @@ STATUS_PROCESSING = "processing"
 STATUS_COMPLETED = "completed"
 STATUS_FAILED = "failed"
 STATUS_DELETED = "deleted"
+DATASET_STATUS_ACTIVE = "active"
+DATASET_STATUS_DELETED = "deleted"
+
+DATASET_ROLE_VIEWER = "viewer"
+DATASET_ROLE_EDITOR = "editor"
+DATASET_ROLE_ADMIN = "admin"
+DATASET_ROLES = {DATASET_ROLE_VIEWER, DATASET_ROLE_EDITOR, DATASET_ROLE_ADMIN}
 
 # error_code 是“机器可读错误码”，前端使用它区分“节点自身执行失败”
 # 和“后台服务重启导致任务中断”。旧数据没有该字段时按空字符串处理，
@@ -84,6 +94,7 @@ class ImportMetadataRepository:
         self.client = MongoClient(self.mongo_url, serverSelectionTimeoutMS=2000)
         self.db = self.client[self.db_name]
         self.datasets = self.db["datasets"]
+        self.dataset_members = self.db["dataset_members"]
         self.documents = self.db["documents"]
         self.tasks = self.db["tasks"]
         self._ensure_indexes()
@@ -91,6 +102,14 @@ class ImportMetadataRepository:
 
     def _ensure_indexes(self) -> None:
         self.datasets.create_index([("dataset_id", ASCENDING)], unique=True)
+        self.datasets.create_index([("owner_user_id", ASCENDING), ("updated_at", DESCENDING)])
+        self.datasets.create_index([("tenant_id", ASCENDING), ("visibility", ASCENDING), ("updated_at", DESCENDING)])
+        self.datasets.create_index([("status", ASCENDING), ("updated_at", DESCENDING)])
+        if hasattr(self, "dataset_members"):
+            self.dataset_members.create_index([("member_id", ASCENDING)], unique=True)
+            self.dataset_members.create_index([("dataset_id", ASCENDING), ("user_id", ASCENDING), ("removed_at", ASCENDING)])
+            self.dataset_members.create_index([("user_id", ASCENDING), ("role", ASCENDING), ("updated_at", DESCENDING)])
+            self.dataset_members.create_index([("dataset_id", ASCENDING), ("role", ASCENDING), ("updated_at", DESCENDING)])
         self.documents.create_index([("document_id", ASCENDING)], unique=True)
         self.documents.create_index([("dataset_id", ASCENDING), ("updated_at", DESCENDING)])
         self.documents.create_index([("dataset_id", ASCENDING), ("status", ASCENDING)])
@@ -116,17 +135,203 @@ class ImportMetadataRepository:
                     "dataset_id": DEFAULT_DATASET_ID,
                     "name": DEFAULT_DATASET_NAME,
                     "description": "默认设备运维知识库容器。",
+                    "owner_user_id": DEFAULT_DATASET_OWNER_USER_ID,
+                    "tenant_id": DEFAULT_TENANT_ID,
+                    "visibility": "public",
+                    "status": DATASET_STATUS_ACTIVE,
+                    "created_by_user_id": DEFAULT_DATASET_OWNER_USER_ID,
                     "created_at": now,
                 },
-                "$set": {"updated_at": now},
+                "$set": {
+                    "owner_user_id": DEFAULT_DATASET_OWNER_USER_ID,
+                    "tenant_id": DEFAULT_TENANT_ID,
+                    "visibility": "public",
+                    "status": DATASET_STATUS_ACTIVE,
+                    "updated_at": now,
+                },
             },
             upsert=True,
         )
         return self.get_dataset(DEFAULT_DATASET_ID)
 
     def get_dataset(self, dataset_id: str) -> dict[str, Any]:
-        dataset = self.datasets.find_one({"dataset_id": dataset_id})
+        dataset = self.datasets.find_one({
+            "dataset_id": dataset_id,
+            "status": {"$ne": DATASET_STATUS_DELETED},
+        })
         return _without_mongo_id(dataset) or {}
+
+    def create_dataset(
+            self,
+            *,
+            dataset_id: str,
+            owner_user_id: str,
+            name: str,
+            description: str = "",
+            tenant_id: str = DEFAULT_TENANT_ID,
+            visibility: str = DEFAULT_VISIBILITY,
+    ) -> dict[str, Any]:
+        """创建一个 Dataset。Repository 只负责落库，权限由 service 层判断。"""
+        if not dataset_id:
+            dataset_id = f"dataset_{uuid.uuid4().hex}"
+        now = _now_iso()
+        dataset = {
+            "dataset_id": dataset_id,
+            "name": name,
+            "description": description or "",
+            "owner_user_id": owner_user_id,
+            "tenant_id": tenant_id or DEFAULT_TENANT_ID,
+            "visibility": visibility or DEFAULT_VISIBILITY,
+            "status": DATASET_STATUS_ACTIVE,
+            "created_by_user_id": owner_user_id,
+            "created_at": now,
+            "updated_at": now,
+            "deleted_at": "",
+        }
+        self.datasets.insert_one(dataset)
+        return dataset
+
+    def update_dataset(self, dataset_id: str, **fields: Any) -> dict[str, Any]:
+        """更新 Dataset 元数据并返回最新记录。"""
+        payload = {key: value for key, value in fields.items() if value is not None}
+        if not payload:
+            return self.get_dataset(dataset_id)
+        payload["updated_at"] = _now_iso()
+        self.datasets.update_one({"dataset_id": dataset_id}, {"$set": payload})
+        return self.get_dataset(dataset_id)
+
+    def list_visible_datasets(
+            self,
+            *,
+            user_id: str,
+            tenant_id: str = DEFAULT_TENANT_ID,
+            visibility: str | None = None,
+            limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """
+        查询当前用户可见的 Dataset。
+
+        public dataset 对所有当前用户可见；private/shared 需要 owner 或显式 member。
+        """
+        member_dataset_ids = [
+            str(member.get("dataset_id") or "")
+            for member in self.list_dataset_members_by_user(user_id=user_id)
+        ]
+        query: dict[str, Any] = {
+            "status": {"$ne": DATASET_STATUS_DELETED},
+            "$or": [
+                {"owner_user_id": user_id},
+                {"dataset_id": {"$in": member_dataset_ids}},
+                {"visibility": "public"},
+            ],
+        }
+        if visibility and visibility != "all":
+            query["visibility"] = visibility
+        cursor = self.datasets.find(query).sort("updated_at", DESCENDING).limit(limit)
+        return [_without_mongo_id(dataset) or {} for dataset in cursor]
+
+    def count_dataset_documents(self, dataset_id: str) -> int:
+        if hasattr(self.documents, "count_documents"):
+            return int(self.documents.count_documents({
+                "dataset_id": dataset_id,
+                "status": {"$ne": STATUS_DELETED},
+            }))
+        return len([
+            document for document in self.documents.find({
+                "dataset_id": dataset_id,
+                "status": {"$ne": STATUS_DELETED},
+            })
+        ])
+
+    def count_dataset_members(self, dataset_id: str) -> int:
+        if not hasattr(self, "dataset_members"):
+            return 0
+        query = {"dataset_id": dataset_id, "removed_at": ""}
+        if hasattr(self.dataset_members, "count_documents"):
+            return int(self.dataset_members.count_documents(query))
+        return len([member for member in self.dataset_members.find(query)])
+
+    def get_dataset_member(self, *, dataset_id: str, user_id: str) -> dict[str, Any]:
+        if not hasattr(self, "dataset_members"):
+            return {}
+        member = self.dataset_members.find_one({
+            "dataset_id": dataset_id,
+            "user_id": user_id,
+            "removed_at": "",
+        })
+        return _without_mongo_id(member) or {}
+
+    def list_dataset_members(self, *, dataset_id: str, limit: int = 100) -> list[dict[str, Any]]:
+        if not hasattr(self, "dataset_members"):
+            return []
+        cursor = self.dataset_members.find({
+            "dataset_id": dataset_id,
+            "removed_at": "",
+        }).sort("updated_at", DESCENDING).limit(limit)
+        return [_without_mongo_id(member) or {} for member in cursor]
+
+    def list_dataset_members_by_user(self, *, user_id: str, limit: int = 500) -> list[dict[str, Any]]:
+        if not hasattr(self, "dataset_members"):
+            return []
+        cursor = self.dataset_members.find({
+            "user_id": user_id,
+            "removed_at": "",
+        }).sort("updated_at", DESCENDING).limit(limit)
+        return [_without_mongo_id(member) or {} for member in cursor]
+
+    def upsert_dataset_member(
+            self,
+            *,
+            dataset_id: str,
+            user_id: str,
+            role: str,
+            added_by_user_id: str,
+    ) -> dict[str, Any]:
+        if not hasattr(self, "dataset_members"):
+            raise ValueError("dataset_members 集合未初始化")
+        if role not in DATASET_ROLES:
+            raise ValueError(f"不支持的 dataset member role={role}")
+        now = _now_iso()
+        existing = self.get_dataset_member(dataset_id=dataset_id, user_id=user_id)
+        member_id = existing.get("member_id") or f"member_{uuid.uuid4().hex}"
+        payload = {
+            "member_id": member_id,
+            "dataset_id": dataset_id,
+            "user_id": user_id,
+            "role": role,
+            "added_by_user_id": existing.get("added_by_user_id") or added_by_user_id,
+            "created_at": existing.get("created_at") or now,
+            "updated_at": now,
+            "removed_at": "",
+        }
+        self.dataset_members.update_one(
+            {"dataset_id": dataset_id, "user_id": user_id, "removed_at": ""},
+            {"$set": payload},
+            upsert=True,
+        )
+        return payload
+
+    def remove_dataset_member(
+            self,
+            *,
+            dataset_id: str,
+            user_id: str,
+    ) -> dict[str, Any]:
+        if not hasattr(self, "dataset_members"):
+            return {}
+        member = self.get_dataset_member(dataset_id=dataset_id, user_id=user_id)
+        if not member:
+            return {}
+        now = _now_iso()
+        self.dataset_members.update_one(
+            {
+                "dataset_id": dataset_id,
+                "user_id": user_id,
+                "removed_at": "",
+            },
+            {"$set": {"removed_at": now, "updated_at": now}},
+        )
+        return {**member, "removed_at": now, "updated_at": now}
 
     def resolve_dataset_for_import(self, dataset_id: str | None = None) -> dict[str, Any]:
         """
@@ -191,6 +396,10 @@ class ImportMetadataRepository:
             "parse_result_zip_path": "",
             "parse_result_dir": "",
             "deleted_at": "",
+            "hidden_at": "",
+            "superseded_by_document_id": "",
+            "access_sync_status": "none",
+            "access_sync_task_id": "",
             "failed_node": "",
             "error_code": "",
             "error_message": "",
@@ -286,6 +495,10 @@ class ImportMetadataRepository:
         })
         return _without_mongo_id(document) or {}
 
+    def get_document_by_id(self, document_id: str) -> dict[str, Any]:
+        document = self.documents.find_one({"document_id": document_id})
+        return _without_mongo_id(document) or {}
+
     def get_visible_document(
             self,
             *,
@@ -334,6 +547,35 @@ class ImportMetadataRepository:
         cursor = self.documents.find(query).sort("updated_at", DESCENDING).limit(limit)
         return [_without_mongo_id(document) or {} for document in cursor]
 
+    def list_visible_documents(
+        self,
+        *,
+        owner_user_id: str,
+        dataset_id: str = DEFAULT_DATASET_ID,
+        status: str | None = None,
+        keyword: str | None = None,
+        limit: int = 20,
+        include_deleted: bool = False,
+    ) -> list[dict[str, Any]]:
+        """按阶段 7 轻量可见性返回 document 列表。"""
+        query: dict[str, Any] = {
+            "dataset_id": dataset_id,
+            "$or": [
+                {"owner_user_id": owner_user_id},
+                {"visibility": "public"},
+                {"visibility": "shared"},
+            ],
+        }
+        if status and status != "all":
+            query["status"] = status
+        elif not include_deleted:
+            query["status"] = {"$ne": STATUS_DELETED}
+        if keyword:
+            query["file_name"] = {"$regex": keyword, "$options": "i"}
+
+        cursor = self.documents.find(query).sort("created_at", DESCENDING).limit(limit)
+        return [_without_mongo_id(document) or {} for document in cursor]
+
     def mark_document_deleted(
         self,
         *,
@@ -375,6 +617,66 @@ class ImportMetadataRepository:
             return
         payload["updated_at"] = _now_iso()
         self.documents.update_one({"document_id": document_id}, {"$set": payload})
+
+    def update_document_access(
+            self,
+            *,
+            document_id: str,
+            owner_user_id: str | None = None,
+            visibility: str | None = None,
+            access_sync_status: str | None = None,
+            access_sync_task_id: str | None = None,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {}
+        if owner_user_id is not None:
+            payload["owner_user_id"] = owner_user_id
+        if visibility is not None:
+            payload["visibility"] = visibility
+        if access_sync_status is not None:
+            payload["access_sync_status"] = access_sync_status
+        if access_sync_task_id is not None:
+            payload["access_sync_task_id"] = access_sync_task_id
+        if payload:
+            payload["updated_at"] = _now_iso()
+            self.documents.update_one({"document_id": document_id}, {"$set": payload})
+        return self.get_document_by_id(document_id)
+
+    def hide_failed_documents(
+            self,
+            *,
+            owner_user_id: str,
+            dataset_id: str,
+            document_ids: list[str],
+            only_superseded: bool = True,
+            dry_run: bool = False,
+    ) -> list[dict[str, Any]]:
+        """软隐藏当前用户失败导入记录。"""
+        now = _now_iso()
+        results: list[dict[str, Any]] = []
+        for document_id in document_ids:
+            document = self.get_document(document_id, owner_user_id)
+            if not document or document.get("dataset_id") != dataset_id:
+                results.append({"document_id": document_id, "cleaned": False, "reason": "not_found"})
+                continue
+            if document.get("status") != STATUS_FAILED:
+                results.append({"document_id": document_id, "cleaned": False, "reason": "not_failed"})
+                continue
+            if only_superseded and not document.get("superseded_by_document_id"):
+                results.append({"document_id": document_id, "cleaned": False, "reason": "not_superseded"})
+                continue
+            if not dry_run:
+                self.documents.update_one(
+                    {"document_id": document_id, "owner_user_id": owner_user_id},
+                    {"$set": {"hidden_at": now, "updated_at": now}},
+                )
+            results.append({
+                "document_id": document_id,
+                "status": document.get("status", ""),
+                "hidden_at": now if not dry_run else "",
+                "cleaned": True,
+                "reason": "",
+            })
+        return results
 
     def _get_task_by_id(self, task_id: str) -> dict[str, Any]:
         task = self.tasks.find_one({"task_id": task_id})
@@ -577,18 +879,23 @@ class ImportMetadataRepository:
                 }
             },
         )
+        document_id = str(task.get("document_id", ""))
+        document = self.get_document_by_id(document_id)
+        document_payload = {
+            "status": STATUS_COMPLETED,
+            "parse_status": STATUS_COMPLETED,
+            "index_status": STATUS_COMPLETED,
+            "failed_node": "",
+            "error_code": "",
+            "error_message": "",
+            "updated_at": now,
+        }
+        if document.get("access_sync_task_id") == task_id:
+            document_payload["access_sync_status"] = STATUS_COMPLETED
         self.documents.update_one(
-            {"document_id": task.get("document_id", "")},
+            {"document_id": document_id},
             {
-                "$set": {
-                    "status": STATUS_COMPLETED,
-                    "parse_status": STATUS_COMPLETED,
-                    "index_status": STATUS_COMPLETED,
-                    "failed_node": "",
-                    "error_code": "",
-                    "error_message": "",
-                    "updated_at": now,
-                }
+                "$set": document_payload,
             },
         )
 
@@ -626,9 +933,13 @@ class ImportMetadataRepository:
             document_payload["parse_status"] = STATUS_FAILED
         else:
             document_payload["index_status"] = STATUS_FAILED
+        document_id = str(task.get("document_id", ""))
+        document = self.get_document_by_id(document_id)
+        if document.get("access_sync_task_id") == task_id:
+            document_payload["access_sync_status"] = STATUS_FAILED
 
         self.documents.update_one(
-            {"document_id": task.get("document_id", "")},
+            {"document_id": document_id},
             {"$set": document_payload},
         )
 

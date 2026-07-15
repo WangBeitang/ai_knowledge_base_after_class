@@ -256,7 +256,7 @@ def test_change_chunk_enabled_rejects_invalid_reason_contract(monkeypatch):
 def test_chunk_service_errors_map_to_http_status(monkeypatch):
     cases = [
         (ChunkNotFoundError("chunk_id=1001 不存在"), 404),
-        (ChunkPermissionError("阶段 6 第一版只允许 document owner 启停 chunk"), 403),
+        (ChunkPermissionError("当前用户只能查看该 chunk，不能执行启停操作"), 403),
         (ChunkVersionConflictError("expected_index_version=1 与当前 index_version=2 不一致"), 409),
         (ChunkStateError("Milvus enabled=false 的 chunk 不能通过路线 B 人工恢复"), 409),
     ]

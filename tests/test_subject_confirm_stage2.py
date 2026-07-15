@@ -57,7 +57,7 @@ def test_classify_subject_aliases_returns_candidates(monkeypatch):
 
 def test_confirm_subject_name_writes_subject_ids_and_standard_names(monkeypatch):
     monkeypatch.setattr(service, "params_check", lambda state: ("HAK180怎么开机？", "session-1"))
-    monkeypatch.setattr(service, "load_history", lambda session_id: [])
+    monkeypatch.setattr(service, "load_history", lambda session_id, user_id: [])
     monkeypatch.setattr(
         service,
         "query_rewrite_and_subject_name_recognition",

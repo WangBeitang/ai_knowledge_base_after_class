@@ -236,6 +236,38 @@ class ChunkStatusChangeResponse(ChunkSchemaModel):
     latest_event: ChunkStatusEventSchema | None = None
 
 
+class ChunkBatchStatusItem(ChunkSchemaModel):
+    """批量启停请求中的单个 chunk 身份。"""
+
+    document_id: str = Field(min_length=1)
+    chunk_id: int | str
+    expected_index_version: int = Field(ge=0)
+
+
+class ChunkBatchStatusChangeRequest(ChunkSchemaModel):
+    """批量启用或禁用 chunk 的请求体。"""
+
+    enabled: bool
+    reason_type: ChunkStatusReasonType
+    reason_detail: str = Field(default="", max_length=500)
+    items: list[ChunkBatchStatusItem] = Field(min_length=1, max_length=100)
+
+    @model_validator(mode="after")
+    def validate_reason_detail(self) -> Self:
+        if self.reason_type == ChunkStatusReasonType.OTHER and not self.reason_detail:
+            raise ValueError("reason_type=other 时必须填写 reason_detail")
+        return self
+
+
+class ChunkBatchStatusChangeResponse(ChunkSchemaModel):
+    """批量启停响应；每个 item 独立返回成功或失败。"""
+
+    code: int = 200
+    changed_count: int = Field(default=0, ge=0)
+    failed_count: int = Field(default=0, ge=0)
+    items: list[dict] = Field(default_factory=list)
+
+
 class ChunkEventListSchema(ChunkSchemaModel):
     """某个 chunk 的启停历史响应。"""
 
@@ -248,6 +280,9 @@ class ChunkEventListSchema(ChunkSchemaModel):
 
 __all__ = [
     "ChunkDetailSchema",
+    "ChunkBatchStatusChangeRequest",
+    "ChunkBatchStatusChangeResponse",
+    "ChunkBatchStatusItem",
     "ChunkEnabledFilter",
     "ChunkEventListSchema",
     "ChunkListItemSchema",

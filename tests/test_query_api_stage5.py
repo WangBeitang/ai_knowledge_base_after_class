@@ -132,6 +132,7 @@ def test_query_rejects_invalid_dataset_scope_before_graph_execution(monkeypatch,
 
 def test_query_api_passes_normalized_context_to_sync_graph(monkeypatch):
     graph_calls = []
+    dataset_scope_calls = []
 
     def fake_query_graph_invoke(**kwargs):
         graph_calls.append(copy.deepcopy(kwargs))
@@ -144,6 +145,11 @@ def test_query_api_passes_normalized_context_to_sync_graph(monkeypatch):
         }
 
     monkeypatch.setattr(query_server, "query_graph_invoke", fake_query_graph_invoke)
+    monkeypatch.setattr(
+        query_server,
+        "_require_dataset_read_scope",
+        lambda user_id, dataset_ids: dataset_scope_calls.append((user_id, list(dataset_ids))),
+    )
 
     response = client.post(
         "/query",
@@ -161,6 +167,7 @@ def test_query_api_passes_normalized_context_to_sync_graph(monkeypatch):
             "dataset_ids": ["dataset_b", "dataset_a"],
         }
     ]
+    assert dataset_scope_calls == [("user_a", ["dataset_b", "dataset_a"])]
 
 
 def test_query_api_passes_identity_and_default_dataset_to_stream_task(monkeypatch):
@@ -230,6 +237,39 @@ def test_query_graph_state_keeps_different_owner_context_for_same_query(monkeypa
         }
         for state in captured_states
     )
+
+
+def test_query_graph_invoke_accepts_retrieval_test_config_overrides(monkeypatch):
+    captured_states = []
+
+    class FakeQueryGraph:
+        def invoke(self, state):
+            captured_states.append(copy.deepcopy(state))
+            return {**state, "answer": "测试答案", "image_urls": []}
+
+    monkeypatch.setattr(query_server, "query_graph_app", FakeQueryGraph())
+    monkeypatch.setattr(query_server, "clear_task", lambda session_id: None)
+    monkeypatch.setattr(query_server, "update_task_status", lambda *args, **kwargs: None)
+    monkeypatch.setattr(query_server, "safe_create_running_trace", lambda state: None)
+
+    query_server.query_graph_invoke(
+        session_id="retrieval-test-config",
+        query="HAK 180 怎么开机？",
+        is_stream=False,
+        owner_user_id="user_a",
+        dataset_ids=[DEFAULT_DATASET_ID],
+        history_persistence_enabled=False,
+        execution_source="retrieval_test",
+        retrieval_mode="dense_bm25",
+        web_fallback_enabled=False,
+    )
+
+    assert captured_states[0]["execution_source"] == "retrieval_test"
+    assert captured_states[0]["history_persistence_enabled"] is False
+    assert captured_states[0]["retrieval_mode"] == "dense_bm25"
+    assert captured_states[0]["retrieval_config_snapshot"]["retrieval_mode"] == "dense_bm25"
+    assert captured_states[0]["web_search_allowed"] is False
+    assert captured_states[0]["retrieval_config_snapshot"]["web_fallback_enabled"] is False
 
 
 def test_query_log_trace_prefers_single_execution_id_and_keeps_legacy_fallbacks():

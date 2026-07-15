@@ -343,7 +343,7 @@ def test_public_document_can_be_read_but_non_owner_cannot_change_state():
     result = service.list_document_chunks(document_id="doc_1", user_id="user_a")
 
     assert result["items"][0]["chunk_id"] == 1001
-    with pytest.raises(ChunkPermissionError, match="只允许 document owner"):
+    with pytest.raises(ChunkPermissionError, match="只能查看该 chunk"):
         service.change_chunk_enabled(
             document_id="doc_1",
             chunk_id=1001,

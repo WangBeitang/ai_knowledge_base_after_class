@@ -21,6 +21,8 @@ class TaskStatusSchema(BaseModel):
     running_list:list[str] = Field(default_factory=list) # 当前task_id正在处理的节点列表
     document_id:str = ""
     dataset_id:str = ""
+    owner_user_id:str = ""
+    tenant_id:str = ""
     failed_node:str = ""
     # error_code 是机器可读错误码。旧数据和普通节点异常默认为空；
     # import_service_restarted 表示该任务随旧服务进程退出而中断。
@@ -34,6 +36,9 @@ class DocumentStatusSchema(BaseModel):
     code:int = 200
     document_id:str
     dataset_id:str = ""
+    owner_user_id:str = ""
+    tenant_id:str = ""
+    visibility:str = ""
     latest_task_id:str = ""
     file_name:str = ""
     file_path:str = ""
@@ -50,6 +55,13 @@ class DocumentStatusSchema(BaseModel):
     parse_result_zip_path:str = ""
     parse_result_dir:str = ""
     deleted_at:str = ""
+    hidden_at:str = ""
+    record_kind:str = "active"
+    history_group_key:str = ""
+    history_record_count:int = 0
+    superseded_by_document_id:str = ""
+    access_sync_status:str = "none"
+    access_sync_task_id:str = ""
     failed_node:str = ""
     # document.error_code 投影最新一次导入的机器失败原因，
     # 用于前端稳定区分服务重启中断和普通节点失败。

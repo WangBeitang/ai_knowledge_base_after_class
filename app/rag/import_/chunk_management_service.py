@@ -20,6 +20,8 @@ from app.infra.persistence.chunk_status_repository import (
     get_chunk_status_repository,
 )
 from app.infra.persistence.import_metadata_repository import (
+    DATASET_ROLE_ADMIN,
+    DATASET_ROLE_EDITOR,
     DEFAULT_TENANT_ID,
     STATUS_DELETED,
     get_import_metadata_repository,
@@ -106,6 +108,18 @@ def _is_visible_document(document: Mapping[str, Any], *, user_id: str, tenant_id
 def _event_value(value: Any) -> str:
     """兼容 API enum 和测试里直接传字符串的写法。"""
     return str(getattr(value, "value", value) or "").strip()
+
+
+def _dataset_write_role(metadata_repository: Any, *, document: Mapping[str, Any], user_id: str) -> bool:
+    """判断当前用户是否是 document 所属 dataset 的 editor/admin。"""
+    dataset_id = str(document.get("dataset_id") or "")
+    if not dataset_id or not hasattr(metadata_repository, "get_dataset_member"):
+        return False
+    dataset = metadata_repository.get_dataset(dataset_id) if hasattr(metadata_repository, "get_dataset") else {}
+    if dataset and dataset.get("owner_user_id") == user_id:
+        return True
+    member = metadata_repository.get_dataset_member(dataset_id=dataset_id, user_id=user_id)
+    return str(member.get("role") or "") in {DATASET_ROLE_EDITOR, DATASET_ROLE_ADMIN}
 
 
 class ChunkManagementService:
@@ -343,6 +357,113 @@ class ChunkManagementService:
                 items.append(item)
         return {"code": 200, "items": items[:limit]}
 
+    def list_chunks(
+            self,
+            *,
+            dataset_id: str,
+            user_id: str,
+            tenant_id: str = DEFAULT_TENANT_ID,
+            document_id: str | None = None,
+            enabled: bool | None = None,
+            limit: int = 100,
+    ) -> dict[str, Any]:
+        """
+        跨 document 查询当前用户可见 chunk。
+
+        第一版不做全文搜索和复杂排序；如果传 document_id，复用按 document 的稳定列表。
+        """
+        if document_id:
+            return self.list_document_chunks(
+                document_id=document_id,
+                user_id=user_id,
+                tenant_id=tenant_id,
+                enabled=enabled,
+                limit=limit,
+            )
+
+        filter_expr = build_chunk_management_filter(
+            dataset_ids=[dataset_id],
+            owner_user_id=user_id,
+            tenant_id=tenant_id,
+            enabled=None,
+        )
+        chunks = self.vector_gateway.query_entities(
+            collection_name=self.vector_gateway.chunk_collection_name,
+            filter_expr=filter_expr,
+            output_fields=CHUNK_OUTPUT_FIELDS,
+            limit=limit,
+        )
+        items: list[dict[str, Any]] = []
+        for chunk in chunks:
+            chunk_id = chunk.get("chunk_id")
+            chunk_document_id = str(chunk.get("document_id") or "")
+            index_version = _as_int(chunk.get("index_version", 0), field_name="index_version")
+            overrides = self.status_repository.get_overrides(
+                document_id=chunk_document_id,
+                chunk_ids=[chunk_id],
+                index_version=index_version,
+            )
+            item = self._format_chunk_item(
+                chunk,
+                override=overrides[0] if overrides else None,
+                latest_event=self._latest_event(
+                    document_id=chunk_document_id,
+                    chunk_id=chunk_id,
+                    index_version=index_version,
+                ),
+                include_content=False,
+            )
+            if enabled is None or item["effective_enabled"] == enabled:
+                items.append(item)
+        return {"code": 200, "items": items[:limit]}
+
+    def change_chunks_enabled(
+            self,
+            *,
+            items: list[dict[str, Any]],
+            user_id: str,
+            enabled: bool,
+            reason_type: str,
+            reason_detail: str = "",
+            tenant_id: str = DEFAULT_TENANT_ID,
+    ) -> dict[str, Any]:
+        """批量启停 chunk。每个 item 独立返回结果，不做整批事务回滚。"""
+        results: list[dict[str, Any]] = []
+        changed_count = 0
+        failed_count = 0
+        for item in items[:100]:
+            try:
+                result = self.change_chunk_enabled(
+                    document_id=str(item.get("document_id") or ""),
+                    chunk_id=item.get("chunk_id"),
+                    user_id=user_id,
+                    tenant_id=tenant_id,
+                    enabled=enabled,
+                    expected_index_version=_as_int(
+                        item.get("expected_index_version"),
+                        field_name="expected_index_version",
+                    ),
+                    reason_type=reason_type,
+                    reason_detail=reason_detail,
+                )
+                changed_count += int(bool(result.get("changed")))
+                results.append(result)
+            except Exception as error:
+                failed_count += 1
+                results.append({
+                    "document_id": str(item.get("document_id") or ""),
+                    "chunk_id": item.get("chunk_id"),
+                    "changed": False,
+                    "effective_enabled": None,
+                    "error": str(error),
+                })
+        return {
+            "code": 200,
+            "changed_count": changed_count,
+            "failed_count": failed_count,
+            "items": results,
+        }
+
     def get_chunk_detail(
             self,
             *,
@@ -393,12 +514,16 @@ class ChunkManagementService:
         """
         启用或禁用 chunk。
 
-        阶段 6 选择路线 B：不修改 Milvus 原始 row，只写 Mongo override。当前用户必须是
-        document owner；public/shared 的非 owner 只允许查看，不允许启停。
+        阶段 6 选择路线 B：不修改 Milvus 原始 row，只写 Mongo override。阶段 7 起，
+        document owner 或 dataset editor/admin 可以启停；普通 public/shared 读者只能查看。
         """
         document = self._get_visible_document(document_id, user_id, tenant_id)
-        if document.get("owner_user_id") != user_id:
-            raise ChunkPermissionError("阶段 6 第一版只允许 document owner 启停 chunk")
+        if document.get("owner_user_id") != user_id and not _dataset_write_role(
+            self.metadata_repository,
+            document=document,
+            user_id=user_id,
+        ):
+            raise ChunkPermissionError("当前用户只能查看该 chunk，不能执行启停操作")
 
         index_version = self._document_index_version(document)
         if _as_int(expected_index_version, field_name="expected_index_version") != index_version:

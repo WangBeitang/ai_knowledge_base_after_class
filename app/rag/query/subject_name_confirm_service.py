@@ -21,8 +21,8 @@ def params_check(state):
     return original_query, session_id
 
 
-def load_history(session_id):
-    return history_repository.list_recent(session_id,QUERY_HISTORY_LIMIT)
+def load_history(session_id, user_id: str):
+    return history_repository.list_recent(session_id, QUERY_HISTORY_LIMIT, user_id=user_id)
 
 
 def build_history_text(history_messages):
@@ -207,7 +207,7 @@ def confirm_subject_name(state: QueryGraphState) -> QueryGraphState:
     original_query, session_id = params_check(state)
 
     # 2. 加载历史对话
-    history_messages = load_history(session_id)
+    history_messages = load_history(session_id, str(state.get("owner_user_id") or ""))
     state["history"] = history_messages
 
     # 3.拼接历史对话文本
@@ -250,11 +250,13 @@ def confirm_subject_name(state: QueryGraphState) -> QueryGraphState:
 
     # 7. 所有正常主体结果都必须经过同一个用户消息保存点。旧实现的 confirmed/ambiguous/
     # not_found 分支会提前 return，导致用户问题漏存；现在先完成状态分类，再统一落历史。
-    history_repository.save_message(
-        session_id=session_id,
-        role="user",
-        text=original_query,
-        rewritten_query=state.get("rewritten_query", original_query),
-        standard_subject_names=state.get("standard_subject_names", [])
-    )
+    if state.get("history_persistence_enabled", True):
+        history_repository.save_message(
+            user_id=str(state.get("owner_user_id") or ""),
+            session_id=session_id,
+            role="user",
+            text=original_query,
+            rewritten_query=state.get("rewritten_query", original_query),
+            standard_subject_names=state.get("standard_subject_names", [])
+        )
     return state
