@@ -164,6 +164,14 @@
             background-color: #fff2f0;
             border-color: #d58d85;
         }
+        .document-action.chunk-action {
+            color: #1f5f8b;
+            border-color: #b8d4ea;
+        }
+        .document-action.chunk-action:hover:not(:disabled) {
+            background-color: #edf7ff;
+            border-color: #87b9df;
+        }
         .document-action:disabled {
             color: #98a3ad;
             background-color: #f4f6f8;
@@ -218,6 +226,142 @@
             color: #c0392b;
             font-size: 13px;
             line-height: 1.5;
+        }
+        .chunk-panel {
+            margin-top: 12px;
+            border: 1px solid #d9e4ef;
+            border-radius: 8px;
+            background-color: #f8fbfe;
+            padding: 12px;
+        }
+        .chunk-panel[hidden] {
+            display: none;
+        }
+        .chunk-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .chunk-panel-title {
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .chunk-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chunk-filter {
+            height: 32px;
+            border: 1px solid #cfd8e3;
+            border-radius: 6px;
+            background-color: #fff;
+            color: #34495e;
+            font-size: 13px;
+            padding: 0 8px;
+        }
+        .chunk-refresh {
+            min-width: 34px;
+            height: 32px;
+            padding: 0 8px;
+        }
+        .chunk-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chunk-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background-color: #fff;
+            padding: 10px;
+        }
+        .chunk-item-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .chunk-title {
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+        .chunk-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 12px;
+            margin-top: 6px;
+            color: #60717f;
+            font-size: 12px;
+        }
+        .chunk-preview {
+            margin-top: 8px;
+            color: #34495e;
+            font-size: 13px;
+            line-height: 1.55;
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
+        }
+        .chunk-state {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 48px;
+            height: 24px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .chunk-state-enabled {
+            color: #17653a;
+            background-color: #e8f7ee;
+        }
+        .chunk-state-disabled {
+            color: #9f2d24;
+            background-color: #fff2f0;
+        }
+        .chunk-toggle {
+            min-width: 64px;
+            height: 30px;
+            margin-top: 8px;
+            border: 1px solid #cfd8e3;
+            border-radius: 6px;
+            background-color: #fff;
+            color: #34495e;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .chunk-toggle:hover:not(:disabled) {
+            background-color: #f3f7fa;
+            border-color: #9fb2c5;
+        }
+        .chunk-toggle.disable-chunk {
+            color: #b03a2e;
+            border-color: #e6b8b3;
+        }
+        .chunk-toggle:disabled {
+            color: #98a3ad;
+            background-color: #f4f6f8;
+            cursor: not-allowed;
+        }
+        .chunk-message {
+            display: none;
+            margin: 6px 0 10px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .chunk-message.is-success {
+            display: block;
+            color: #17653a;
+        }
+        .chunk-message.is-error {
+            display: block;
+            color: #b03a2e;
         }
         .empty-state {
             color: #7f8c8d;
@@ -299,10 +443,20 @@
                 gap: 12px;
             }
             .document-actions {
+                flex-wrap: wrap;
+                justify-content: flex-end;
                 margin-left: auto;
             }
             .document-action {
                 min-width: 68px;
+            }
+            .chunk-panel-header,
+            .chunk-item-head {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .chunk-toolbar {
+                justify-content: space-between;
             }
             .status-badge {
                 min-width: 72px;
@@ -492,6 +646,43 @@
         detailListEl.innerHTML = lines.join('');
     }
 
+    function manualStatusLabel(value) {
+        if (value === 'disabled') return '人工禁用';
+        if (value === 'enabled') return '人工恢复';
+        return '无人工覆盖';
+    }
+
+    function chunkStateLabel(chunk) {
+        return chunk?.effective_enabled ? '启用' : '禁用';
+    }
+
+    function chunkStateClass(chunk) {
+        return chunk?.effective_enabled ? 'chunk-state-enabled' : 'chunk-state-disabled';
+    }
+
+    async function apiErrorFromResponse(response, fallbackMessage) {
+        const data = await response.json().catch(() => ({}));
+        const detail = data.detail || fallbackMessage || `HTTP ${response.status}`;
+        const error = new Error(detail);
+        error.status = response.status;
+        error.detail = detail;
+        return error;
+    }
+
+    function renderChunkMessage(panelEl, message, type = 'success') {
+        const messageEl = panelEl.querySelector('.chunk-message');
+        messageEl.textContent = message || '';
+        messageEl.className = message ? `chunk-message is-${type}` : 'chunk-message';
+    }
+
+    function chunkErrorMessage(error) {
+        if (error.detail) return error.detail;
+        if (error.status === 403) return '没有权限操作该 chunk';
+        if (error.status === 404) return '该 chunk 不存在或当前用户不可见';
+        if (error.status === 409) return 'chunk 状态已变化，请刷新后重试';
+        return 'chunk 操作失败，请稍后重试';
+    }
+
     function scheduleHistoryRefresh(shouldContinue) {
         if (historyRefreshTimer !== null) {
             clearTimeout(historyRefreshTimer);
@@ -557,8 +748,11 @@
 
     function createDocumentHistoryHtml(documentRecord) {
         const canOperate = ['completed', 'failed'].includes(documentRecord.status);
+        const canViewChunks = documentRecord.status === 'completed' && Number(documentRecord.chunk_count || 0) > 0;
         const disabledAttribute = canOperate ? '' : 'disabled';
         const disabledTitle = canOperate ? '' : '文档处理完成后才能操作';
+        const chunkDisabledAttribute = canViewChunks ? '' : 'disabled';
+        const chunkDisabledTitle = canViewChunks ? '' : '索引完成并生成 chunk 后才能查看';
         const summary = failureSummary(documentRecord);
         const failureHtml = summary
             ? `<div class="failure-summary" style="display:block">${escapeHtml(summary)}</div>`
@@ -591,10 +785,21 @@
                         <summary>查看详情</summary>
                         <ul class="detail-list">${detailLines}</ul>
                     </details>
+                    ${createChunkPanelHtml(documentRecord)}
                 </div>
                 <div class="document-side">
                     <div class="status-badge ${statusClass(documentRecord.status)}">${escapeHtml(statusLabel(documentRecord.status))}</div>
                     <div class="document-actions">
+                        <button type="button"
+                                class="document-action chunk-action"
+                                data-action="chunks"
+                                data-operable="${canViewChunks}"
+                                aria-label="查看 chunk"
+                                title="${chunkDisabledTitle || '查看 chunk'}"
+                                ${chunkDisabledAttribute}>
+                            <i data-lucide="list" aria-hidden="true"></i>
+                            <span>Chunk</span>
+                        </button>
                         <button type="button"
                                 class="document-action rebuild-action"
                                 data-action="rebuild"
@@ -617,6 +822,33 @@
                         </button>
                     </div>
                 </div>
+            </div>
+        `;
+    }
+
+    function createChunkPanelHtml(documentRecord) {
+        return `
+            <div class="chunk-panel"
+                 data-document-id="${escapeHtml(documentRecord.document_id)}"
+                 hidden>
+                <div class="chunk-panel-header">
+                    <div class="chunk-panel-title">Chunk 列表</div>
+                    <div class="chunk-toolbar">
+                        <select class="chunk-filter" aria-label="chunk 状态过滤">
+                            <option value="all">全部</option>
+                            <option value="true">启用</option>
+                            <option value="false">禁用</option>
+                        </select>
+                        <button type="button"
+                                class="document-action chunk-refresh"
+                                data-chunk-action="refresh"
+                                aria-label="刷新 chunk">
+                            <i data-lucide="refresh-cw" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chunk-message" role="alert"></div>
+                <div class="chunk-list"></div>
             </div>
         `;
     }
@@ -683,6 +915,168 @@
         return data;
     }
 
+    async function requestDocumentChunks(documentId, enabledFilter) {
+        const response = await fetch(
+            `${API_BASE}/documents/${encodeURIComponent(documentId)}/chunks?enabled=${encodeURIComponent(enabledFilter)}&limit=100`,
+            {
+                headers: userHeaders(),
+            }
+        );
+        if (!response.ok) {
+            throw await apiErrorFromResponse(response, '查询 chunk 列表失败');
+        }
+        return response.json();
+    }
+
+    async function requestChunkStatusChange(documentId, chunkId, payload) {
+        const response = await fetch(
+            `${API_BASE}/documents/${encodeURIComponent(documentId)}/chunks/${encodeURIComponent(chunkId)}/enabled`,
+            {
+                method: 'PATCH',
+                headers: {
+                    ...userHeaders(),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            }
+        );
+        if (!response.ok) {
+            throw await apiErrorFromResponse(response, '修改 chunk 启停状态失败');
+        }
+        return response.json();
+    }
+
+    function createChunkItemHtml(chunk) {
+        const latestEvent = chunk.latest_event
+            ? `${chunk.latest_event.reason_type || '-'} / ${formatTime(chunk.latest_event.created_at)}`
+            : '无';
+        const nextEnabled = chunk.effective_enabled ? 'false' : 'true';
+        const actionLabel = chunk.effective_enabled ? '禁用' : '启用';
+        const actionClass = chunk.effective_enabled ? 'disable-chunk' : 'enable-chunk';
+        const title = chunk.title || chunk.parent_title || `chunk ${chunk.chunk_id}`;
+
+        return `
+            <div class="chunk-item" data-chunk-id="${escapeHtml(chunk.chunk_id)}">
+                <div class="chunk-item-head">
+                    <div>
+                        <div class="chunk-title">${escapeHtml(title)}</div>
+                        <div class="chunk-meta">
+                            <span>ID：${escapeHtml(chunk.chunk_id)}</span>
+                            <span>序号：${escapeHtml(chunk.chunk_index)}</span>
+                            <span>版本：${escapeHtml(chunk.index_version)}</span>
+                            <span>覆盖：${escapeHtml(manualStatusLabel(chunk.manual_status))}</span>
+                            <span>最近事件：${escapeHtml(latestEvent)}</span>
+                        </div>
+                    </div>
+                    <span class="chunk-state ${chunkStateClass(chunk)}">${escapeHtml(chunkStateLabel(chunk))}</span>
+                </div>
+                <div class="chunk-preview">${escapeHtml(chunk.content_preview || '无正文预览')}</div>
+                <button type="button"
+                        class="chunk-toggle ${actionClass}"
+                        data-chunk-action="toggle-enabled"
+                        data-chunk-id="${escapeHtml(chunk.chunk_id)}"
+                        data-index-version="${escapeHtml(chunk.index_version)}"
+                        data-next-enabled="${nextEnabled}">
+                    ${escapeHtml(actionLabel)}
+                </button>
+            </div>
+        `;
+    }
+
+    function renderChunkList(panelEl, chunks) {
+        const listEl = panelEl.querySelector('.chunk-list');
+        if (!chunks.length) {
+            listEl.innerHTML = '<div class="empty-state">当前筛选条件下没有 chunk</div>';
+            return;
+        }
+        listEl.innerHTML = chunks.map(createChunkItemHtml).join('');
+        renderLucideIcons();
+    }
+
+    function setChunkPanelBusy(panelEl, isBusy) {
+        const controls = panelEl.querySelectorAll('.chunk-filter, .chunk-refresh, .chunk-toggle');
+        for (const control of controls) {
+            control.disabled = isBusy;
+        }
+        panelEl.setAttribute('aria-busy', String(isBusy));
+    }
+
+    async function loadDocumentChunks(itemEl) {
+        const documentId = itemEl?.dataset.documentId;
+        const panelEl = itemEl?.querySelector('.chunk-panel');
+        if (!documentId || !panelEl) return;
+
+        const enabledFilter = panelEl.querySelector('.chunk-filter')?.value || 'all';
+        setChunkPanelBusy(panelEl, true);
+        try {
+            const data = await requestDocumentChunks(documentId, enabledFilter);
+            const chunks = Array.isArray(data.items) ? data.items : [];
+            renderChunkList(panelEl, chunks);
+            renderChunkMessage(panelEl, chunks.length ? `已加载 ${chunks.length} 个 chunk` : '', 'success');
+        } catch (error) {
+            console.error(error);
+            renderChunkMessage(panelEl, chunkErrorMessage(error), 'error');
+        } finally {
+            setChunkPanelBusy(panelEl, false);
+        }
+    }
+
+    async function toggleChunkPanel(button) {
+        const itemEl = button.closest('.file-item');
+        const panelEl = itemEl?.querySelector('.chunk-panel');
+        if (!itemEl || !panelEl) return;
+
+        const shouldOpen = panelEl.hidden;
+        panelEl.hidden = !shouldOpen;
+        const labelEl = button.querySelector('span');
+        if (labelEl) labelEl.textContent = shouldOpen ? '收起' : 'Chunk';
+        button.setAttribute('aria-expanded', String(shouldOpen));
+        if (shouldOpen) {
+            await loadDocumentChunks(itemEl);
+        }
+    }
+
+    async function handleChunkStatusChange(button) {
+        const itemEl = button.closest('.file-item');
+        const panelEl = button.closest('.chunk-panel');
+        const documentId = itemEl?.dataset.documentId;
+        const chunkId = button.dataset.chunkId;
+        const nextEnabled = button.dataset.nextEnabled === 'true';
+        const expectedIndexVersion = Number(button.dataset.indexVersion);
+        if (!itemEl || !panelEl || !documentId || !chunkId) return;
+
+        const defaultReason = nextEnabled ? '前端人工恢复' : '前端人工禁用';
+        const reasonDetail = window.prompt(
+            nextEnabled ? '请输入启用原因' : '请输入禁用原因',
+            defaultReason,
+        );
+        if (reasonDetail === null) return;
+        if (!nextEnabled && !reasonDetail.trim()) {
+            renderChunkMessage(panelEl, '禁用原因不能为空', 'error');
+            return;
+        }
+
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = '处理中';
+        try {
+            await requestChunkStatusChange(documentId, chunkId, {
+                enabled: nextEnabled,
+                expected_index_version: expectedIndexVersion,
+                reason_type: nextEnabled ? 'manual_restore' : 'other',
+                reason_detail: reasonDetail.trim(),
+            });
+            renderChunkMessage(panelEl, nextEnabled ? 'chunk 已启用' : 'chunk 已禁用', 'success');
+            await loadDocumentChunks(itemEl);
+        } catch (error) {
+            console.error(error);
+            renderChunkMessage(panelEl, chunkErrorMessage(error), 'error');
+        } finally {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+
     async function handleDocumentAction(button) {
         const itemEl = button.closest('.file-item');
         const documentId = itemEl?.dataset.documentId;
@@ -740,9 +1134,29 @@
     });
 
     fileList.addEventListener('click', (event) => {
+        const chunkButton = event.target.closest('[data-chunk-action]');
+        if (chunkButton && !chunkButton.disabled) {
+            const action = chunkButton.dataset.chunkAction;
+            if (action === 'refresh') {
+                loadDocumentChunks(chunkButton.closest('.file-item'));
+            } else if (action === 'toggle-enabled') {
+                handleChunkStatusChange(chunkButton);
+            }
+            return;
+        }
+
         const button = event.target.closest('.document-action');
         if (!button || button.disabled) return;
-        handleDocumentAction(button);
+        if (button.dataset.action === 'chunks') {
+            toggleChunkPanel(button);
+        } else {
+            handleDocumentAction(button);
+        }
+    });
+
+    fileList.addEventListener('change', (event) => {
+        if (!event.target.classList.contains('chunk-filter')) return;
+        loadDocumentChunks(event.target.closest('.file-item'));
     });
 
     function handleFiles(files) {
