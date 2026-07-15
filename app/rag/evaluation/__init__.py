@@ -31,6 +31,18 @@ from app.rag.evaluation.case_schema import (
     validate_case_collection,
     validate_cases_for_sft_export,
 )
+from app.rag.evaluation.offline_environment import (
+    # 离线 Environment。它把固定 snapshot 转成可执行 State/Trace，不写聊天历史。
+    EmptyOfflineActionProvider,
+    OfflineActionProvider,
+    OfflineError,
+    OfflineRagEnvironment,
+    OfflineState,
+    OfflineStepResult,
+    OfflineTraceStep,
+    OfflineTrajectoryResult,
+    OfflineTrajectoryStatus,
+)
 
 
 __all__ = [
@@ -47,6 +59,16 @@ __all__ = [
     "PlannerEvalResult",
     "PrivacyScope",
     "SplitManifest",
+    # 阶段 8.4 离线执行器。
+    "EmptyOfflineActionProvider",
+    "OfflineActionProvider",
+    "OfflineError",
+    "OfflineRagEnvironment",
+    "OfflineState",
+    "OfflineStepResult",
+    "OfflineTraceStep",
+    "OfflineTrajectoryResult",
+    "OfflineTrajectoryStatus",
     # 训练导出前必须调用的边界校验函数。
     "validate_case_collection",
     "validate_cases_for_sft_export",
