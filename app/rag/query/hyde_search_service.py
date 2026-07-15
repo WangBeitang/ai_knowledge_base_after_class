@@ -6,6 +6,7 @@ from app.rag.query.chunk_retrieval_utils import (
     build_chunk_retrieval_filter_from_state,
     format_chunk_search_item,
 )
+from app.rag.query.chunk_status_filter_service import get_disabled_chunk_ids_for_query
 from app.rag.query.config import (
     BM25_SPARSE_FIELD,
     LEARNED_SPARSE_FIELD,
@@ -26,7 +27,12 @@ def check_params(state):
         raise ValueError("请输入问题")
     # HyDE 必须和普通检索使用同一个权限与范围入口。即使 HyDE 的向量文本不同，允许
     # 访问的 dataset、subject 和私有文档范围也绝不能变化。
-    filter_expr = build_chunk_retrieval_filter_from_state(state)
+    disabled_chunk_ids = get_disabled_chunk_ids_for_query(state)
+    state["disabled_chunk_ids"] = disabled_chunk_ids
+    filter_expr = build_chunk_retrieval_filter_from_state({
+        **state,
+        "disabled_chunk_ids": disabled_chunk_ids,
+    })
     logger.warning(f"{rewritten_query},类型{type(rewritten_query)}")
     return rewritten_query, filter_expr
 

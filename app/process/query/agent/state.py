@@ -240,6 +240,17 @@ class QueryGraphState(TypedDict):
     # 和 Web 开关等真实数值；查询入口创建后不得在同一条 Trace 中途修改。
     retrieval_config_snapshot: dict[str, object]
 
+    # chunk status filter enabled 的中文含义是“是否启用人工禁用 chunk 查询过滤”。True 时
+    # 本地检索和 HyDE 会先读取 Mongo ``chunk_status_overrides`` 中 manual_status=disabled
+    # 的 chunk_id，再追加到 Milvus expr。默认 False 仅用于无 Mongo 的单元测试和离线重放；
+    # 真实 HTTP 查询入口必须显式写 True。
+    chunk_status_filter_enabled: bool
+
+    # disabled chunk IDs 的中文含义是“本轮查询范围内被人工禁用的 chunk_id 快照”。它来自
+    # Mongo ``chunk_status_overrides.manual_status=disabled``，只用于构建当前 Milvus expr；
+    # 默认空列表表示尚无禁用覆盖或当前路径未启用 Mongo 读取，不代表全库没有禁用数据。
+    disabled_chunk_ids: list[int | str]
+
     # trace persistence enabled 的中文含义是“是否由查询入口负责持久化 Trace”。默认 False
     # 让纯图单元测试和离线 Planner 重放不依赖 Mongo；真实 HTTP 查询入口会显式写 True。
     trace_persistence_enabled: bool
@@ -303,6 +314,8 @@ query_graph_default_state: QueryGraphState = {
     "terminal_reason_code": None,
     "answer_runtime_metadata": {},
     "retrieval_config_snapshot": {},
+    "chunk_status_filter_enabled": False,
+    "disabled_chunk_ids": [],
     "trace_persistence_enabled": False,
     "prompt": "",
     "answer": "",

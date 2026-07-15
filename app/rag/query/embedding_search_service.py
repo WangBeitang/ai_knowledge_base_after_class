@@ -12,6 +12,7 @@ from app.rag.query.chunk_retrieval_utils import (
     format_chunk_search_item,
     select_structured_query_identifiers,
 )
+from app.rag.query.chunk_status_filter_service import get_disabled_chunk_ids_for_query
 from app.rag.query.config import (
     BM25_SPARSE_FIELD,
     LEARNED_SPARSE_FIELD,
@@ -42,7 +43,12 @@ from app.rag.query.query_identifier_service import (
 from app.shared.runtime.logger import logger, step_log
 
 
-def _build_filter(state: Mapping[str, object], *, query_identifiers) -> str:
+def _build_filter(
+        state: Mapping[str, object],
+        *,
+        query_identifiers,
+        disabled_chunk_ids=None,
+) -> str:
     """
     使用同一份权限上下文构建检索表达式。
 
@@ -56,6 +62,7 @@ def _build_filter(state: Mapping[str, object], *, query_identifiers) -> str:
         owner_user_id=state.get("owner_user_id"),
         tenant_id=state.get("tenant_id"),
         query_identifiers=query_identifiers,
+        disabled_chunk_ids=disabled_chunk_ids,
     )
 
 
@@ -80,9 +87,15 @@ def check_params(state):
 
     # 即使没有任何编号，也先构建基础表达式完成空 dataset/subject/owner/tenant 校验。
     # 这保证参数错误发生在 embedding 和 Milvus 调用之前，不会退化为全库搜索。
-    base_filter_expr = _build_filter(state, query_identifiers={})
+    disabled_chunk_ids = get_disabled_chunk_ids_for_query(state)
+    state["disabled_chunk_ids"] = disabled_chunk_ids
+    base_filter_expr = _build_filter(
+        state,
+        query_identifiers={},
+        disabled_chunk_ids=disabled_chunk_ids,
+    )
     logger.warning(f"{rewritten_query},类型{type(rewritten_query)}")
-    return rewritten_query, query_identifiers, structured_identifiers, base_filter_expr
+    return rewritten_query, query_identifiers, structured_identifiers, base_filter_expr, disabled_chunk_ids
 
 
 def _embed_retrieval_query(retrieval_query: str) -> tuple[list[float], dict[int, float]]:
@@ -240,7 +253,13 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
     找到 E021 这类相近但不同编号时，只生成追问候选，不能进入答案生成。
     """
     started_at = perf_counter()
-    rewritten_query, query_identifiers, structured_identifiers, base_filter_expr = check_params(state)
+    (
+        rewritten_query,
+        query_identifiers,
+        structured_identifiers,
+        base_filter_expr,
+        disabled_chunk_ids,
+    ) = check_params(state)
 
     state["query_identifiers"] = query_identifiers
     retrieval_mode = normalize_retrieval_mode(state.get("retrieval_mode"))
@@ -277,7 +296,11 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
     # 第一段：只有 schema 已存在的标识才进入精确 expr。SOP/零件编号等 lexical-only
     # 标识仍会追加到 retrieval_query，并通过结果正文做同码核验。
     if used_structured_filter:
-        exact_filter_expr = _build_filter(state, query_identifiers=structured_identifiers)
+        exact_filter_expr = _build_filter(
+            state,
+            query_identifiers=structured_identifiers,
+            disabled_chunk_ids=disabled_chunk_ids,
+        )
         exact_chunks = query_chunk_by_milvus(
             retrieval_query,
             exact_filter_expr,

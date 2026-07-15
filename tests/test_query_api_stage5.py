@@ -220,6 +220,8 @@ def test_query_graph_state_keeps_different_owner_context_for_same_query(monkeypa
     assert all(state["policy_version"] == "rule-v1" for state in captured_states)
     assert all(state["retrieval_config_version"] == "retrieval-stage5-final-v1" for state in captured_states)
     assert all(state["retrieval_config_snapshot"]["rrf_k"] == 60 for state in captured_states)
+    assert all(state["chunk_status_filter_enabled"] is True for state in captured_states)
+    assert all(state["disabled_chunk_ids"] == [] for state in captured_states)
     # 标识提取在进入 LangGraph 前完成，并且不同用户得到彼此独立但内容一致的字典。
     assert all(
         state["query_identifiers"] == {

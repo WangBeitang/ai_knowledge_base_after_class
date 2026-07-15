@@ -115,6 +115,64 @@ def _milvus_string_list(values: list[str]) -> str:
     return "[" + ",".join(_milvus_string_literal(value) for value in values) + "]"
 
 
+def _normalize_milvus_chunk_ids(values, *, field_name: str) -> list[int | str]:
+    """
+    规范化用于 Milvus ``chunk_id`` 条件的 ID 列表。
+
+    当前 chunk_id 是 Milvus INT64 auto_id，HTTP path 传入的纯数字字符串需要转成 int，
+    才能匹配真实字段类型；非纯数字字符串保留给未来应用生成稳定业务 ID 的路线。这里
+    不接受单个字符串作为列表，避免把 ``"1001"`` 当成字符序列逐字拼进表达式。
+    """
+    if values is None:
+        return []
+    if isinstance(values, (str, bytes)):
+        raise ValueError(f"{field_name} 必须是 chunk_id 列表，不能直接传入单个字符串")
+
+    normalized_values: list[int | str] = []
+    seen: set[tuple[str, int | str]] = set()
+    for value in values:
+        if isinstance(value, bool):
+            raise ValueError(f"{field_name} 只能包含字符串或整数")
+        if isinstance(value, int):
+            normalized_value: int | str = value
+        else:
+            normalized_text = str(value or "").strip()
+            if not normalized_text:
+                raise ValueError(f"{field_name} 不能包含空 chunk_id")
+            normalized_value = int(normalized_text) if normalized_text.isdigit() else normalized_text
+        identity = (type(normalized_value).__name__, normalized_value)
+        if identity in seen:
+            continue
+        normalized_values.append(normalized_value)
+        seen.add(identity)
+    return normalized_values
+
+
+def _milvus_chunk_id_literal(value: int | str) -> str:
+    """把规范化后的 chunk_id 转成 Milvus 表达式字面量。"""
+    if isinstance(value, int):
+        return str(value)
+    return _milvus_string_literal(value)
+
+
+def build_disabled_chunk_exclusion_filter(disabled_chunk_ids=None) -> str:
+    """
+    构建路线 B 的人工禁用 chunk 排除条件。
+
+    该条件不是第二个 ``enabled == true`` 白名单，而是 Mongo ``manual_status=disabled``
+    形成的黑名单覆盖层。空列表表示当前范围没有人工禁用 chunk，此时必须返回空字符串，
+    不能拼出 Milvus 不一定支持的 ``chunk_id not in []``。
+    """
+    normalized_chunk_ids = _normalize_milvus_chunk_ids(
+        disabled_chunk_ids,
+        field_name="disabled_chunk_ids",
+    )
+    if not normalized_chunk_ids:
+        return ""
+    values_expr = ",".join(_milvus_chunk_id_literal(chunk_id) for chunk_id in normalized_chunk_ids)
+    return f"chunk_id not in [{values_expr}]"
+
+
 def _build_required_in_clause(field_name: str, values, *, value_label: str) -> str:
     """
     构建不允许为空的 ``field in [...]`` 条件。
@@ -394,6 +452,7 @@ def build_chunk_retrieval_filter(
         owner_user_id: str,
         tenant_id: str,
         query_identifiers=None,
+        disabled_chunk_ids=None,
 ) -> str:
     """
     生成所有本地召回通道必须复用的最终 Milvus ``expr``。
@@ -402,6 +461,7 @@ def build_chunk_retrieval_filter(
     1. access filter：dataset、enabled、public/shared/owner 权限；
     2. subject filter：已确认的稳定 subject_id；
     3. structured identifier filter：可选的设备型号、报警码等精确标识。
+    4. disabled chunk exclusion：路线 B 下 Mongo 人工禁用覆盖层形成的排除列表。
 
     普通 dense/learned sparse 混合检索、HyDE 以及后续 BM25 都只能调用本函数，不能各自
     拼接 expr。这样新增权限规则时只修改一个位置，也不会出现某一条检索通道漏过滤。
@@ -420,10 +480,13 @@ def build_chunk_retrieval_filter(
     # 字段进入 expr；未知字段和空值仍由适配器明确拒绝，不能静默忽略。
     structured_identifiers = select_structured_query_identifiers(query_identifiers)
     identifier_clause = build_structured_identifier_filter(structured_identifiers)
+    disabled_chunk_clause = build_disabled_chunk_exclusion_filter(disabled_chunk_ids)
 
     clauses = [access_clause, subject_clause]
     if identifier_clause:
         clauses.append(identifier_clause)
+    if disabled_chunk_clause:
+        clauses.append(disabled_chunk_clause)
     return " AND ".join(clauses)
 
 
@@ -440,6 +503,7 @@ def build_chunk_retrieval_filter_from_state(state: Mapping[str, object]) -> str:
         owner_user_id=state.get("owner_user_id"),
         tenant_id=state.get("tenant_id"),
         query_identifiers=state.get("query_identifiers"),
+        disabled_chunk_ids=state.get("disabled_chunk_ids"),
     )
 
 

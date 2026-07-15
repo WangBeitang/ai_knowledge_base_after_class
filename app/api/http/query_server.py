@@ -121,6 +121,9 @@ def query_graph_invoke(
         retrieval_mode=RETRIEVAL_DEFAULT_MODE.value,
         retrieval_config_snapshot=retrieval_config_snapshot,
         web_search_allowed=WEB_FALLBACK_ENABLED,
+        # 阶段 6 路线 B：真实查询必须读取 Mongo 人工禁用覆盖层，并在 Milvus expr 中
+        # 追加 chunk_id not in [...]，否则管理端禁用不会影响召回。
+        chunk_status_filter_enabled=True,
         # 只有真实查询入口开启持久化；直接调用 graph 的单元测试和离线重放保持无 Mongo I/O。
         trace_persistence_enabled=True,
     )

@@ -109,6 +109,8 @@ def test_query_default_state_fields_are_complete():
         "terminal_reason_code",
         "answer_runtime_metadata",
         "retrieval_config_snapshot",
+        "chunk_status_filter_enabled",
+        "disabled_chunk_ids",
         "trace_persistence_enabled",
         "prompt",
         "answer",
@@ -134,6 +136,8 @@ def test_query_default_state_fields_are_complete():
     assert state["retrieval_config_version"] == "retrieval-stage5-final-v1"
     assert state["planner_total_duration_ms"] == 0
     assert state["retrieval_config_snapshot"] == {}
+    assert state["chunk_status_filter_enabled"] is False
+    assert state["disabled_chunk_ids"] == []
     assert state["trace_persistence_enabled"] is False
     assert state["terminal_reason_code"] is None
     assert isinstance(state["dataset_ids"], list)
@@ -150,6 +154,7 @@ def test_query_default_state_fields_are_complete():
     assert isinstance(state["web_search_docs"], list)
     assert isinstance(state["citations"], list)
     assert isinstance(state["answer_runtime_metadata"], dict)
+    assert isinstance(state["disabled_chunk_ids"], list)
     assert isinstance(state["image_urls"], list)
 
 
@@ -168,6 +173,7 @@ def test_query_default_state_supports_overrides_and_deepcopy():
     state["planner_action_history"].append({"step": 1})
     state["planner_runtime_metadata"]["provider"] = "rule"
     state["retrieval_channel_results"]["dense"] = [{"chunk_id": 1}]
+    state["disabled_chunk_ids"].append(1001)
     state["citations"].append({"chunk_id": 1})
     state["answer_runtime_metadata"]["model_id"] = "answer-model"
 
@@ -184,6 +190,7 @@ def test_query_default_state_supports_overrides_and_deepcopy():
     assert fresh_state["planner_action_history"] == []
     assert fresh_state["planner_runtime_metadata"] == {}
     assert fresh_state["retrieval_channel_results"] == {}
+    assert fresh_state["disabled_chunk_ids"] == []
     assert fresh_state["citations"] == []
     assert fresh_state["answer_runtime_metadata"] == {}
 
@@ -194,15 +201,18 @@ def test_copy_query_state_deepcopies_new_planner_and_observation_containers():
         query_identifiers={"equipment_model": ["HAK 180"]},
         planner_runtime_metadata={"token_usage": {"input": 0}},
         retrieval_channel_results={"dense": [{"chunk_id": 1}]},
+        disabled_chunk_ids=[1001],
     )
 
     copied = copy_query_state(original, trace_id="trace-copy")
     copied["query_identifiers"]["equipment_model"].append("HAK 180 Pro")
     copied["planner_runtime_metadata"]["token_usage"]["input"] = 10
     copied["retrieval_channel_results"]["dense"][0]["chunk_id"] = 2
+    copied["disabled_chunk_ids"].append(1002)
 
     assert original["trace_id"] == "trace-original"
     assert copied["trace_id"] == "trace-copy"
     assert original["query_identifiers"] == {"equipment_model": ["HAK 180"]}
     assert original["planner_runtime_metadata"] == {"token_usage": {"input": 0}}
     assert original["retrieval_channel_results"] == {"dense": [{"chunk_id": 1}]}
+    assert original["disabled_chunk_ids"] == [1001]

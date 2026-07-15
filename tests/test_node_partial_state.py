@@ -200,6 +200,7 @@ def test_query_nodes_return_partial_state(monkeypatch):
             **state,
             "query_identifiers": {"alarm_code": ["E020"]},
             "embedding_chunks": [{"chunk_id": "c1"}],
+            "disabled_chunk_ids": [1001],
             "retrieval_observation": {"status": "success"},
             "clarification_question": None,
             "extra": "ignored",
@@ -208,7 +209,12 @@ def test_query_nodes_return_partial_state(monkeypatch):
     monkeypatch.setattr(
         query_hyde_node,
         "search_by_hyde",
-        lambda state: {**state, "hyde_embedding_chunks": [{"chunk_id": "c2"}], "extra": "ignored"},
+        lambda state: {
+            **state,
+            "hyde_embedding_chunks": [{"chunk_id": "c2"}],
+            "disabled_chunk_ids": [1001],
+            "extra": "ignored",
+        },
     )
     monkeypatch.setattr(
         query_web_node,
@@ -259,12 +265,14 @@ def test_query_nodes_return_partial_state(monkeypatch):
     assert set(query_embedding_node.node_search_embedding(state_for(QueryAction.LOCAL_SEARCH))) == {
         "query_identifiers",
         "embedding_chunks",
+        "disabled_chunk_ids",
         "retrieval_observation",
         "clarification_question",
         "current_action_duration_ms",
     }
     assert set(query_hyde_node.node_search_embedding_hyde(state_for(QueryAction.HYDE_SEARCH))) == {
         "hyde_embedding_chunks",
+        "disabled_chunk_ids",
         "current_action_duration_ms",
     }
     assert set(query_web_node.node_web_search_mcp(state_for(QueryAction.WEB_SEARCH))) == {

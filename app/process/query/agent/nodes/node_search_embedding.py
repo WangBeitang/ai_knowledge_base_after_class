@@ -17,8 +17,8 @@ def node_search_embedding(state):
     节点功能：使用原问题/改写问题执行普通本地向量检索。
 
     service 层为了兼容现有实现会返回一份包含完整字段的字典，但 LangGraph 节点边界
-    只提交本节点负责的 ``query_identifiers``、``embedding_chunks``、检索 Observation
-    和可能的 ``clarification_question``。这种返回方式称为 partial state
+    只提交本节点负责的 ``query_identifiers``、``embedding_chunks``、禁用 chunk 快照、
+    检索 Observation 和可能的 ``clarification_question``。这种返回方式称为 partial state
     （局部状态）：LangGraph 会把它合并回主 State，其他节点已经写入的字段不会被本节点
     用旧副本覆盖。
     """
@@ -38,6 +38,7 @@ def node_search_embedding(state):
         return {
             "embedding_chunks": [],
             "retrieval_observation": observation,
+            "disabled_chunk_ids": state.get("disabled_chunk_ids", []),
             "current_action_duration_ms": duration_ms,
         }
     duration_ms = int((perf_counter() - started_at) * 1000)
@@ -45,6 +46,7 @@ def node_search_embedding(state):
     return {
         "query_identifiers": result_state.get("query_identifiers", {}),
         "embedding_chunks": result_state.get("embedding_chunks"),
+        "disabled_chunk_ids": result_state.get("disabled_chunk_ids", []),
         "retrieval_observation": result_state.get("retrieval_observation"),
         "clarification_question": result_state.get("clarification_question"),
         "current_action_duration_ms": duration_ms,
