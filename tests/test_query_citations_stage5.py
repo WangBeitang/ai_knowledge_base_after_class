@@ -11,6 +11,7 @@ def _local(chunk_id="chunk-1", score=0.9):
         dataset_id="dataset-a",
         index_version=1,
         chunk_index=0,
+        enabled=True,
         title="本地手册",
         source_title="HAK 180 手册.pdf",
         content="本地证据",
@@ -56,4 +57,3 @@ def test_citation_rejects_candidate_that_has_not_completed_rerank():
 
     with pytest.raises(ValueError, match="生成 Citation 前候选必须已经完成 rerank"):
         build_citations([candidate])
-

@@ -458,6 +458,8 @@ def format_chunk_search_item(
     内部 RRF 不返回逐请求命中明细，所以这里不声称该 chunk 命中了每一条底层通道。
     """
     entity = item.get("entity", {})
+    if not isinstance(entity.get("enabled"), bool):
+        raise ValueError("本地 chunk 缺少 bool enabled 字段，无法写入可观测 Trace")
     source_title = str(entity.get("source_title") or entity.get("file_title") or "").strip()
     candidate = RetrievalCandidate(
         document_id=entity.get("document_id"),
@@ -465,6 +467,7 @@ def format_chunk_search_item(
         dataset_id=entity.get("dataset_id"),
         index_version=entity.get("index_version"),
         chunk_index=entity.get("chunk_index"),
+        enabled=entity.get("enabled"),
         title=str(entity.get("title") or source_title or "未命名知识切片").strip(),
         source_title=source_title,
         subject_id=entity.get("subject_id"),

@@ -55,6 +55,22 @@ def _content_hash(content: object) -> str:
     return hashlib.sha256(str(content or "").encode("utf-8")).hexdigest()
 
 
+def _candidate_trace_identity(candidate: RetrievalCandidate) -> tuple[str, str]:
+    """生成 Trace 内部候选身份。本地用 chunk_id，Web 用真实 URL。"""
+    return (
+        candidate.source_type.value,
+        str(candidate.chunk_id if candidate.chunk_id is not None else candidate.url),
+    )
+
+
+def _citation_trace_identity(citation: Citation) -> tuple[str, str]:
+    """生成 Citation 身份，用于标记候选是否最终成为引用。"""
+    return (
+        citation.source_type.value,
+        str(citation.chunk_id if citation.chunk_id is not None else citation.source),
+    )
+
+
 def _usage_from_metadata(metadata: dict[str, object] | None, *, duration_ms: int | None = None) -> UsageMetrics:
     metadata = dict(metadata or {})
     input_tokens = max(0, int(metadata.get("input_tokens") or 0))
@@ -273,11 +289,12 @@ def _channel_hits(state: dict[str, Any]) -> list[TraceChannelHit]:
     rerank_by_identity: dict[tuple[str, str], float | None] = {}
     for raw_candidate in state.get("reranked_docs") or []:
         candidate = RetrievalCandidate.model_validate(raw_candidate)
-        identity = (
-            candidate.source_type.value,
-            str(candidate.chunk_id if candidate.chunk_id is not None else candidate.url),
-        )
-        rerank_by_identity[identity] = candidate.rerank_score
+        rerank_by_identity[_candidate_trace_identity(candidate)] = candidate.rerank_score
+
+    citation_identities = {
+        _citation_trace_identity(item if isinstance(item, Citation) else Citation.model_validate(item))
+        for item in state.get("citations") or []
+    }
 
     hits: list[TraceChannelHit] = []
     for action, raw_candidates in action_lists:
@@ -288,15 +305,16 @@ def _channel_hits(state: dict[str, Any]) -> list[TraceChannelHit]:
         }[action]
         for rank, raw_candidate in enumerate(raw_candidates, start=1):
             candidate = RetrievalCandidate.model_validate(raw_candidate)
-            identity = (
-                candidate.source_type.value,
-                str(candidate.chunk_id if candidate.chunk_id is not None else candidate.url),
-            )
+            identity = _candidate_trace_identity(candidate)
             hits.append(TraceChannelHit(
                 channel=channel,
                 document_id=candidate.document_id,
                 chunk_id=candidate.chunk_id,
                 index_version=candidate.index_version,
+                enabled=candidate.enabled,
+                retrieval_channels=candidate.retrieval_channels,
+                entered_rerank=identity in rerank_by_identity,
+                became_citation=identity in citation_identities,
                 rank=rank,
                 retrieval_score=candidate.retrieval_score,
                 rerank_score=rerank_by_identity.get(identity),
@@ -418,4 +436,3 @@ def safe_fail_trace(state: dict[str, Any], error: Exception) -> None:
             f"标记 Retrieval Trace failed 失败，trace_id={state.get('trace_id')}, "
             f"error_type={type(trace_error).__name__}"
         )
-

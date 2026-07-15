@@ -30,6 +30,7 @@ def _local_candidate(
         dataset_id="dataset_ops",
         index_version=3,
         chunk_index=rank - 1,
+        enabled=True,
         title=f"本地候选 {chunk_id}",
         source_title="HAK 180 操作手册",
         subject_id="subject_hak_180",
@@ -160,6 +161,16 @@ def test_retrieval_candidate_enforces_local_and_web_identity_boundaries():
     invalid_local["document_id"] = None
     with pytest.raises(ValidationError, match="本地候选必须包含"):
         RetrievalCandidate.model_validate(invalid_local)
+
+    missing_enabled_local = _local_candidate("chunk-a", channels=["original", "dense"])
+    missing_enabled_local["enabled"] = None
+    with pytest.raises(ValidationError, match="enabled"):
+        RetrievalCandidate.model_validate(missing_enabled_local)
+
+    invalid_web = _web_candidate("https://example.com/notice")
+    invalid_web["enabled"] = True
+    with pytest.raises(ValidationError, match="enabled"):
+        RetrievalCandidate.model_validate(invalid_web)
 
 
 def test_outer_rrf_fuses_original_hyde_and_web_once_and_keeps_provenance():

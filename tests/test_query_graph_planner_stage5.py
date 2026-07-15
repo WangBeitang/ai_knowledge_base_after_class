@@ -35,6 +35,7 @@ def _candidate(chunk_id: str, *, channel: RetrievalChannel, score: float | None 
         dataset_id="dataset_default_equipment_ops",
         index_version=1,
         chunk_index=0,
+        enabled=True,
         title=f"候选 {chunk_id}",
         source_title="HAK 180 操作手册",
         subject_id="subject_hak_180",

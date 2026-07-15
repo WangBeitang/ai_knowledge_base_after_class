@@ -44,6 +44,7 @@ class FakeMilvusGateway:
                     "document_id": "doc-1001",
                     "index_version": 1,
                     "chunk_index": 0,
+                    "enabled": True,
                         "subject_id": "subject_hak_180",
                         "standard_subject_name": "HAK 180 烫金机",
                         "content": "新数据按 subject_id 召回。",
@@ -254,3 +255,4 @@ def test_embedding_query_preserves_formatted_result_metadata(monkeypatch):
     assert result[0]["chunk_id"] == 1001
     assert result[0]["source_type"] == "local"
     assert result[0]["document_id"] == "doc-1001"
+    assert result[0]["enabled"] is True

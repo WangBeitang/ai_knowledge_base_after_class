@@ -97,6 +97,7 @@ def _candidate() -> dict:
         dataset_id="dataset-default",
         index_version=3,
         chunk_index=0,
+        enabled=True,
         title="E020 报警处理",
         source_title="HAK 180 维修手册",
         content="按下复位按钮前先确认急停回路。",
@@ -190,6 +191,10 @@ def test_trace_lifecycle_records_pending_completed_and_terminal_steps(monkeypatc
     assert final_trace["terminal_action"] == "answer"
     assert final_trace["index_versions"] == [3]
     assert final_trace["final_citations"][0]["chunk_id"] == "chunk-1"
+    assert final_trace["channel_hits"][0]["enabled"] is True
+    assert final_trace["channel_hits"][0]["retrieval_channels"] == ["original"]
+    assert final_trace["channel_hits"][0]["entered_rerank"] is True
+    assert final_trace["channel_hits"][0]["became_citation"] is True
     assert "按下复位" not in str(final_trace["channel_hits"])
 
 
@@ -213,4 +218,3 @@ def test_disabled_trace_persistence_does_not_initialize_repository(monkeypatch):
         lambda: pytest.fail("离线图重放不应初始化 Mongo repository"),
     )
     trace_service.safe_create_running_trace(_state(trace_persistence_enabled=False))
-

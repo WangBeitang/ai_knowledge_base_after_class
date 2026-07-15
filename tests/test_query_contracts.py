@@ -12,6 +12,7 @@ def _local_candidate(chunk_id="chunk-1"):
         "dataset_id": "dataset-1",
         "index_version": 1,
         "chunk_index": 0,
+        "enabled": True,
         "title": "测试文档",
         "source_title": "测试手册",
         "content": "测试正文",

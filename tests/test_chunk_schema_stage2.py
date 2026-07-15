@@ -1,3 +1,5 @@
+import pytest
+
 from app.rag.import_ import index_service
 from app.rag.query.chunk_retrieval_utils import (
     CHUNK_OUTPUT_FIELDS,
@@ -131,6 +133,7 @@ def test_format_chunk_search_item_preserves_stage2_fields():
     assert result["document_id"] == "doc_1"
     assert result["index_version"] == 2
     assert result["chunk_index"] == 0
+    assert result["enabled"] is True
     assert result["source_title"] == "HAK180说明书"
     assert result["subject_id"] == "subject_hak_180"
     assert result["standard_subject_name"] == "HAK 180 烫金机"
@@ -140,3 +143,25 @@ def test_format_chunk_search_item_preserves_stage2_fields():
     assert result["retrieval_channels"] == ["dense", "learned_sparse", "original"]
     assert result["retrieval_rank"] == 1
     assert result["retrieval_score"] == 0.87
+
+
+def test_format_chunk_search_item_rejects_local_chunk_without_enabled():
+    item = {
+        "id": 1,
+        "distance": 0.87,
+        "entity": {
+            "dataset_id": "dataset_default_equipment_ops",
+            "document_id": "doc_1",
+            "index_version": 2,
+            "chunk_index": 0,
+            "content": "报警 E101 表示温度异常。",
+            "title": "报警说明",
+        },
+    }
+
+    with pytest.raises(ValueError, match="enabled"):
+        format_chunk_search_item(
+            item,
+            retrieval_channels=["dense", "original"],
+            retrieval_rank=1,
+        )

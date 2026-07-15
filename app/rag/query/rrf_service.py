@@ -53,7 +53,13 @@ def candidate_identity(candidate: RetrievalCandidate) -> str:
 
 def _candidate_richness(candidate: RetrievalCandidate) -> int:
     """统计非空元数据数量，用于重复候选出现字段差异时稳定选择更完整记录。"""
-    ignored_fields = {"retrieval_channels", "retrieval_rank", "retrieval_score", "rerank_score"}
+    ignored_fields = {
+        "enabled",
+        "retrieval_channels",
+        "retrieval_rank",
+        "retrieval_score",
+        "rerank_score",
+    }
     return sum(
         value not in (None, "", [], {})
         for field_name, value in candidate.model_dump(mode="json").items()

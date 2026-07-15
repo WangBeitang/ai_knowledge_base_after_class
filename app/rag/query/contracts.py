@@ -192,6 +192,9 @@ class RetrievalCandidate(QueryContractModel):
     index_version: int | None = Field(default=None, ge=0)
     # chunk 在文档中的顺序。用于后续相邻片段扩展；旧数据缺失时允许 None。
     chunk_index: int | None = Field(default=None, ge=0)
+    # 查询时该候选是否处于启用状态。本地 chunk 必须为 bool；Web 没有本地启停状态。
+    # 阶段 6 路线 B 接入查询过滤后，这里继续使用 enabled 表达“实际可召回状态”。
+    enabled: bool | None = None
     # 当前切片或网页标题。供 rerank、答案上下文和引用展示使用。
     title: str = Field(min_length=1)
     # 来源文件标题。本地通常是原文件名；Web 可以为空字符串。
@@ -239,9 +242,10 @@ class RetrievalCandidate(QueryContractModel):
                 or not self.dataset_id
                 or self.index_version is None
                 or self.chunk_index is None
+                or self.enabled is None
             ):
                 raise ValueError(
-                    "本地候选必须包含 document_id、chunk_id、dataset_id、index_version 和 chunk_index"
+                    "本地候选必须包含 document_id、chunk_id、dataset_id、index_version、chunk_index 和 enabled"
                 )
             if self.url is not None and not self.url.strip():
                 raise ValueError("本地候选的 url 如果存在就不能只有空白")
@@ -253,8 +257,9 @@ class RetrievalCandidate(QueryContractModel):
                 self.index_version,
                 self.chunk_index,
                 self.subject_id,
+                self.enabled,
             )):
-                raise ValueError("Web 候选不能伪造 document/chunk/dataset/index 本地身份")
+                raise ValueError("Web 候选不能伪造 document/chunk/dataset/index/enabled 本地身份")
             if not self.url or not self.url.strip():
                 raise ValueError("Web 候选必须包含真实 url")
         return self
@@ -625,6 +630,12 @@ class TraceChannelHit(QueryContractModel):
     document_id: str | None = None  # 本地文档 ID；Web 为空。
     chunk_id: str | int | None = None  # 本地 chunk ID；Web 为空。
     index_version: int | None = Field(default=None, ge=0)  # 本地索引版本；Web 为空。
+    enabled: bool | None = None  # 本地候选当时是否可召回；Web 没有本地启停状态。
+    # 候选携带的召回通道集合。它表示“这个 Action 启用了哪些通道/来源”，不虚构
+    # Milvus hybrid_search 内部逐底层请求命中事实。
+    retrieval_channels: list[RetrievalChannel] = Field(min_length=1)
+    entered_rerank: bool = False  # 该候选身份是否进入统一 rerank 结果集。
+    became_citation: bool = False  # 该候选身份是否成为最终答案引用。
     rank: PositiveStep  # 候选在该 Action 原始列表中的排名。
     retrieval_score: float = Field(ge=0)  # 召回/RRF 分，仅用于排序记录。
     rerank_score: float | None = Field(default=None, ge=0, le=1)  # 最终统一 rerank 分，未入选时可为空。
