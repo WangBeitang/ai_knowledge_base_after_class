@@ -1,0 +1,11 @@
+{
+  "manifest_id": "stage8-split-manifest-template",
+  "created_at": "1970-01-01T00:00:00+00:00",
+  "snapshot_id": "",
+  "train_case_ids": [],
+  "dev_case_ids": [],
+  "test_case_ids": [],
+  "demo_regression_case_ids": [],
+  "leakage_group_to_split": {},
+  "notes": "阶段 8.1 先固定 split manifest 契约；任务 8.2 填充真实 case 后同步更新。"
+}
