@@ -128,6 +128,81 @@ def _build_required_in_clause(field_name: str, values, *, value_label: str) -> s
     return f"{field_name} in {_milvus_string_list(normalized_values)}"
 
 
+def _build_optional_text_eq_clause(field_name: str, value, *, value_label: str) -> str:
+    """
+    构建可选的 ``field == "value"`` 条件。
+
+    management filter（管理过滤器）允许 document_id 为空，表示跨文档列表；但只要调用方
+    显式传入字段，就必须是非空文本。这样可以避免前端传入空字符串后悄悄退化为更宽的
+    查询范围。
+    """
+    if value is None:
+        return ""
+    normalized_value = _require_milvus_text(value, field_name=value_label)
+    return f"{field_name} == {_milvus_string_literal(normalized_value)}"
+
+
+def _build_optional_int_eq_clause(field_name: str, value, *, value_label: str) -> str:
+    """
+    构建可选的 ``field == number`` 条件。
+
+    ``index_version`` 是 document 级索引产物版本，用数字比较；它不是 Milvus 物理索引
+    版本。bool 在 Python 中是 int 的子类，这里显式拒绝，避免 True 被写成版本 1。
+    """
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        raise ValueError(f"{value_label} 必须是大于等于 0 的整数")
+    try:
+        normalized_value = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{value_label} 必须是大于等于 0 的整数") from exc
+    if normalized_value < 0:
+        raise ValueError(f"{value_label} 必须是大于等于 0 的整数")
+    return f"{field_name} == {normalized_value}"
+
+
+def _build_optional_bool_eq_clause(field_name: str, value, *, value_label: str) -> str:
+    """
+    构建可选的 ``field == true/false`` 条件。
+
+    enabled 为 None 表示管理列表查看全部 chunk；只有明确传 True/False 时才拼启停条件。
+    这与查询检索过滤不同：查询检索必须始终强制 ``enabled == true``。
+    """
+    if value is None:
+        return ""
+    if not isinstance(value, bool):
+        raise ValueError(f"{value_label} 必须是 bool 或 None")
+    return f"{field_name} == {'true' if value else 'false'}"
+
+
+def _build_chunk_visibility_clause(*, owner_user_id: str, tenant_id: str) -> str:
+    """
+    构建 public/shared/owner 三个可见性分支，并始终返回带括号的 OR 组合。
+
+    visibility 的中文含义是“可见性”。括号是安全边界：调用方会把它与 dataset、document、
+    enabled 等条件用 AND 连接；如果这里不整体加括号，owner 分支可能绕过前面的范围条件。
+    """
+    normalized_owner_user_id = _require_milvus_text(
+        owner_user_id,
+        field_name="owner_user_id",
+    )
+    normalized_tenant_id = _require_milvus_text(tenant_id, field_name="tenant_id")
+
+    public_value = _milvus_string_literal("public")
+    shared_value = _milvus_string_literal("shared")
+    tenant_value = _milvus_string_literal(normalized_tenant_id)
+    owner_value = _milvus_string_literal(normalized_owner_user_id)
+
+    return (
+        "("
+        f"visibility == {public_value} "
+        f"OR (visibility == {shared_value} AND tenant_id == {tenant_value}) "
+        f"OR owner_user_id == {owner_value}"
+        ")"
+    )
+
+
 def build_chunk_access_filter(*, dataset_ids, owner_user_id: str, tenant_id: str) -> str:
     """
     构建 chunk 的知识库范围、启用状态和用户可见性过滤条件。
@@ -147,26 +222,75 @@ def build_chunk_access_filter(*, dataset_ids, owner_user_id: str, tenant_id: str
         dataset_ids,
         value_label="dataset_ids",
     )
-    normalized_owner_user_id = _require_milvus_text(
-        owner_user_id,
-        field_name="owner_user_id",
+    visibility_clause = _build_chunk_visibility_clause(
+        owner_user_id=owner_user_id,
+        tenant_id=tenant_id,
     )
-    normalized_tenant_id = _require_milvus_text(tenant_id, field_name="tenant_id")
-
-    public_value = _milvus_string_literal("public")
-    shared_value = _milvus_string_literal("shared")
-    tenant_value = _milvus_string_literal(normalized_tenant_id)
-    owner_value = _milvus_string_literal(normalized_owner_user_id)
 
     return (
         f"{dataset_clause} "
         "AND enabled == true "
-        "AND ("
-        f"visibility == {public_value} "
-        f"OR (visibility == {shared_value} AND tenant_id == {tenant_value}) "
-        f"OR owner_user_id == {owner_value}"
-        ")"
+        f"AND {visibility_clause}"
     )
+
+
+def build_chunk_management_filter(
+        *,
+        dataset_ids,
+        owner_user_id: str,
+        tenant_id: str,
+        document_id: str | None = None,
+        index_version: int | None = None,
+        enabled: bool | None = None,
+) -> str:
+    """
+    生成 chunk 管理列表/详情使用的 Milvus 过滤表达式。
+
+    management 的中文含义是“管理场景”。它与检索过滤的边界不同：
+    - dataset 和可见性仍然是硬权限条件；
+    - document_id、index_version 和 enabled 是可选筛选条件；
+    - enabled 为 None 时不拼 ``enabled == true``，这样管理页才能看到 disabled chunk 并恢复。
+
+    public/shared/owner 的 OR 分支仍由 ``_build_chunk_visibility_clause`` 统一加括号，不能让
+    owner 条件绕过 dataset 或 document 范围。
+    """
+    clauses = [
+        _build_required_in_clause(
+            "dataset_id",
+            dataset_ids,
+            value_label="dataset_ids",
+        )
+    ]
+
+    document_clause = _build_optional_text_eq_clause(
+        "document_id",
+        document_id,
+        value_label="document_id",
+    )
+    if document_clause:
+        clauses.append(document_clause)
+
+    index_version_clause = _build_optional_int_eq_clause(
+        "index_version",
+        index_version,
+        value_label="index_version",
+    )
+    if index_version_clause:
+        clauses.append(index_version_clause)
+
+    enabled_clause = _build_optional_bool_eq_clause(
+        "enabled",
+        enabled,
+        value_label="enabled",
+    )
+    if enabled_clause:
+        clauses.append(enabled_clause)
+
+    clauses.append(_build_chunk_visibility_clause(
+        owner_user_id=owner_user_id,
+        tenant_id=tenant_id,
+    ))
+    return " AND ".join(clauses)
 
 
 def build_structured_identifier_filter(query_identifiers=None) -> str:

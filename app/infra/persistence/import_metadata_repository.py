@@ -286,6 +286,29 @@ class ImportMetadataRepository:
         })
         return _without_mongo_id(document) or {}
 
+    def get_visible_document(
+            self,
+            *,
+            document_id: str,
+            owner_user_id: str,
+            tenant_id: str = DEFAULT_TENANT_ID,
+    ) -> dict[str, Any]:
+        """
+        按阶段 5/6 的轻量可见性规则读取 document。
+
+        visible 的中文含义是“当前用户可见”。这里不表示可编辑或可启停：
+        public/shared/owner 只是读取范围，chunk 启停操作权限仍由上层 service 单独判断。
+        """
+        document = self.documents.find_one({
+            "document_id": document_id,
+            "$or": [
+                {"visibility": "public"},
+                {"visibility": "shared", "tenant_id": tenant_id},
+                {"owner_user_id": owner_user_id},
+            ],
+        })
+        return _without_mongo_id(document) or {}
+
     def list_documents(
         self,
         *,

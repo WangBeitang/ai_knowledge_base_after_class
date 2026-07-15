@@ -17,6 +17,14 @@ from app.api.schema.import_schema import (
     TaskStatusSchema,
     UploadSchema,
 )
+from app.api.schema.chunk_schema import (
+    ChunkDetailSchema,
+    ChunkEnabledFilter,
+    ChunkEventListSchema,
+    ChunkListSchema,
+    ChunkStatusChangeRequest,
+    ChunkStatusChangeResponse,
+)
 from app.api.http.request_context import get_current_user_id
 from app.infra.persistence.import_metadata_repository import (
     DEFAULT_DATASET_ID,
@@ -36,6 +44,14 @@ from app.rag.import_.document_lifecycle_service import (
     DocumentStateError,
     delete_document as delete_document_service,
     prepare_document_rebuild,
+)
+from app.rag.import_.chunk_management_service import (
+    ChunkManagementError,
+    ChunkNotFoundError,
+    ChunkPermissionError,
+    ChunkStateError,
+    ChunkVersionConflictError,
+    get_chunk_management_service,
 )
 from app.shared.utils.task_utils import (
     TASK_STATUS_COMPLETED,
@@ -210,6 +226,150 @@ def document_status(request: Request, document_id: str) -> DocumentStatusSchema:
     if not document:
         raise HTTPException(status_code=404, detail=f"document_id={document_id} 不存在")
     return _document_status_from_record(document)
+
+
+def _raise_chunk_management_http_exception(
+        error: ChunkManagementError,
+        *,
+        document_id: str,
+        owner_user_id: str,
+) -> None:
+    """把 chunk service 的业务异常稳定映射为 HTTP 状态码。"""
+    if isinstance(error, ChunkNotFoundError):
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    if isinstance(error, ChunkPermissionError):
+        raise HTTPException(status_code=403, detail=str(error)) from error
+    if isinstance(error, (ChunkVersionConflictError, ChunkStateError)):
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    logger.warning(
+        f"chunk 管理请求参数错误，document_id={document_id}, owner_user_id={owner_user_id}, error={error}"
+    )
+    raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@app.get("/documents/{document_id}/chunks")
+def list_document_chunks(
+        request: Request,
+        document_id: str,
+        enabled: ChunkEnabledFilter = Query(default=ChunkEnabledFilter.ALL),
+        limit: int = Query(default=100, ge=1, le=100),
+) -> ChunkListSchema:
+    owner_user_id = get_current_user_id(request)
+    try:
+        result = get_chunk_management_service().list_document_chunks(
+            document_id=document_id,
+            user_id=owner_user_id,
+            tenant_id=DEFAULT_TENANT_ID,
+            enabled=enabled.to_bool(),
+            limit=limit,
+        )
+        return ChunkListSchema(**result)
+    except ChunkManagementError as e:
+        _raise_chunk_management_http_exception(
+            e,
+            document_id=document_id,
+            owner_user_id=owner_user_id,
+        )
+    except Exception as e:
+        logger.exception(
+            f"查询 document chunk 列表失败，document_id={document_id}, owner_user_id={owner_user_id}, error={e}"
+        )
+        raise HTTPException(status_code=500, detail="查询 chunk 列表失败") from e
+
+
+@app.get("/documents/{document_id}/chunks/{chunk_id}")
+def chunk_detail(
+        request: Request,
+        document_id: str,
+        chunk_id: str,
+) -> ChunkDetailSchema:
+    owner_user_id = get_current_user_id(request)
+    try:
+        result = get_chunk_management_service().get_chunk_detail(
+            document_id=document_id,
+            chunk_id=chunk_id,
+            user_id=owner_user_id,
+            tenant_id=DEFAULT_TENANT_ID,
+        )
+        return ChunkDetailSchema(**result)
+    except ChunkManagementError as e:
+        _raise_chunk_management_http_exception(
+            e,
+            document_id=document_id,
+            owner_user_id=owner_user_id,
+        )
+    except Exception as e:
+        logger.exception(
+            f"查询 chunk 详情失败，document_id={document_id}, chunk_id={chunk_id}, "
+            f"owner_user_id={owner_user_id}, error={e}"
+        )
+        raise HTTPException(status_code=500, detail="查询 chunk 详情失败") from e
+
+
+@app.patch("/documents/{document_id}/chunks/{chunk_id}/enabled")
+def change_chunk_enabled(
+        request: Request,
+        document_id: str,
+        chunk_id: str,
+        payload: ChunkStatusChangeRequest,
+) -> ChunkStatusChangeResponse:
+    owner_user_id = get_current_user_id(request)
+    try:
+        result = get_chunk_management_service().change_chunk_enabled(
+            document_id=document_id,
+            chunk_id=chunk_id,
+            user_id=owner_user_id,
+            tenant_id=DEFAULT_TENANT_ID,
+            enabled=payload.enabled,
+            expected_index_version=payload.expected_index_version,
+            reason_type=payload.reason_type,
+            reason_detail=payload.reason_detail,
+            trace_id=payload.trace_id,
+        )
+        return ChunkStatusChangeResponse(**result)
+    except ChunkManagementError as e:
+        _raise_chunk_management_http_exception(
+            e,
+            document_id=document_id,
+            owner_user_id=owner_user_id,
+        )
+    except Exception as e:
+        logger.exception(
+            f"修改 chunk 启停状态失败，document_id={document_id}, chunk_id={chunk_id}, "
+            f"owner_user_id={owner_user_id}, error={e}"
+        )
+        raise HTTPException(status_code=500, detail="修改 chunk 启停状态失败") from e
+
+
+@app.get("/documents/{document_id}/chunks/{chunk_id}/events")
+def list_chunk_events(
+        request: Request,
+        document_id: str,
+        chunk_id: str,
+        limit: int = Query(default=20, ge=1, le=100),
+) -> ChunkEventListSchema:
+    owner_user_id = get_current_user_id(request)
+    try:
+        result = get_chunk_management_service().list_chunk_events(
+            document_id=document_id,
+            chunk_id=chunk_id,
+            user_id=owner_user_id,
+            tenant_id=DEFAULT_TENANT_ID,
+            limit=limit,
+        )
+        return ChunkEventListSchema(**result)
+    except ChunkManagementError as e:
+        _raise_chunk_management_http_exception(
+            e,
+            document_id=document_id,
+            owner_user_id=owner_user_id,
+        )
+    except Exception as e:
+        logger.exception(
+            f"查询 chunk 启停历史失败，document_id={document_id}, chunk_id={chunk_id}, "
+            f"owner_user_id={owner_user_id}, error={e}"
+        )
+        raise HTTPException(status_code=500, detail="查询 chunk 启停历史失败") from e
 
 
 def invoke_graph(
