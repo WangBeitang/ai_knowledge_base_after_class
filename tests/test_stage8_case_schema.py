@@ -1,3 +1,4 @@
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -177,3 +178,52 @@ def test_stage8_template_jsonl_can_be_loaded():
 
     assert cases[0].case_id == "template-dev-alarm-e020"
     assert cases[0].human_review_status.value == "pending"
+
+
+def test_stage8_task82_demo_and_planner_case_files_are_usable():
+    demo_cases = load_planner_cases("evaluation/stage8/cases/demo_regression_cases.jsonl")
+    planner_cases = load_planner_cases("evaluation/stage8/cases/planner_cases.jsonl")
+
+    assert 10 <= len(demo_cases) <= 20
+    assert len(planner_cases) > len(demo_cases) * 3
+    assert {case.split.value for case in demo_cases} == {"demo_regression"}
+    assert all(case.human_review_status.value == "reviewed" for case in demo_cases)
+
+    planner_groups = Counter(case.case_group.value for case in planner_cases)
+    for expected_group in {"core", "colloquial", "clarification", "refusal", "realtime", "private_doc"}:
+        assert planner_groups[expected_group] >= 1
+
+    core_answer_cases = [
+        case for case in planner_cases
+        if case.case_group.value == "core" and case.expected_behavior.should_answer
+    ]
+    assert core_answer_cases
+    assert all(case.expected_chunks for case in core_answer_cases)
+    assert all(case.expected_answer_points for case in core_answer_cases)
+
+
+def test_stage8_task82_split_manifest_matches_case_files():
+    manifest = SplitManifest.model_validate_json(
+        Path("evaluation/stage8/cases/split_manifest.json").read_text(encoding="utf-8")
+    )
+    demo_cases = load_planner_cases("evaluation/stage8/cases/demo_regression_cases.jsonl")
+    planner_cases = load_planner_cases("evaluation/stage8/cases/planner_cases.jsonl")
+
+    case_ids_by_split = {
+        "train": {case.case_id for case in planner_cases if case.split.value == "train"},
+        "dev": {case.case_id for case in planner_cases if case.split.value == "dev"},
+        "test": {case.case_id for case in planner_cases if case.split.value == "test"},
+        "demo_regression": {case.case_id for case in demo_cases},
+    }
+
+    assert set(manifest.train_case_ids) == case_ids_by_split["train"]
+    assert set(manifest.dev_case_ids) == case_ids_by_split["dev"]
+    assert set(manifest.test_case_ids) == case_ids_by_split["test"]
+    assert set(manifest.demo_regression_case_ids) == case_ids_by_split["demo_regression"]
+
+    all_cases = planner_cases + demo_cases
+    assert set(manifest.leakage_group_to_split) == {case.leakage_group_id for case in all_cases}
+    assert all(
+        manifest.leakage_group_to_split[case.leakage_group_id] == case.split
+        for case in all_cases
+    )
