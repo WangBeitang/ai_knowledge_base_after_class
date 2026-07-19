@@ -61,6 +61,33 @@ from app.rag.evaluation.reward import (
     score_retrieval,
     score_trajectory,
 )
+from app.rag.evaluation.baseline_runner import (
+    # 阶段 8.6 baseline runner。它固定 case/snapshot/reward 跑 Planner 对照评测，
+    # 不训练模型，也不计算 GRPO 组内 advantage。
+    BaselineEvalOutput,
+    BaselinePlannerSummary,
+    SnapshotExpectedChunkActionProvider,
+    load_environment_snapshot,
+    parse_planner_modes,
+    run_baseline_evaluation,
+    run_baseline_evaluation_from_files,
+    write_baseline_eval_output,
+)
+from app.rag.evaluation.sft_exporter import (
+    # 阶段 8.7 SFT 数据导出器。它把已评分轨迹筛成单步 PlannerDecision 监督样本，
+    # 不保存完整 chunk 正文、答案 Prompt 或模型私有思维链。
+    SFT_EXPORT_VERSION,
+    SftExportConfig,
+    SftExportManifest,
+    SftExportResult,
+    SftPlannerSample,
+    export_sft_samples,
+    export_sft_samples_from_files,
+    load_baseline_eval_output,
+    parse_allowed_splits,
+    write_sft_manifest,
+    write_sft_samples,
+)
 
 
 __all__ = [
@@ -100,6 +127,27 @@ __all__ = [
     "score_format",
     "score_retrieval",
     "score_trajectory",
+    # 阶段 8.6 Planner baseline 跑批器。
+    "BaselineEvalOutput",
+    "BaselinePlannerSummary",
+    "SnapshotExpectedChunkActionProvider",
+    "load_environment_snapshot",
+    "parse_planner_modes",
+    "run_baseline_evaluation",
+    "run_baseline_evaluation_from_files",
+    "write_baseline_eval_output",
+    # 阶段 8.7 Planner SFT 数据导出。
+    "SFT_EXPORT_VERSION",
+    "SftExportConfig",
+    "SftExportManifest",
+    "SftExportResult",
+    "SftPlannerSample",
+    "export_sft_samples",
+    "export_sft_samples_from_files",
+    "load_baseline_eval_output",
+    "parse_allowed_splits",
+    "write_sft_manifest",
+    "write_sft_samples",
     # 训练导出前必须调用的边界校验函数。
     "validate_case_collection",
     "validate_cases_for_sft_export",

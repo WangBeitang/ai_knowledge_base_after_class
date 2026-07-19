@@ -1,0 +1,45 @@
+{
+  "manifest_id": "sft_manifest_stage8_eval_20260719T064325Z_77f72fa0",
+  "export_version": "stage8-sft-export-v1",
+  "created_at": "2026-07-19T06:48:01.789336+00:00",
+  "source_run_id": "stage8_eval_20260719T064325Z_77f72fa0",
+  "snapshot_id": "stage8-env-20260715-v1",
+  "reward_version": "reward-v1",
+  "reward_threshold": 0.8,
+  "allowed_splits": [
+    "train"
+  ],
+  "exported_case_count": 9,
+  "exported_trajectory_count": 9,
+  "sample_count": 17,
+  "source_counts": {
+    "rule": 17
+  },
+  "source_ratios": {
+    "rule": 1.0
+  },
+  "split_counts": {
+    "train": 17
+  },
+  "review_status_counts": {
+    "auto_selected": 1,
+    "reviewed": 16
+  },
+  "filter_counts": {
+    "private_case_not_reviewed": 1,
+    "terminal_behavior_mismatch": 1
+  },
+  "filter_rules": [
+    "test/demo split 永不导出",
+    "格式非法、执行错误、无效引用轨迹不导出",
+    "API teacher 轨迹必须达到 Reward 阈值",
+    "私有文档样本默认必须人工 reviewed",
+    "导出样本不包含完整 chunk 正文、答案 Prompt 或模型私有思维链"
+  ],
+  "excluded_payloads": [
+    "full_chunk_content",
+    "answer_prompt",
+    "private_chain_of_thought",
+    "model_reasoning_text"
+  ]
+}
