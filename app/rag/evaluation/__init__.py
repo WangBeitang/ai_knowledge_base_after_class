@@ -1,9 +1,11 @@
 """
 阶段 8 离线评测契约与工具包。
 
-本包只暴露“数据契约”和“边界校验”相关对象，不执行真实检索、Reward 计算或模型推理。
-这样做是为了让后续脚本、测试和训练导出都复用同一套 schema（数据形状约束），避免
-JSONL 样本、环境快照、评测结果和 SFT 导出之间各自定义一套字段。
+本包暴露阶段 8 离线评测的稳定对象：数据契约、边界校验、离线 Environment 和
+Reward v1 评分入口。它不执行真实检索或模型推理；Reward 计算只读取已经产生的
+OfflineTrajectoryResult，不连接 Mongo/Milvus/Web。这样做是为了让后续脚本、测试和
+训练导出都复用同一套 schema（数据形状约束），避免 JSONL 样本、环境快照、评测结果
+和 SFT/GRPO 导出之间各自定义一套字段。
 
 关键术语：
 - Planner：规划器，只决定下一步 Action，不直接访问 Milvus/Mongo/Web。
@@ -43,6 +45,22 @@ from app.rag.evaluation.offline_environment import (
     OfflineTrajectoryResult,
     OfflineTrajectoryStatus,
 )
+from app.rag.evaluation.reward import (
+    # Reward v1 评分入口和结果 schema。Reward 的中文含义是“奖励/评分信号”，阶段 8
+    # 用于 baseline 评测，阶段 9 会复用 total_reward 作为 GRPO 训练信号。
+    REWARD_VERSION,
+    RewardComponent,
+    RewardConfig,
+    RewardWeights,
+    TrajectoryReward,
+    score_answer,
+    score_behavior,
+    score_citation,
+    score_cost,
+    score_format,
+    score_retrieval,
+    score_trajectory,
+)
 
 
 __all__ = [
@@ -69,6 +87,19 @@ __all__ = [
     "OfflineTraceStep",
     "OfflineTrajectoryResult",
     "OfflineTrajectoryStatus",
+    # 阶段 8.5 Reward v1 评分器。
+    "REWARD_VERSION",
+    "RewardComponent",
+    "RewardConfig",
+    "RewardWeights",
+    "TrajectoryReward",
+    "score_answer",
+    "score_behavior",
+    "score_citation",
+    "score_cost",
+    "score_format",
+    "score_retrieval",
+    "score_trajectory",
     # 训练导出前必须调用的边界校验函数。
     "validate_case_collection",
     "validate_cases_for_sft_export",
