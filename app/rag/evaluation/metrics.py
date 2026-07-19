@@ -27,6 +27,7 @@ def expected_chunk_keys(expected_chunks: Sequence[ExpectedChunk]) -> list[ChunkK
         for chunk in expected_chunks  # 保留人工标注顺序，后续报告更容易对照 case 文件。
     )
 
+# candidate:候选
 def candidate_chunk_keys(candidates: Sequence[RetrievalCandidate]) -> list[ChunkKey]:
     """从实际检索候选中提取本地 chunk 身份，Web 候选会被自动忽略。"""
     return _compact_keys(  # 去重时保留第一次出现的位置，因为 MRR/nDCG 依赖排名。
@@ -42,6 +43,90 @@ def recall_at_k(retrieved_keys: Sequence[ChunkKey], expected_keys: Sequence[Chun
     top_keys = set(retrieved_keys[:max(0, k)])  # k 小于 0 时按 0 处理，避免切片语义产生误会。
     hit_count = sum(1 for key in expected_keys if key in top_keys)  # 逐个 expected chunk 统计是否命中。
     return hit_count / len(expected_keys)  # recall 的分母是期望证据数量，不是检索返回数量。
+
+def reciprocal_rank(retrieved_keys: Sequence[ChunkKey], expected_keys: Sequence[ChunkKey]) -> float:
+    """计算 MRR 的单样本 reciprocal rank：第一个期望 chunk 越靠前越高。"""
+    expected_set = set(expected_keys)  # set 查询是 O(1)，避免每个候选都线性扫描 expected_keys。
+    if not expected_set:  # 没有 expected chunk 时不惩罚检索层。
+        return 1.0
+    for rank, key in enumerate(retrieved_keys, start=1):  # rank 从 1 开始，符合 MRR 公式 1/rank。
+        if key in expected_set:  # 只看第一个命中的期望证据。
+            return 1.0 / rank
+    return 0.0  # 完全没有命中期望证据时 MRR 为 0。
+
+def ndcg_at_k(retrieved_keys: Sequence[ChunkKey], expected_keys: Sequence[ChunkKey], *, k: int) -> float:
+    """计算二值相关性的 nDCG@k：同样命中数量下，越靠前分越高。"""
+    if not expected_keys:  # 非回答型或无期望证据样本不在指标层扣分。
+        return 1.0
+    expected_set = set(expected_keys)  # 第一版只做二值相关性：命中 expected chunk 就是 1，否则 0。
+    ranked_keys = retrieved_keys[:max(0, k)]  # 只评价前 k 个候选，和 recall@k 的窗口保持一致。
+    dcg = sum(  # DCG：实际排序下的折损累计收益。
+        1.0 / math.log2(rank + 1)  # rank 越靠后，log 折损越大。
+        for rank, key in enumerate(ranked_keys, start=1)  # rank 从 1 开始，公式分母使用 log2(rank + 1)。
+        if key in expected_set  # 非期望 chunk 的相关性为 0，不贡献 DCG。
+    )
+    ideal_hits = min(len(expected_set), max(0, k))  # 理想排序最多只能命中 min(expected_count, k) 个。
+    ideal_dcg = sum(1.0 / math.log2(rank + 1) for rank in range(1, ideal_hits + 1))  # IDCG 是最佳排序分。
+    return 0.0 if ideal_dcg == 0 else dcg / ideal_dcg  # 避免 k=0 时除以 0。
+
+def identifier_hit_rate(
+        candidates: Sequence[RetrievalCandidate],
+        expected_identifiers: dict[str, list[str]],
+) -> tuple[float, dict[str, list[str]], dict[str, list[str]]]:
+    """计算设备型号、报警码、部件名等结构化标识的命中率。"""
+    expected_pairs = _identifier_pairs(expected_identifiers)  # 展平成 [(字段名, 规范化值)]，方便逐个判断。
+    if not expected_pairs:  # case 没有标注标识时，不让这个补充指标拖低检索分。
+        return 1.0, {}, {}
+
+    hits: dict[str, list[str]] = {}  # 保存已命中的标识，写入 Reward 明细供报告解释。
+    misses: dict[str, list[str]] = {}  # 保存未命中的标识，便于定位是设备型号错还是报警码错。
+    for identifier_type, expected_value in expected_pairs:  # 每个标识值单独计分，避免一个字段多个值时被合并。
+        matched = any(  # 任意候选命中该标识就算这个标识值命中。
+            expected_value in _candidate_identifier_text(candidate, identifier_type)  # 在 metadata、标题和正文中查找。
+            for candidate in candidates
+        )
+        target = hits if matched else misses  # 命中和未命中分开放，Reward details 更直观。
+        target.setdefault(identifier_type, []).append(expected_value)  # 同一字段下可能有多个期望值。
+
+    hit_count = sum(len(values) for values in hits.values())  # 命中的标识值总数。
+    return hit_count / len(expected_pairs), hits, misses  # 返回命中率、命中明细、缺失明细。
+
+
+# 第三部分：答案和 Action 路径指标。score_answer、score_behavior、score_cost 会调用这里。
+def answer_point_coverage(answer: str, expected_answer_points: Sequence[str]) -> tuple[float, list[str], list[str]]:
+    """计算答案要点覆盖率，第一版使用可复现的文本包含判断。"""
+    if not expected_answer_points:  # 拒答/追问样本没有答案要点，不应在指标层被误扣分。
+        return 1.0, [], []
+
+    normalized_answer = normalize_text(answer)  # 统一大小写和空白，减少表面格式差异。
+    hit_points: list[str] = []  # 保存已覆盖的人工要点。
+    missing_points: list[str] = []  # 保存缺失的人工要点。
+    for point in expected_answer_points:  # 每个答案要点独立判断，后续可定位漏了哪一点。
+        normalized_point = normalize_text(point)  # 要点同样归一化，和 answer 使用同一规则。
+        if normalized_point and normalized_point in normalized_answer:  # 命中时归入 hit_points。
+            target = hit_points
+        else:  # 未命中或空要点归入 missing_points，便于报告提示缺失项。
+            target = missing_points
+        target.append(point)  # details 保留原始中文要点，报告更可读。
+
+    return len(hit_points) / len(expected_answer_points), hit_points, missing_points  # 覆盖率 = 命中要点数 / 总要点数。
+
+def action_values(actions: Iterable[QueryAction | str]) -> list[str]:
+    """把 QueryAction 或字符串统一成持久化 value，供路径比较和报告输出使用。"""
+    return [action.value if isinstance(action, QueryAction) else str(action) for action in actions]  # 保持原顺序，不排序。
+
+def matches_any_action_path(
+        actual_path: Sequence[QueryAction | str],
+        acceptable_paths: Sequence[Sequence[QueryAction | str]],
+) -> bool:
+    """判断实际 Action 路径是否完整匹配任意一条人工可接受路径。"""
+    actual_values = action_values(actual_path)  # 先把实际路径统一成字符串列表。
+    return any(actual_values == action_values(path) for path in acceptable_paths)  # 必须完整相等，不做前缀匹配。
+
+def shortest_acceptable_path_length(acceptable_paths: Sequence[Sequence[QueryAction | str]]) -> int:
+    """返回最短可接受路径长度，用于估计额外步骤成本。"""
+    lengths = [len(path) for path in acceptable_paths if path]  # 空路径在 schema 层会拒绝，这里仍防御处理。
+    return min(lengths) if lengths else 0  # 没有可接受路径时返回 0，让上层自行决定是否扣分。
 
 
 
