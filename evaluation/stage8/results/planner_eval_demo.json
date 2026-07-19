@@ -1,0 +1,1931 @@
+{
+  "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+  "runner_version": "stage8-baseline-runner-v1",
+  "created_at": "2026-07-19T06:55:15.721425+00:00",
+  "split": "demo_regression",
+  "snapshot_id": "stage8-env-20260715-v1",
+  "reward_version": "reward-v1",
+  "requested_planners": [
+    "rule",
+    "api",
+    "local_base"
+  ],
+  "action_provider": "snapshot_expected_chunks",
+  "case_count": 12,
+  "planner_summaries": [
+    {
+      "planner_mode": "rule",
+      "status": "completed",
+      "config": {
+        "planner_mode": "rule",
+        "policy_version": "rule-v1",
+        "retrieval_config_version": "retrieval-stage5-final-v1",
+        "rerank_evidence_threshold": 0.75,
+        "snapshot_policy_version": "rule-v1",
+        "action_provider": "snapshot_expected_chunks"
+      },
+      "usage": {
+        "planner_calls": 24,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 11,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "failed_case_count": 0
+      },
+      "reward": {
+        "average_total_reward": 0.8000000000000002,
+        "average_raw_total_reward": 0.8000000000000002,
+        "scored_case_count": 12,
+        "format_valid_rate": 1.0,
+        "component_average_scores": {
+          "answer": 0.0,
+          "behavior": 1.0,
+          "citation": 1.0,
+          "cost": 1.0,
+          "format": 1.0,
+          "retrieval": 1.0
+        }
+      },
+      "case_count": 12,
+      "completed_case_count": 12,
+      "failed_case_count": 0,
+      "skip_reason": ""
+    },
+    {
+      "planner_mode": "api",
+      "status": "skipped",
+      "config": {
+        "enabled_for_eval": false,
+        "skip_reason": "阶段 7 只注册名称，不加载 API Planner"
+      },
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY"
+      },
+      "reward": {
+        "average_total_reward": null,
+        "scored_case_count": 0
+      },
+      "case_count": 0,
+      "completed_case_count": 0,
+      "failed_case_count": 0,
+      "skip_reason": "阶段 7 只注册名称，不加载 API Planner"
+    },
+    {
+      "planner_mode": "local_base",
+      "status": "skipped",
+      "config": {
+        "enabled_for_eval": false,
+        "skip_reason": "阶段 8 离线评测预留"
+      },
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY"
+      },
+      "reward": {
+        "average_total_reward": null,
+        "scored_case_count": 0
+      },
+      "case_count": 0,
+      "completed_case_count": 0,
+      "failed_case_count": 0,
+      "skip_reason": "阶段 8 离线评测预留"
+    }
+  ],
+  "results": [
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-dev-hak-no-feed",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-dev-hak-no-feed",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585609762
+      ],
+      "citation_chunk_ids": [
+        467551067585609762
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {
+                "equipment_model": [
+                  "hak180"
+                ]
+              },
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：HAK180 显示“无进纸”并发生卡纸时怎样处理？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "保持设备型号、报警码或其它结构化标识一致：HAK 180"
+              ],
+              "answer_length": 32
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-dev-hak-power-safety",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-dev-hak-power-safety",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585609649
+      ],
+      "citation_chunk_ids": [
+        467551067585609649
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {
+                "equipment_model": [
+                  "hak180"
+                ]
+              },
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：HAK180 应该使用什么电源，清洁内部前要怎样断电？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "保持设备型号、报警码或其它结构化标识一致：HAK 180"
+              ],
+              "answer_length": 32
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-dev-hak-temp",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-dev-hak-temp",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585609721
+      ],
+      "citation_chunk_ids": [
+        467551067585609721
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {
+                "equipment_model": [
+                  "hak180"
+                ]
+              },
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：HAK180 烫金膜容易脱落或者图案缺失时，应该怎样调整？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "保持设备型号、报警码或其它结构化标识一致：HAK 180"
+              ],
+              "answer_length": 32
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-dev-lj2268-admin-password",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-dev-lj2268-admin-password",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585609929
+      ],
+      "citation_chunk_ids": [
+        467551067585609929
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {
+                "equipment_model": [
+                  "lj2268w"
+                ]
+              },
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：LJ2268W 配置 Wi-Fi 时管理员初始密码是多少？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "保持设备型号、报警码或其它结构化标识一致：LJ 2268W"
+              ],
+              "answer_length": 34
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-dev-m7208-consumable-life",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-dev-m7208-consumable-life",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585610228
+      ],
+      "citation_chunk_ids": [
+        467551067585610228
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {},
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：M7208W Pro 的墨粉盒和感光鼓平均寿命分别是多少页？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "覆盖期望 chunk 中的关键步骤、限制、原因或数值"
+              ],
+              "answer_length": 40
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-dev-p3030-duplex-jam",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-dev-p3030-duplex-jam",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585611043
+      ],
+      "citation_chunk_ids": [
+        467551067585611043
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {},
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：Pantum P3030 双面打印单元卡纸后怎样取出纸张？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "覆盖期望 chunk 中的关键步骤、限制、原因或数值"
+              ],
+              "answer_length": 42
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-dev-panda-id-copy",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-dev-panda-id-copy",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585611476
+      ],
+      "citation_chunk_ids": [
+        467551067585611476
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {},
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：Panda Pro 怎样把身份证正反面复印到同一张纸上？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "覆盖期望 chunk 中的关键步骤、限制、原因或数值"
+              ],
+              "answer_length": 35
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-held-colloquial-hak-temp",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-held-colloquial-hak-temp",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585609721
+      ],
+      "citation_chunk_ids": [
+        467551067585609721
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {
+                "equipment_model": [
+                  "hak180"
+                ]
+              },
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：HAK180 烫出来一擦就掉，还缺一块，这个温度咋调啊？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "保持设备型号、报警码或其它结构化标识一致：HAK 180"
+              ],
+              "answer_length": 32
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-held-colloquial-lj-password",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-held-colloquial-lj-password",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585609929
+      ],
+      "citation_chunk_ids": [
+        467551067585609929
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {
+                "equipment_model": [
+                  "lj2268w"
+                ]
+              },
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：LJ2268W 连 Wi-Fi 弹出管理员登录，默认密码多少来着？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "保持设备型号、报警码或其它结构化标识一致：LJ 2268W"
+              ],
+              "answer_length": 34
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-held-colloquial-panda-id-copy",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-held-colloquial-panda-id-copy",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585611476
+      ],
+      "citation_chunk_ids": [
+        467551067585611476
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {},
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：Panda Pro 身份证正反面能不能印到一张纸上，怎么弄？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "覆盖期望 chunk 中的关键步骤、限制、原因或数值"
+              ],
+              "answer_length": 35
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-held-colloquial-z35-toner-drum",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-held-colloquial-z35-toner-drum",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585610715
+      ],
+      "citation_chunk_ids": [
+        467551067585610715
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {},
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：Z35 新鼓粉盒装进去前要不要先摇几下？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "覆盖期望 chunk 中的关键步骤、限制、原因或数值"
+              ],
+              "answer_length": 32
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage8_eval_20260719T065515Z_9066a07b",
+      "case_id": "demo-held-z35-safe-poweroff",
+      "split": "demo_regression",
+      "planner_mode": "rule",
+      "snapshot_id": "stage8-env-20260715-v1",
+      "reward_version": "reward-v1",
+      "trace_id": "stage8_eval_20260719T065515Z_9066a07b_rule_demo-held-z35-safe-poweroff",
+      "action_path": [
+        "local_search",
+        "answer"
+      ],
+      "terminal_action": "answer",
+      "terminal_reason_code": "local_evidence_sufficient",
+      "retrieved_chunk_ids": [
+        467551067585610642
+      ],
+      "citation_chunk_ids": [
+        467551067585610642
+      ],
+      "metrics": {
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "format_valid": true,
+        "recall_at_k": 1.0,
+        "mrr": 1.0,
+        "ndcg_at_k": 1.0,
+        "citation_hit_rate": 1.0,
+        "answer_point_coverage": 0.0,
+        "path_match": true
+      },
+      "reward": {
+        "reward_version": "reward-v1",
+        "total_reward": 0.8,
+        "raw_total_reward": 0.8,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "answer",
+              "action_path": [
+                "local_search",
+                "answer"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 1.0,
+            "weight": 0.25,
+            "weighted_score": 0.25,
+            "details": {
+              "recall_at_k": 1.0,
+              "mrr": 1.0,
+              "ndcg_at_k": 1.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {},
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 1,
+              "top_k": 10
+            },
+            "reasons": []
+          },
+          "citation": {
+            "name": "citation",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "citation_hit_rate": 1.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 1,
+              "invalid_citation_count": 0
+            },
+            "reasons": []
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.2,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "直接回答用户问题：Z35 为什么不能在打印或固件升级时直接关机？",
+                "引用期望 chunk 中的手册依据，不编造未提供的信息",
+                "覆盖期望 chunk 中的关键步骤、限制、原因或数值"
+              ],
+              "answer_length": 32
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "answer",
+              "path_match": true,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": []
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.1,
+            "weighted_score": 0.1,
+            "details": {
+              "action_count": 2,
+              "shortest_acceptable_path_length": 2,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "planner_calls": 2,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    }
+  ]
+}
