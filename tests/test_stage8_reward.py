@@ -1,6 +1,6 @@
 import json
 
-from app.rag.evaluation import RewardConfig, score_trajectory
+from app.rag.evaluation import REWARD_VERSION, RewardConfig, RewardWeights, score_trajectory
 from app.rag.evaluation.case_schema import EnvironmentSnapshot, PlannerEvalCase
 from app.rag.evaluation.offline_environment import OfflineRagEnvironment, OfflineState
 from app.rag.query.config import RETRIEVAL_CONFIG_VERSION
@@ -146,6 +146,33 @@ def _refusal_case() -> PlannerEvalCase:
     )
 
 
+def _clarification_case() -> PlannerEvalCase:
+    return PlannerEvalCase(
+        case_id="reward-dev-ask-missing-subject",
+        case_group="clarification",
+        split="dev",
+        leakage_group_id="reward-ask-missing-subject",
+        query="这个报警应该怎么处理？",
+        dataset_ids=["dataset_default_equipment_ops"],
+        owner_user_id="eval_demo_user",
+        tenant_id="tenant_default",
+        privacy_scope="public_demo",
+        expected_chunks=[],
+        expected_answer_points=[],
+        expected_behavior={
+            "should_answer": False,
+            "should_refuse": False,
+            "should_ask_clarification": True,
+            "should_call_web": False,
+            "forbidden_actions": ["web_search", "hyde_search"],
+        },
+        acceptable_action_paths=[["ask_clarification"]],
+        expected_identifiers={},
+        label_source="manual",
+        human_review_status="reviewed",
+    )
+
+
 def _candidate(chunk_id: int, *, retrieval_channel: RetrievalChannel) -> RetrievalCandidate:
     return RetrievalCandidate(
         document_id="doc_hak180_manual",
@@ -167,6 +194,25 @@ def _candidate(chunk_id: int, *, retrieval_channel: RetrievalChannel) -> Retriev
     )
 
 
+def test_stage85_reward_v1_1_default_weights_prioritize_planner_route():
+    weights = RewardWeights()
+    config = RewardConfig()
+
+    assert REWARD_VERSION == "reward-v1.1"
+    assert config.reward_version == "reward-v1.1"
+    assert weights.as_dict() == {
+        "format": 0.15,
+        "retrieval": 0.12,
+        "citation": 0.08,
+        "answer": 0.15,
+        "behavior": 0.35,
+        "cost": 0.15,
+    }
+    assert weights.behavior + weights.cost == 0.50
+    assert weights.retrieval + weights.citation == 0.20
+    assert weights.behavior + weights.cost > weights.retrieval + weights.citation
+
+
 def test_stage8_reward_scores_valid_answer_path_and_serializes_json():
     case = _answer_case()
     trajectory = _env().run_action_path(
@@ -177,6 +223,7 @@ def test_stage8_reward_scores_valid_answer_path_and_serializes_json():
 
     reward = score_trajectory(case, trajectory)
 
+    assert reward.reward_version == "reward-v1.1"
     assert reward.capped_by is None
     assert reward.format_valid is True
     assert set(reward.components) == {
@@ -190,6 +237,8 @@ def test_stage8_reward_scores_valid_answer_path_and_serializes_json():
     assert reward.components["retrieval"].details["recall_at_k"] == 1.0
     assert reward.components["citation"].details["citation_hit_rate"] == 1.0
     assert reward.components["answer"].details["answer_point_coverage"] == 1.0
+    assert reward.components["behavior"].weight > reward.components["retrieval"].weight
+    assert reward.components["cost"].weight > reward.components["citation"].weight
     for component in reward.components.values():
         assert component.details
 
@@ -227,6 +276,24 @@ def test_stage8_reward_does_not_penalize_refusal_for_missing_answer_points():
     assert reward.components["retrieval"].details["not_applicable"] is True
 
 
+def test_stage85_reward_does_not_penalize_clarification_for_missing_expected_chunks():
+    case = _clarification_case()
+    trajectory = _env().run_action_path(
+        case,
+        [QueryAction.ASK_CLARIFICATION],
+        run_id="reward_clarification",
+    )
+
+    reward = score_trajectory(case, trajectory)
+
+    assert reward.components["answer"].score == 1.0
+    assert reward.components["answer"].details["not_applicable_answer_points"] is True
+    assert reward.components["retrieval"].score == 1.0
+    assert reward.components["retrieval"].details["not_applicable"] is True
+    assert reward.components["citation"].score == 1.0
+    assert reward.components["citation"].details["not_applicable"] is True
+
+
 def test_stage8_reward_penalizes_unnecessary_hyde_and_web_actions():
     case = _answer_case()
     env = _env()
@@ -260,3 +327,39 @@ def test_stage8_reward_penalizes_unnecessary_hyde_and_web_actions():
     assert web_reward.components["behavior"].score < direct_reward.components["behavior"].score
     assert web_reward.components["cost"].score < direct_reward.components["cost"].score
     assert any("Web" in reason for reason in web_reward.components["cost"].reasons)
+
+
+def test_stage85_reward_v1_1_route_components_move_total_more_than_retrieval_components():
+    case = _answer_case()
+    env = _env()
+    direct = env.run_action_path(
+        case,
+        [QueryAction.LOCAL_SEARCH, QueryAction.ANSWER],
+        run_id="reward_route_direct_path",
+    )
+    unnecessary_route = direct.model_copy(update={
+        "action_path": [
+            QueryAction.LOCAL_SEARCH,
+            QueryAction.WEB_SEARCH,
+            QueryAction.ANSWER,
+        ]
+    })
+    direct_reward = score_trajectory(case, direct)
+    route_reward = score_trajectory(case, unnecessary_route)
+
+    route_weight_delta = (
+        direct_reward.components["behavior"].weighted_score
+        + direct_reward.components["cost"].weighted_score
+        - route_reward.components["behavior"].weighted_score
+        - route_reward.components["cost"].weighted_score
+    )
+    retrieval_weight_delta = (
+        direct_reward.components["retrieval"].weighted_score
+        + direct_reward.components["citation"].weighted_score
+        - route_reward.components["retrieval"].weighted_score
+        - route_reward.components["citation"].weighted_score
+    )
+
+    assert route_weight_delta > 0
+    assert abs(retrieval_weight_delta) < 1e-12
+    assert route_weight_delta > retrieval_weight_delta

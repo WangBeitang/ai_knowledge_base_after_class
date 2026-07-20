@@ -1,9 +1,10 @@
 """
-阶段 8.5 Reward v1。
+阶段 8.5 Reward v1.1。
 
 Reward 的中文含义是“奖励/评分信号”。阶段 8 中它用于离线评测，阶段 9 中同一套
-score_trajectory 会作为 GRPO 的训练奖励。第一版优先使用可执行、可复现的规则指标；
-LLM Judge 只能作为后续补充分项，不能替代这些基础规则。
+score_trajectory 会作为 GRPO 的训练奖励。v1.1 仍使用可执行、可复现的规则指标，但按
+Planner 可控性重标定六路权重：行为分和成本分承担主要检索路线信号，检索分和引用分
+保留为低权重终局质量约束，避免 chunk 排名这类间接指标主导 Planner 训练。
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ from app.rag.query.contracts import EvidenceSourceType, QueryAction
 
 
 # 第一部分：版本和硬边界常量。score_trajectory 会先用这些常量判断轨迹是否可训练。
-REWARD_VERSION = "reward-v1"  # Reward 版本必须写入结果文件；权重或规则变化时要升级。
+REWARD_VERSION = "reward-v1.1"  # Reward 版本必须写入结果文件；权重或规则变化时要升级。
 TERMINAL_ACTIONS = {QueryAction.ANSWER, QueryAction.ASK_CLARIFICATION, QueryAction.REFUSE}  # 合法终态集合。
 FORMAT_ERROR_CODES = {  # 以下错误表示 Planner 输出格式或 Action 执行路径不合法，会触发总分上限。
     "unknown_action",                 # Planner 输出了系统无法识别或未定义的 Action。
@@ -63,14 +64,21 @@ class RewardComponent(RewardModel):
 
 
 class RewardWeights(RewardModel):
-    """Reward v1 分项权重；第一版同时约束答案质量、证据质量、行为和成本。"""
+    """
+    Reward v1.1 分项权重。
+
+    Planner 的中文含义是“检索与终态规划器”。它直接决定 Action 路线、fallback（证据
+    不足后的升级或终止选择）和回答时机，但不直接决定某个 chunk 的底层排名。因此 v1.1
+    把 behavior + cost 作为主要检索路线分，把 retrieval + citation 降为低权重终局质量
+    约束，避免阶段 9 训练过度追逐固定检索器产生的 chunk 排名。
+    """
 
     format: float = Field(default=0.15, ge=0, description="结构化格式和 Action 合法性权重。")
-    retrieval: float = Field(default=0.25, ge=0, description="expected chunk 召回、排序和标识命中权重。")
-    citation: float = Field(default=0.15, ge=0, description="最终 Citation 是否引用期望/有效 chunk 的权重。")
-    answer: float = Field(default=0.20, ge=0, description="答案要点覆盖或拒答/追问终态正确性的权重。")
-    behavior: float = Field(default=0.15, ge=0, description="是否该答、该拒、该追问、该 Web 的行为权重。")
-    cost: float = Field(default=0.10, ge=0, description="不必要 HyDE/Web、额外步骤和耗时的成本权重。")
+    retrieval: float = Field(default=0.12, ge=0, description="expected chunk 召回、排序和标识命中权重；v1.1 中属于低权重终局质量约束。")
+    citation: float = Field(default=0.08, ge=0, description="最终 Citation 是否引用期望/有效 chunk 的权重；v1.1 中不作为主训练信号。")
+    answer: float = Field(default=0.15, ge=0, description="答案要点覆盖或拒答/追问终态正确性的权重。")
+    behavior: float = Field(default=0.35, ge=0, description="是否该答、该拒、该追问、该 Web 的行为权重；v1.1 中是检索路线分的主体。")
+    cost: float = Field(default=0.15, ge=0, description="不必要 HyDE/Web、额外步骤和耗时的成本权重；与 behavior 合起来约束检索路线。")
 
     def as_dict(self) -> dict[str, float]:
         """按 score 函数名称返回权重，score_trajectory 用它统一聚合。"""
@@ -85,10 +93,10 @@ class RewardWeights(RewardModel):
 
 
 class RewardConfig(RewardModel):
-    """Reward v1 运行配置，集中保存版本、权重和硬上限。"""
+    """Reward v1.1 运行配置，集中保存版本、权重和硬上限。"""
 
     reward_version: str = Field(default=REWARD_VERSION, description="Reward 版本，写入每条评测结果。")
-    weights: RewardWeights = Field(default_factory=RewardWeights, description="六个分项的聚合权重。")
+    weights: RewardWeights = Field(default_factory=RewardWeights, description="六个分项的聚合权重；v1.1 默认让 behavior + cost 高于 retrieval + citation。")
     retrieval_top_k: int = Field(default=10, ge=1, description="recall@k 和 nDCG@k 使用的 k。")
     invalid_format_cap: float = Field(default=0.20, ge=0, le=1, description="格式非法时总分上限。")
     failed_trajectory_cap: float = Field(default=0.30, ge=0, le=1, description="环境执行失败但非格式错误时总分上限。")
@@ -129,8 +137,8 @@ def score_trajectory(
         trajectory: OfflineTrajectoryResult,
         config: RewardConfig | None = None,
 ) -> TrajectoryReward:
-    """对一条 OfflineTrajectoryResult 计算 Reward v1。"""
-    active_config = config or RewardConfig()  # 调用方不传配置时使用 v1 默认权重。
+    """对一条 OfflineTrajectoryResult 计算 Reward v1.1。"""
+    active_config = config or RewardConfig()  # 调用方不传配置时使用 v1.1 默认权重。
     score_functions: tuple[ScoreFn, ...] = (  # 按实际评估顺序排列，方便阅读和排查。
         score_format,
         score_retrieval,

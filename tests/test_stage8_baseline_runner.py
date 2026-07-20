@@ -34,7 +34,7 @@ def test_stage8_baseline_runner_runs_rule_and_skips_unavailable_planners():
     result = output.results[0]
     assert result.planner_mode is PlannerMode.RULE
     assert result.action_path == [QueryAction.LOCAL_SEARCH, QueryAction.ANSWER]
-    assert result.reward["reward_version"] == "reward-v1"
+    assert result.reward["reward_version"] == "reward-v1.1"
     assert result.metrics["recall_at_k"] == 1.0
     assert result.usage["planner_calls"] == 2
 
