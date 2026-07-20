@@ -1,3 +1,1 @@
-# 阶段 8.5 许可证清单。每行一条 JSON；空行和 # 注释行会被脚本跳过。
-# 示例字段：license_id、license_name、license_url、redistribution_allowed、training_allowed、commercial_use_allowed、notes。
-
+{"commercial_use_allowed": true, "license_id": "cc-by-4.0", "license_name": "CC BY 4.0", "license_url": "https://creativecommons.org/licenses/by/4.0/", "notes": "需要署名；本阶段只生成可审计候选，不再分发原始数据文件。", "redistribution_allowed": true, "training_allowed": true}
