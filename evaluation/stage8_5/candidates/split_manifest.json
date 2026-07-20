@@ -1,0 +1,12 @@
+{
+  "created_at": "2026-07-19T00:00:00+00:00",
+  "demo_regression_case_ids": [],
+  "dev_case_ids": [],
+  "leakage_group_to_split": {},
+  "manifest_id": "stage85-split-manifest-empty-v1",
+  "notes": "阶段 8.5 初始空 split 清单；真实 approved case 生成后由 split_candidate_cases.py 覆盖。",
+  "snapshot_id": "",
+  "test_case_ids": [],
+  "train_case_ids": []
+}
+
