@@ -1,0 +1,46 @@
+{
+  "manifest_id": "sft_manifest_stage8_eval_20260721T071755Z_e824ffd1",
+  "export_version": "stage8-sft-export-v1",
+  "created_at": "2026-07-21T07:18:13.009054+00:00",
+  "source_run_id": "stage8_eval_20260721T071755Z_e824ffd1",
+  "snapshot_id": "stage85-env-20260721-v2",
+  "reward_version": "reward-v1.1",
+  "artifact_status": "approved_training_seed",
+  "reward_threshold": 0.8,
+  "allowed_splits": [
+    "train"
+  ],
+  "exported_case_count": 20,
+  "exported_trajectory_count": 20,
+  "sample_count": 40,
+  "source_counts": {
+    "rule": 40
+  },
+  "source_ratios": {
+    "rule": 1.0
+  },
+  "split_counts": {
+    "train": 40
+  },
+  "gold_origin_counts": {
+    "curated_seed_gold": 40
+  },
+  "review_status_counts": {
+    "reviewed": 40
+  },
+  "filter_counts": {},
+  "filter_rules": [
+    "test/demo split 永不导出",
+    "格式非法、执行错误、无效引用轨迹不导出",
+    "API teacher 轨迹必须达到 Reward 阈值",
+    "私有文档样本默认必须人工 reviewed",
+    "approved_training_seed 必须来自 train、reviewed 且具有明确 gold_origin 的非 heldout Gold",
+    "导出样本不包含完整 chunk 正文、答案 Prompt 或模型私有思维链"
+  ],
+  "excluded_payloads": [
+    "full_chunk_content",
+    "answer_prompt",
+    "private_chain_of_thought",
+    "model_reasoning_text"
+  ]
+}

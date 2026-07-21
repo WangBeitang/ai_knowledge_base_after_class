@@ -23,6 +23,7 @@ from app.rag.evaluation.case_schema import (
     EnvironmentSnapshot,
     ExpectedBehavior,
     ExpectedChunk,
+    GoldOrigin,
     HumanReviewStatus,
     LabelSource,
     PlannerEvalCase,
@@ -77,6 +78,7 @@ from app.rag.evaluation.sft_exporter import (
     # 阶段 8.7 SFT 数据导出器。它把已评分轨迹筛成单步 PlannerDecision 监督样本，
     # 不保存完整 chunk 正文、答案 Prompt 或模型私有思维链。
     SFT_EXPORT_VERSION,
+    SftArtifactStatus,
     SftExportConfig,
     SftExportManifest,
     SftExportResult,
@@ -98,6 +100,7 @@ __all__ = [
     "EnvironmentSnapshot",
     "ExpectedBehavior",
     "ExpectedChunk",
+    "GoldOrigin",
     "HumanReviewStatus",
     "LabelSource",
     "PlannerEvalCase",
@@ -138,6 +141,7 @@ __all__ = [
     "write_baseline_eval_output",
     # 阶段 8.7 Planner SFT 数据导出。
     "SFT_EXPORT_VERSION",
+    "SftArtifactStatus",
     "SftExportConfig",
     "SftExportManifest",
     "SftExportResult",

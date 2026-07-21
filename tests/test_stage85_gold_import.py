@@ -4,8 +4,13 @@ from pathlib import Path
 import pytest
 
 from app.rag.evaluation.case_schema import PlannerEvalCase
-from evaluation.stage8_5.build_source_grounded_gold import GoldCaseAudit, GoldEvidenceChunk
-from evaluation.stage8_5.import_gold_evidence import (
+from evaluation.stage8_5.pipelines.common.paths import stage85_layout
+from evaluation.stage8_5.pipelines.common.stage85_schema import read_jsonl
+from evaluation.stage8_5.pipelines.curated_gold.build_source_grounded_gold import (
+    GoldCaseAudit,
+    GoldEvidenceChunk,
+)
+from evaluation.stage8_5.pipelines.curated_gold.import_gold_evidence import (
     GoldChunkRuntimeBinding,
     GoldImportManifest,
     SecondReviewDecision,
@@ -14,22 +19,22 @@ from evaluation.stage8_5.import_gold_evidence import (
     reuse_frozen_snapshot_if_compatible,
     validate_second_review,
 )
-from evaluation.stage8_5.stage85_schema import read_jsonl
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 STAGE85_DIR = PROJECT_ROOT / "evaluation/stage8_5"
+LAYOUT = stage85_layout(STAGE85_DIR)
 
 
 def test_stage85_second_review_and_runtime_binding_form_closed_snapshot_inputs():
-    cases = read_jsonl(STAGE85_DIR / "candidates/gold_cases.jsonl", PlannerEvalCase)
-    audits = read_jsonl(STAGE85_DIR / "reviews/gold_case_audit.jsonl", GoldCaseAudit)
+    cases = read_jsonl(LAYOUT.curated_intermediate / "gold_cases_authoring.jsonl", PlannerEvalCase)
+    audits = read_jsonl(LAYOUT.curated_review / "gold_case_audit.jsonl", GoldCaseAudit)
     evidence_chunks = read_jsonl(
-        STAGE85_DIR / "processed/gold_evidence_chunks.jsonl",
+        LAYOUT.curated_intermediate / "gold_evidence_chunks.jsonl",
         GoldEvidenceChunk,
     )
     decisions = read_jsonl(
-        STAGE85_DIR / "reviews/gold_case_second_review.jsonl",
+        LAYOUT.curated_review / "gold_case_second_review.jsonl",
         SecondReviewDecision,
     )
 
@@ -53,7 +58,7 @@ def test_stage85_second_review_and_runtime_binding_form_closed_snapshot_inputs()
         cases=cases,
         audits=audits,
         bindings=bindings,
-        second_review_path=STAGE85_DIR / "reviews/gold_case_second_review.jsonl",
+        second_review_path=LAYOUT.curated_review / "gold_case_second_review.jsonl",
         snapshot_id="stage85-env-test-v1",
         split_created_at="2026-07-21T00:00:00+00:00",
     )
@@ -72,7 +77,7 @@ def test_stage85_second_review_and_runtime_binding_form_closed_snapshot_inputs()
 
     # 已物化 manifest 也必须显式保存记录数，不能让审计者只能通过重新读取文件推断。
     manifest = GoldImportManifest.model_validate(json.loads(
-        (STAGE85_DIR / "processed/gold_import_manifest.json").read_text(encoding="utf-8")
+        (LAYOUT.curated_intermediate / "gold_import_manifest.json").read_text(encoding="utf-8")
     ))
     assert manifest.second_review_count == 20
     assert manifest.indexed_case_count == 20
@@ -92,9 +97,9 @@ def test_stage85_second_review_gate_rejects_any_case_needing_fix():
 
 
 def test_stage85_existing_snapshot_is_reused_only_when_inputs_match():
-    snapshot_path = STAGE85_DIR / "results/environment_snapshot_stage85.json"
+    snapshot_path = LAYOUT.curated_intermediate / "environment_snapshot_import_v1.json"
     snapshot_payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
-    cases = read_jsonl(STAGE85_DIR / "candidates/gold_cases_indexed.jsonl", PlannerEvalCase)
+    cases = read_jsonl(LAYOUT.curated_intermediate / "gold_cases_indexed.jsonl", PlannerEvalCase)
 
     result = reuse_frozen_snapshot_if_compatible(
         snapshot_path,

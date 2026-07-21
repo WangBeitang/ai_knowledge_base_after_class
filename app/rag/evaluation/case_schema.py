@@ -85,6 +85,21 @@ class LabelSource(str, Enum):
     SYNTHETIC = "synthetic"  # 文档约束合成样本，关键样本仍需人工复核。
 
 
+class GoldOrigin(str, Enum):
+    """
+    Gold 数据的生产方式和允许用途。
+
+    它与 ``label_source`` 不同：label_source 说明标签由人工、反馈还是 API 辅助产生；
+    gold_origin 说明证据是在人工策划边界后入库，还是先经过生产切分再反向生成问题。
+    该字段会进入训练样本和 manifest，防止不同证据难度的数据被无标记混合。
+    """
+
+    UNSPECIFIED = "unspecified"  # 非 Gold 或历史 case；旧阶段 8 文件默认使用，不自动获得 Gold 身份。
+    CURATED_SEED_GOLD = "curated_seed_gold"  # 人工策划原子证据的高置信种子；只允许 train/回归。
+    PRODUCTION_CHUNK_GOLD = "production_chunk_gold"  # 生产文档先切分入库、再基于真实 chunk 生成的 Gold。
+    HELDOUT_GOLD = "heldout_gold"  # 独立来源冻结 Gold；只用于 dev/test，禁止训练导出。
+
+
 class HumanReviewStatus(str, Enum):
     """人工复核状态。它决定样本能否作为高可信训练/评测证据。"""
 
@@ -276,6 +291,8 @@ class PlannerEvalCase(Stage8SchemaModel):
     expected_identifiers: dict[str, list[str]] = Field(default_factory=dict)
     # 标注来源。API 辅助、合成、人工反馈的可信度不同。
     label_source: LabelSource
+    # Gold 生产方式。默认 unspecified 保持阶段 8 历史 case 兼容；正式训练种子必须显式填写。
+    gold_origin: GoldOrigin = GoldOrigin.UNSPECIFIED
     # 人工复核状态。pending/rejected 不能当作高可信训练标签。
     human_review_status: HumanReviewStatus
     # 人工备注。仅用于排查和报告，不参与评分。
@@ -646,6 +663,7 @@ __all__ = [
     "EnvironmentSnapshot",
     "ExpectedBehavior",
     "ExpectedChunk",
+    "GoldOrigin",
     "HumanReviewStatus",
     "LabelSource",
     "PlannerEvalCase",

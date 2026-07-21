@@ -3,7 +3,8 @@ from collections import Counter
 from pathlib import Path
 
 from app.rag.evaluation.case_schema import PlannerEvalCase
-from evaluation.stage8_5.build_source_grounded_gold import (
+from evaluation.stage8_5.pipelines.common.paths import stage85_layout
+from evaluation.stage8_5.pipelines.curated_gold.build_source_grounded_gold import (
     GoldCaseAudit,
     GoldEvidenceChunk,
     main as build_source_grounded_gold,
@@ -15,19 +16,20 @@ def test_stage85_builds_twenty_source_grounded_gold_cases(tmp_path: Path):
 
     base_dir = tmp_path / "stage8_5"
     assert build_source_grounded_gold(["--base-dir", str(base_dir)]) == 0
+    layout = stage85_layout(base_dir)
 
     evidence_chunks = [
         GoldEvidenceChunk.model_validate(payload)
-        for payload in _read_jsonl(base_dir / "processed/gold_evidence_chunks.jsonl")
+        for payload in _read_jsonl(layout.curated_intermediate / "gold_evidence_chunks.jsonl")
     ]
-    documents = _read_jsonl(base_dir / "processed/gold_evidence_documents.jsonl")
+    documents = _read_jsonl(layout.curated_intermediate / "gold_evidence_documents.jsonl")
     cases = [
         PlannerEvalCase.model_validate(payload)
-        for payload in _read_jsonl(base_dir / "candidates/gold_cases.jsonl")
+        for payload in _read_jsonl(layout.curated_intermediate / "gold_cases_authoring.jsonl")
     ]
     audits = [
         GoldCaseAudit.model_validate(payload)
-        for payload in _read_jsonl(base_dir / "reviews/gold_case_audit.jsonl")
+        for payload in _read_jsonl(layout.curated_review / "gold_case_audit.jsonl")
     ]
 
     assert len(evidence_chunks) == 10

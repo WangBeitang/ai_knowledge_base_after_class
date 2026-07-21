@@ -1,0 +1,43 @@
+{
+  "created_at": "2026-07-21T07:17:18+00:00",
+  "demo_regression_case_ids": [],
+  "dev_case_ids": [],
+  "leakage_group_to_split": {
+    "uci-ai4i-2020-chunk_ai4i_hdf_rule": "train",
+    "uci-ai4i-2020-chunk_ai4i_osf_rule": "train",
+    "uci-ai4i-2020-chunk_ai4i_pwf_rule": "train",
+    "uci-ai4i-2020-chunk_ai4i_rnf_rule": "train",
+    "uci-ai4i-2020-chunk_ai4i_twf_rule": "train",
+    "uci-hydraulic-condition-chunk_hydraulic_profile_accumulator": "train",
+    "uci-hydraulic-condition-chunk_hydraulic_profile_cooler": "train",
+    "uci-hydraulic-condition-chunk_hydraulic_profile_pump_leakage": "train",
+    "uci-hydraulic-condition-chunk_hydraulic_profile_stable_flag": "train",
+    "uci-hydraulic-condition-chunk_hydraulic_profile_valve": "train"
+  },
+  "manifest_id": "stage85-curated-seed-v1-split-manifest",
+  "notes": "20 条 curated_seed_gold 全部为 approved train seed；dev/test 必须来自独立 production chunk。",
+  "snapshot_id": "stage85-env-20260721-v2",
+  "test_case_ids": [],
+  "train_case_ids": [
+    "stage85-gold-ai4i-twf-rule-001",
+    "stage85-gold-ai4i-twf-rule-002",
+    "stage85-gold-ai4i-hdf-rule-001",
+    "stage85-gold-ai4i-hdf-rule-002",
+    "stage85-gold-ai4i-pwf-rule-001",
+    "stage85-gold-ai4i-pwf-rule-002",
+    "stage85-gold-ai4i-osf-rule-001",
+    "stage85-gold-ai4i-osf-rule-002",
+    "stage85-gold-ai4i-rnf-rule-001",
+    "stage85-gold-ai4i-rnf-rule-002",
+    "stage85-gold-hydraulic-cooler-profile-001",
+    "stage85-gold-hydraulic-cooler-profile-002",
+    "stage85-gold-hydraulic-valve-profile-001",
+    "stage85-gold-hydraulic-valve-profile-002",
+    "stage85-gold-hydraulic-pump-profile-001",
+    "stage85-gold-hydraulic-pump-profile-002",
+    "stage85-gold-hydraulic-accumulator-profile-001",
+    "stage85-gold-hydraulic-accumulator-profile-002",
+    "stage85-gold-hydraulic-stable-profile-001",
+    "stage85-gold-hydraulic-stable-profile-002"
+  ]
+}

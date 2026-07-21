@@ -3,12 +3,20 @@ from pathlib import Path
 
 import pytest
 
-from evaluation.stage8_5.build_fault_cards import main as build_fault_cards
-from evaluation.stage8_5.generate_candidate_cases import main as generate_candidate_cases
-from evaluation.stage8_5.generate_stage85_report import main as generate_stage85_report
-from evaluation.stage8_5.split_candidate_cases import main as split_candidate_cases
-from evaluation.stage8_5.validate_candidate_cases import main as validate_candidate_cases
-from evaluation.stage8_5.validate_sources import main as validate_sources
+from evaluation.stage8_5.pipelines.public_candidate.build_fault_cards import main as build_fault_cards
+from evaluation.stage8_5.pipelines.public_candidate.generate_candidate_cases import (
+    main as generate_candidate_cases,
+)
+from evaluation.stage8_5.pipelines.public_candidate.generate_stage85_report import (
+    main as generate_stage85_report,
+)
+from evaluation.stage8_5.pipelines.public_candidate.split_candidate_cases import (
+    main as split_candidate_cases,
+)
+from evaluation.stage8_5.pipelines.public_candidate.validate_candidate_cases import (
+    main as validate_candidate_cases,
+)
+from evaluation.stage8_5.pipelines.public_candidate.validate_sources import main as validate_sources
 
 
 def test_stage85_source_validation_blocks_approved_source_without_training_permission(tmp_path: Path):
@@ -41,7 +49,7 @@ def test_stage85_entry_pipeline_generates_review_queue_and_report(tmp_path: Path
     candidates_path = tmp_path / "planner_case_candidates.jsonl"
     rejected_from_cards_path = tmp_path / "rejected_from_cards.jsonl"
     generated_report_path = tmp_path / "generated_report.json"
-    approved_path = tmp_path / "approved_cases.jsonl"
+    approved_path = tmp_path / "schema_approved_cases.jsonl"
     review_path = tmp_path / "review_queue.jsonl"
     rejected_path = tmp_path / "rejected_cases.jsonl"
     validation_report_path = tmp_path / "validation_report.json"
@@ -103,7 +111,7 @@ def test_stage85_entry_pipeline_generates_review_queue_and_report(tmp_path: Path
 
 def test_stage85_candidate_validation_routes_reviewed_and_invalid_records(tmp_path: Path):
     candidates_path = tmp_path / "planner_case_candidates.jsonl"
-    approved_path = tmp_path / "approved_cases.jsonl"
+    approved_path = tmp_path / "schema_approved_cases.jsonl"
     review_path = tmp_path / "review_queue.jsonl"
     rejected_path = tmp_path / "rejected_cases.jsonl"
     report_path = tmp_path / "validation_report.json"
@@ -132,7 +140,7 @@ def test_stage85_candidate_validation_routes_reviewed_and_invalid_records(tmp_pa
 
 
 def test_stage85_split_manifest_reuses_stage8_leakage_validation(tmp_path: Path):
-    cases_path = tmp_path / "approved_cases.jsonl"
+    cases_path = tmp_path / "schema_approved_cases.jsonl"
     manifest_path = tmp_path / "split_manifest.json"
     first = _planner_case_payload(case_id="stage85-train-bearing-001", leakage_group_id="bearing-same", split="train")
     second = _planner_case_payload(case_id="stage85-dev-bearing-001", leakage_group_id="bearing-same", split="dev")

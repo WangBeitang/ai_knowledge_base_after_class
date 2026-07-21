@@ -1,0 +1,51 @@
+{
+  "created_at": "2026-07-21T11:01:22+00:00",
+  "demo_regression_case_ids": [],
+  "dev_case_ids": [
+    "stage85-ai4i-2020-power-failure-high-load-001",
+    "stage85-ai4i-2020-power-failure-high-load-002",
+    "stage85-hydraulic-condition-internal-pump-leakage-001",
+    "stage85-hydraulic-condition-internal-pump-leakage-002",
+    "stage85-metropt3-compressor-over-cycling-001",
+    "stage85-metropt3-compressor-over-cycling-002"
+  ],
+  "leakage_group_to_split": {
+    "uci-ai4i-2020-heat-dissipation-failure-ai4i-milling-machine-spindle-thermal-path": "train",
+    "uci-ai4i-2020-overstrain-failure-ai4i-milling-machine-mechanical-structure": "test",
+    "uci-ai4i-2020-power-failure-high-load-ai4i-milling-machine-drive-system": "dev",
+    "uci-ai4i-2020-tool-wear-failure-ai4i-milling-machine-cutting-tool": "train",
+    "uci-hydraulic-condition-accumulator-pressure-low-hydraulic-test-rig-accumulator": "test",
+    "uci-hydraulic-condition-cooler-efficiency-low-hydraulic-test-rig-cooler": "train",
+    "uci-hydraulic-condition-internal-pump-leakage-hydraulic-test-rig-hydraulic-pump": "dev",
+    "uci-hydraulic-condition-valve-switching-delay-hydraulic-test-rig-directional-valve": "train",
+    "uci-metropt3-air-leak-pressure-recovery-metropt-3-apu-air-compressor": "train",
+    "uci-metropt3-compressor-over-cycling-metropt-3-apu-air-compressor": "dev",
+    "uci-metropt3-oil-temperature-rise-metropt-3-apu-oil-circuit": "test",
+    "uci-metropt3-valve-response-lag-metropt-3-apu-pneumatic-valve": "train"
+  },
+  "manifest_id": "stage85-public-seed-v1-split-manifest",
+  "notes": "阶段 8.5 第一批公开数据 approved case split 清单；review/rejected 样本不进入本 manifest。",
+  "snapshot_id": "stage85-public-seed-snapshot-v1",
+  "test_case_ids": [
+    "stage85-ai4i-2020-overstrain-failure-001",
+    "stage85-ai4i-2020-overstrain-failure-002",
+    "stage85-hydraulic-condition-accumulator-pressure-low-001",
+    "stage85-hydraulic-condition-accumulator-pressure-low-002",
+    "stage85-metropt3-oil-temperature-rise-001",
+    "stage85-metropt3-oil-temperature-rise-002"
+  ],
+  "train_case_ids": [
+    "stage85-ai4i-2020-heat-dissipation-failure-001",
+    "stage85-ai4i-2020-heat-dissipation-failure-002",
+    "stage85-ai4i-2020-tool-wear-failure-001",
+    "stage85-ai4i-2020-tool-wear-failure-002",
+    "stage85-hydraulic-condition-cooler-efficiency-low-001",
+    "stage85-hydraulic-condition-cooler-efficiency-low-002",
+    "stage85-hydraulic-condition-valve-switching-delay-001",
+    "stage85-hydraulic-condition-valve-switching-delay-002",
+    "stage85-metropt3-air-leak-pressure-recovery-001",
+    "stage85-metropt3-air-leak-pressure-recovery-002",
+    "stage85-metropt3-valve-lag-response-001",
+    "stage85-metropt3-valve-lag-response-002"
+  ]
+}

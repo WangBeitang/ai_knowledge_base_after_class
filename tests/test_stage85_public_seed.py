@@ -2,24 +2,28 @@ import json
 from pathlib import Path
 
 from app.rag.evaluation.case_schema import PlannerEvalCase
-from evaluation.stage8_5.seed_public_candidate_pool import main as seed_public_candidate_pool
+from evaluation.stage8_5.pipelines.common.paths import stage85_layout
+from evaluation.stage8_5.pipelines.public_candidate.seed_public_candidate_pool import (
+    main as seed_public_candidate_pool,
+)
 
 
 def test_stage85_seed_public_candidate_pool_materializes_auditable_first_batch(tmp_path: Path):
     base_dir = tmp_path / "stage8_5"
 
     assert seed_public_candidate_pool(["--base-dir", str(base_dir)]) == 0
+    layout = stage85_layout(base_dir)
 
-    sources = _read_jsonl(base_dir / "sources/source_manifest.jsonl")
-    cards = _read_jsonl(base_dir / "processed/fault_scenario_cards.jsonl")
-    candidates = _read_jsonl(base_dir / "candidates/planner_case_candidates.jsonl")
-    approved_payloads = _read_jsonl(base_dir / "candidates/approved_cases.jsonl")
-    review_payloads = _read_jsonl(base_dir / "candidates/review_queue.jsonl")
-    rejected_payloads = _read_jsonl(base_dir / "candidates/rejected_cases.jsonl")
-    chunk_map = _read_jsonl(base_dir / "processed/chunk_source_map.jsonl")
-    report = json.loads((base_dir / "results/data_quality_report.json").read_text(encoding="utf-8"))
-    split_manifest = json.loads((base_dir / "candidates/split_manifest.json").read_text(encoding="utf-8"))
-    markdown_report = (base_dir / "reports/阶段8.5数据处理报告.md").read_text(encoding="utf-8")
+    sources = _read_jsonl(layout.public_intermediate / "sources/source_manifest.jsonl")
+    cards = _read_jsonl(layout.public_intermediate / "fault_scenario_cards.jsonl")
+    candidates = _read_jsonl(layout.public_intermediate / "planner_case_candidates.jsonl")
+    approved_payloads = _read_jsonl(layout.public_review / "schema_approved_cases.jsonl")
+    review_payloads = _read_jsonl(layout.public_review / "review_queue.jsonl")
+    rejected_payloads = _read_jsonl(layout.public_review / "rejected_cases.jsonl")
+    chunk_map = _read_jsonl(layout.public_intermediate / "chunk_source_map.jsonl")
+    report = json.loads((layout.public_intermediate / "data_quality_report.json").read_text(encoding="utf-8"))
+    split_manifest = json.loads((layout.public_review / "split_manifest.json").read_text(encoding="utf-8"))
+    markdown_report = (layout.reports / "阶段8.5数据处理报告.md").read_text(encoding="utf-8")
 
     assert len(sources) == 3
     assert {source["approval_status"] for source in sources} == {"approved"}

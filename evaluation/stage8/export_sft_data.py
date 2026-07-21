@@ -15,6 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app.rag.evaluation.sft_exporter import (  # noqa: E402
     DEFAULT_REWARD_THRESHOLD,
+    SftArtifactStatus,
     SftExportConfig,
     export_sft_samples_from_files,
     parse_allowed_splits,
@@ -28,6 +29,7 @@ def main(argv: list[str] | None = None) -> int:
         reward_threshold=args.reward_threshold,
         allowed_splits=parse_allowed_splits(args.allowed_splits),
         require_private_review=not args.allow_unreviewed_private,
+        artifact_status=SftArtifactStatus(args.artifact_status),
     )
     result = export_sft_samples_from_files(
         eval_result_path=args.eval_result,
@@ -40,6 +42,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"manifest_id={manifest.manifest_id}")
     print(f"source_run_id={manifest.source_run_id}")
     print(f"sample_count={manifest.sample_count}")
+    print(f"artifact_status={manifest.artifact_status.value}")
     print(f"exported_trajectory_count={manifest.exported_trajectory_count}")
     print(f"source_counts={manifest.source_counts}")
     print(f"filter_counts={manifest.filter_counts}")
@@ -80,6 +83,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "--allow-unreviewed-private",
         action="store_true",
         help="允许未 reviewed 的 private_user 样本导出。默认关闭，正常不建议使用。",
+    )
+    parser.add_argument(
+        "--artifact-status",
+        choices=[status.value for status in SftArtifactStatus],
+        default=SftArtifactStatus.CANDIDATE.value,
+        help=(
+            "导出审批级别。默认 candidate；只有 train + reviewed + 明确 Gold 来源的轨迹"
+            "才能使用 approved_training_seed。"
+        ),
     )
     parser.add_argument(
         "--output",

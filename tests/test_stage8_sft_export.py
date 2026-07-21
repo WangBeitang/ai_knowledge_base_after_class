@@ -3,9 +3,12 @@ from pathlib import Path
 from typing import Any
 
 from app.rag.evaluation.baseline_runner import BaselineEvalOutput
-from app.rag.evaluation.case_schema import PlannerEvalCase, PlannerEvalResult
+from app.rag.evaluation.case_schema import GoldOrigin, PlannerEvalCase, PlannerEvalResult
 from app.rag.evaluation.sft_exporter import (
+    SftArtifactStatus,
     SftExportConfig,
+    SftExportManifest,
+    SftPlannerSample,
     export_sft_samples,
     export_sft_samples_from_files,
 )
@@ -26,6 +29,8 @@ def test_stage8_sft_export_splits_valid_rule_trajectory_into_action_samples():
     assert output.samples[1].input_context["latest_observation"]["retrieved_chunk_ids"] == ["12345"]
     assert output.samples[0].label_source == "rule"
     assert output.samples[0].review_status == "reviewed"
+    assert output.samples[0].gold_origin == GoldOrigin.UNSPECIFIED
+    assert output.samples[0].artifact_status == SftArtifactStatus.CANDIDATE
     assert output.manifest.sample_count == 2
     assert output.manifest.source_counts == {"rule": 2}
     assert output.manifest.source_ratios == {"rule": 1.0}
@@ -102,12 +107,73 @@ def test_stage8_sft_export_from_files_writes_jsonl_and_manifest(tmp_path: Path):
     assert len(jsonl_lines) == len(export.samples) == 2
     assert json.loads(jsonl_lines[0])["source_case_id"] == case.case_id
     assert manifest["sample_count"] == 2
+    assert manifest["artifact_status"] == "candidate"
     assert manifest["excluded_payloads"] == [
         "full_chunk_content",
         "answer_prompt",
         "private_chain_of_thought",
         "model_reasoning_text",
     ]
+
+
+def test_stage8_sft_export_marks_reviewed_curated_gold_as_approved_training_seed():
+    case = _case(gold_origin="curated_seed_gold")
+    result = _result(case_id=case.case_id, total_reward=0.85)
+
+    output = export_sft_samples(
+        eval_output=_eval_output([result]),
+        cases=[case],
+        config=SftExportConfig(
+            reward_threshold=0.80,
+            allowed_splits=("train",),
+            artifact_status="approved_training_seed",
+        ),
+    )
+
+    assert len(output.samples) == 2
+    assert {sample.gold_origin for sample in output.samples} == {GoldOrigin.CURATED_SEED_GOLD}
+    assert {sample.artifact_status for sample in output.samples} == {
+        SftArtifactStatus.APPROVED_TRAINING_SEED
+    }
+    assert output.manifest.artifact_status == SftArtifactStatus.APPROVED_TRAINING_SEED
+    assert output.manifest.gold_origin_counts == {"curated_seed_gold": 2}
+
+
+def test_stage8_sft_export_rejects_approved_seed_without_gold_origin():
+    case = _case()
+    result = _result(case_id=case.case_id, total_reward=0.95)
+
+    output = export_sft_samples(
+        eval_output=_eval_output([result]),
+        cases=[case],
+        config=SftExportConfig(artifact_status="approved_training_seed"),
+    )
+
+    assert output.samples == []
+    assert output.manifest.filter_counts == {"approved_seed_requires_gold_origin": 1}
+
+
+def test_stage8_sft_schema_reads_legacy_artifacts_as_unapproved_candidates():
+    """旧阶段 8 文件缺少新字段时只能兼容为候选，不能自动升级为正式训练数据。"""
+
+    sample_payload = export_sft_samples(
+        eval_output=_eval_output([_result(case_id="sft-train-answer")]),
+        cases=[_case()],
+    ).samples[0].model_dump(mode="json")
+    sample_payload.pop("gold_origin")
+    sample_payload.pop("artifact_status")
+    sample = SftPlannerSample.model_validate(sample_payload)
+
+    manifest_payload = export_sft_samples(
+        eval_output=_eval_output([_result(case_id="sft-train-answer")]),
+        cases=[_case()],
+    ).manifest.model_dump(mode="json")
+    manifest_payload.pop("artifact_status")
+    manifest = SftExportManifest.model_validate(manifest_payload)
+
+    assert sample.gold_origin == GoldOrigin.UNSPECIFIED
+    assert sample.artifact_status == SftArtifactStatus.CANDIDATE
+    assert manifest.artifact_status == SftArtifactStatus.CANDIDATE
 
 
 def _eval_output(
@@ -134,6 +200,7 @@ def _case(
         case_id: str = "sft-train-answer",
         split: str = "train",
         case_group: str = "core",
+        gold_origin: str = "unspecified",
 ) -> PlannerEvalCase:
     return PlannerEvalCase(
         case_id=case_id,
@@ -169,6 +236,7 @@ def _case(
         acceptable_action_paths=[["local_search", "answer"]],
         expected_identifiers={"equipment_model": ["HAK 180"], "alarm_code": ["E020"]},
         label_source="manual",
+        gold_origin=gold_origin,
         human_review_status="reviewed",
     )
 

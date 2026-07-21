@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from datetime import UTC, datetime
+from enum import Enum
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -22,6 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.rag.evaluation.baseline_runner import BaselineEvalOutput
 from app.rag.evaluation.case_schema import (
     CaseSplit,
+    GoldOrigin,
     HumanReviewStatus,
     PlannerEvalCase,
     PlannerEvalResult,
@@ -46,6 +48,13 @@ class SftExportModel(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, validate_assignment=True)
 
 
+class SftArtifactStatus(str, Enum):
+    """SFT 导出产物的审批级别；状态写入每条样本和 manifest，不能靠文件名推断。"""
+
+    CANDIDATE = "candidate"  # 自动筛选候选，仍需人工抽查或数据负责人批准后才能训练。
+    APPROVED_TRAINING_SEED = "approved_training_seed"  # 已审核 Gold 生成的正式训练种子，可进入阶段 9 SFT。
+
+
 class SftExportConfig(SftExportModel):
     """
     SFT 导出过滤配置。
@@ -61,6 +70,8 @@ class SftExportConfig(SftExportModel):
     allowed_splits: tuple[CaseSplit, ...] = DEFAULT_ALLOWED_SPLITS
     # 私有文档样本是否必须人工复核。默认必须，避免未经确认的私有数据进入训练。
     require_private_review: bool = True
+    # 导出产物审批级别。默认仍是 candidate；只有调用方显式选择才能生成正式训练种子。
+    artifact_status: SftArtifactStatus = SftArtifactStatus.CANDIDATE
 
     @model_validator(mode="after")
     def reject_test_and_demo_splits(self) -> "SftExportConfig":
@@ -98,10 +109,17 @@ class SftPlannerSample(SftExportModel):
     target_decision: dict[str, Any]
     # 来源轨迹 Reward 摘要。只保存总分、关键分项和进入原因，不保存完整 Trace。
     reward_summary: dict[str, Any]
+    # Gold 生产方式，直接来自 PlannerEvalCase；正式训练种子不允许 unspecified。
+    # 旧版阶段 8 导出文件没有该字段，读取时按 unspecified 兼容；正式训练种子仍会在
+    # _selection_decision 中被强制要求填写明确来源，不能借默认值绕过审批门禁。
+    gold_origin: GoldOrigin = GoldOrigin.UNSPECIFIED
     # 标签来源：rule、api_teacher、local_base 或 manual。
     label_source: str = Field(min_length=1)
     # 复核状态：reviewed 表示人工复核样本，auto_selected 表示自动按 Reward/路径筛选。
     review_status: str = Field(min_length=1)
+    # 本条样本继承的导出审批级别；approved_training_seed 表示可进入正式 SFT 数据集。
+    # 旧版产物默认只按候选处理，不能因为升级 schema 就被误认为已批准训练数据。
+    artifact_status: SftArtifactStatus = SftArtifactStatus.CANDIDATE
 
     @model_validator(mode="after")
     def validate_training_boundaries(self) -> "SftPlannerSample":
@@ -133,6 +151,9 @@ class SftExportManifest(SftExportModel):
     snapshot_id: str = Field(min_length=1)
     # 来源 Reward 版本。
     reward_version: str = Field(min_length=1)
+    # 整个导出产物的审批级别；和每条样本一致。
+    # 兼容阶段 8 历史 manifest；缺失审批状态时只能降级为 candidate。
+    artifact_status: SftArtifactStatus = SftArtifactStatus.CANDIDATE
     # 自动选择阈值。
     reward_threshold: float = Field(ge=0, le=1)
     # 本次允许导出的 split。
@@ -149,6 +170,8 @@ class SftExportManifest(SftExportModel):
     source_ratios: dict[str, float] = Field(default_factory=dict)
     # 按 split 统计的样本数。
     split_counts: dict[str, int] = Field(default_factory=dict)
+    # 按 Gold 生产方式统计样本数，防止 curated/production/heldout 无标记混合。
+    gold_origin_counts: dict[str, int] = Field(default_factory=dict)
     # 按 review_status 统计的样本数。
     review_status_counts: dict[str, int] = Field(default_factory=dict)
     # 被过滤轨迹的首要原因统计。
@@ -273,6 +296,15 @@ def _selection_decision(
         return _reject("split_not_allowed")
     if case.human_review_status == HumanReviewStatus.REJECTED:
         return _reject("case_review_rejected")
+    if config.artifact_status == SftArtifactStatus.APPROVED_TRAINING_SEED:
+        if case.split != CaseSplit.TRAIN:
+            return _reject("approved_seed_requires_train")
+        if case.human_review_status != HumanReviewStatus.REVIEWED:
+            return _reject("approved_seed_requires_reviewed")
+        if case.gold_origin == GoldOrigin.UNSPECIFIED:
+            return _reject("approved_seed_requires_gold_origin")
+        if case.gold_origin == GoldOrigin.HELDOUT_GOLD:
+            return _reject("heldout_gold_not_trainable")
     if config.require_private_review and case.privacy_scope == PrivacyScope.PRIVATE_USER:
         if case.human_review_status != HumanReviewStatus.REVIEWED:
             return _reject("private_case_not_reviewed")
@@ -329,8 +361,10 @@ def _samples_from_result(
             input_context=_input_context(case, result, actions[:index]),
             target_decision=_target_decision(case, result, action, is_terminal=(index == len(actions) - 1)),
             reward_summary=_reward_summary(result, selection_reason, config),
+            gold_origin=case.gold_origin,
             label_source=_label_source(result, case),
             review_status=_review_status(case),
+            artifact_status=config.artifact_status,
         ))
     return samples
 
@@ -423,12 +457,14 @@ def _build_manifest(
     source_counts = Counter(sample.label_source for sample in samples)
     split_counts = Counter(sample.split.value for sample in samples)
     review_counts = Counter(sample.review_status for sample in samples)
+    gold_origin_counts = Counter(sample.gold_origin.value for sample in samples)
     return SftExportManifest(
         manifest_id=f"sft_manifest_{eval_output.run_id}",
         created_at=datetime.now(UTC).isoformat(),
         source_run_id=eval_output.run_id,
         snapshot_id=eval_output.snapshot_id,
         reward_version=eval_output.reward_version,
+        artifact_status=config.artifact_status,
         reward_threshold=config.reward_threshold,
         allowed_splits=list(config.allowed_splits),
         exported_case_count=len({result.case_id for result in accepted_results}),
@@ -437,6 +473,7 @@ def _build_manifest(
         source_counts=dict(sorted(source_counts.items())),
         source_ratios=_ratios(source_counts),
         split_counts=dict(sorted(split_counts.items())),
+        gold_origin_counts=dict(sorted(gold_origin_counts.items())),
         review_status_counts=dict(sorted(review_counts.items())),
         filter_counts=dict(sorted(filter_counts.items())),
         filter_rules=[
@@ -444,6 +481,7 @@ def _build_manifest(
             "格式非法、执行错误、无效引用轨迹不导出",
             "API teacher 轨迹必须达到 Reward 阈值",
             "私有文档样本默认必须人工 reviewed",
+            "approved_training_seed 必须来自 train、reviewed 且具有明确 gold_origin 的非 heldout Gold",
             "导出样本不包含完整 chunk 正文、答案 Prompt 或模型私有思维链",
         ],
         excluded_payloads=[
@@ -614,6 +652,7 @@ def parse_allowed_splits(value: str | Iterable[str | CaseSplit]) -> tuple[CaseSp
 __all__ = [
     "DEFAULT_REWARD_THRESHOLD",
     "SFT_EXPORT_VERSION",
+    "SftArtifactStatus",
     "SftExportConfig",
     "SftExportManifest",
     "SftExportResult",
