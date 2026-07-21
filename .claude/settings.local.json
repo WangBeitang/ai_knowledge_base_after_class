@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(git *)",
-      "Bash(uv run *)"
+      "Bash(uv run *)",
+      "Bash(curl -sL --max-time 15 \"https://archive.ics.uci.edu/dataset/447/condition+monitoring+of+hydraulic+systems\")",
+      "Bash(curl -sL --max-time 15 \"https://archive.ics.uci.edu/api/dataset/601\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d.get\\(k\\) for k in ['name','description','variable_info','additional_info']}, indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(curl -sL --max-time 15 \"https://archive.ics.uci.edu/api/dataset/447\")",
+      "Bash(python3 -c ' *)"
     ]
   }
 }

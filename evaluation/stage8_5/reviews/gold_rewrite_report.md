@@ -12,13 +12,16 @@
 - `gold_status=source_verified`：主审核 agent 已逐答案点核对 UCI 官方说明。
 - `label_source=api_assisted`：明确保留 agent 辅助生成来源，不标为 manual。
 - `human_review_status=reviewed`：表示已通过阶段 8.5 当前审核门禁，不等同于领域专家背书。
-- `second_review_status=pending`：仍建议使用已有复审提示词让另一个 agent 独立检查。
+- `second_review_status=passed`：Claude 已作为独立 agent 复核 20 条，全部为高置信 gold，无不受支持答案点、错误 fact ID 或建议修复项。
 
 ## 运行边界
 
-- `gold_evidence_documents.jsonl` 的状态是 `gold_evidence_ready_for_import`，不是已入库。
-- 在阶段 8.5.4 跑 Planner 检索评测前，需先导入两个 evidence document，并生成新的环境快照。
+- 本批 20 条明确归类为 `curated_seed_gold`：保留作为 train 种子和回归集，不作为独立 dev/test 或生产文档切分能力的证明。
+- `gold_evidence_documents.jsonl` 仍是作者层逻辑文档定义；2 份 evidence document 和 10 个定界 chunk 已经导入 Mongo/Milvus。
+- `gold_cases_indexed.jsonl` 已使用真实 Milvus 整数 `chunk_id`，`gold_case_runtime_bindings.jsonl` 保留逻辑证据键到运行时 ID 的映射。
+- 新快照为 `stage85-env-20260721-v1`，阶段 8.5.4 必须使用该快照与 indexed case，不得与阶段 8 旧快照混用。
 - 20 条目前全部放入 train；同一 UCI 官方说明不拆到 dev/test，后续 held-out 应使用独立来源文档。
+- 后续新增 Gold 必须先让原始文档经过生产 parser/chunker/indexer 入库并冻结快照，再基于真实 `document_id + chunk_id + index_version` 生成问题、答案和审计映射。
 
 ## 逐条映射
 

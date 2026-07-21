@@ -69,5 +69,5 @@
 - AI4I 10 条覆盖 TWF/HDF/PWF/OSF/RNF；Hydraulic 10 条覆盖 cooler/valve/internal pump leakage/accumulator/stable flag。
 - `gold_evidence_chunks.jsonl` 保存 10 个证据 chunk、官方 URL、页面定位和原子事实；`gold_case_audit.jsonl` 保存每个答案点到 fact ID 的映射。
 - `gold_cases.jsonl` 中不再包含原候选的维修动作、未公开根因或通用安全建议。
-- 当前 `second_review_status=pending`；另一个 agent 独立复核通过后再更新二审状态。
-- 证据文档仍处于 `gold_evidence_ready_for_import`，导入知识库并生成新环境快照之前不能直接用于阶段 8.5.4 检索评测。
+- Claude 已完成独立二审；20 条均为 `decision=gold`、`confidence=high`，审计文件已更新为 `second_review_status=passed`。
+- 2 份证据文档和 10 个定界 chunk 已导入知识库；阶段 8.5.4 使用 `gold_cases_indexed.jsonl` 和新快照 `stage85-env-20260721-v1`。

@@ -57,6 +57,12 @@ class FakeCollection:
         return True
 
     def update_one(self, query, update, upsert=False):
+        # 真实 Mongo 会拒绝同一路径同时出现在多个更新操作符中；测试桩也保持这个约束，
+        # 避免 ensure_default_dataset 之类代码只在连接真实数据库时才暴露 path conflict。
+        set_on_insert_fields = set(update.get("$setOnInsert", {}))
+        set_fields = set(update.get("$set", {}))
+        if set_on_insert_fields.intersection(set_fields):
+            raise ValueError("Mongo update path conflict")
         matched_key = next(
             (key for key, document in self.items.items() if self._matches(document, query)),
             None,

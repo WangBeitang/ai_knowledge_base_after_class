@@ -1,0 +1,135 @@
+{
+  "chunk_bindings": [
+    {
+      "chunk_id": 467551067585611565,
+      "content_sha256": "6af63e063c33dbb7bf999ff4be573164491220fe2f8f3408f3959b33eedc73f6",
+      "document_id": "doc_stage85_uci_ai4i_official_description_v1",
+      "evidence_key": "chunk_ai4i_twf_rule",
+      "index_version": 1,
+      "source_id": "uci-ai4i-2020"
+    },
+    {
+      "chunk_id": 467551067585611566,
+      "content_sha256": "8f0aa08a874879bdb87cc610f0bbfca9b24c0e4000b04e1479db3c7da5b56544",
+      "document_id": "doc_stage85_uci_ai4i_official_description_v1",
+      "evidence_key": "chunk_ai4i_hdf_rule",
+      "index_version": 1,
+      "source_id": "uci-ai4i-2020"
+    },
+    {
+      "chunk_id": 467551067585611567,
+      "content_sha256": "c568ba19395baac73e9563eec8f5614f87e2d294943258e2e35d8c383312e67d",
+      "document_id": "doc_stage85_uci_ai4i_official_description_v1",
+      "evidence_key": "chunk_ai4i_pwf_rule",
+      "index_version": 1,
+      "source_id": "uci-ai4i-2020"
+    },
+    {
+      "chunk_id": 467551067585611568,
+      "content_sha256": "8c18810bc186203da6cd052636d8e0d5fd47400b5f7036f40e0d064dbbffbac1",
+      "document_id": "doc_stage85_uci_ai4i_official_description_v1",
+      "evidence_key": "chunk_ai4i_osf_rule",
+      "index_version": 1,
+      "source_id": "uci-ai4i-2020"
+    },
+    {
+      "chunk_id": 467551067585611569,
+      "content_sha256": "a6131b64d9c20f1f0e4f3c63230882bbf2118ec72a587e158bd876560dc006a6",
+      "document_id": "doc_stage85_uci_ai4i_official_description_v1",
+      "evidence_key": "chunk_ai4i_rnf_rule",
+      "index_version": 1,
+      "source_id": "uci-ai4i-2020"
+    },
+    {
+      "chunk_id": 467551067585611571,
+      "content_sha256": "69ad379616891a387defb422edbf2e3bccfbff7fc5a839165289f4ec3da938d0",
+      "document_id": "doc_stage85_uci_hydraulic_official_description_v1",
+      "evidence_key": "chunk_hydraulic_profile_cooler",
+      "index_version": 1,
+      "source_id": "uci-hydraulic-condition"
+    },
+    {
+      "chunk_id": 467551067585611572,
+      "content_sha256": "05d19789dabc103c0cb7623721eb3d17db464605504764db89f5191006d6ea35",
+      "document_id": "doc_stage85_uci_hydraulic_official_description_v1",
+      "evidence_key": "chunk_hydraulic_profile_valve",
+      "index_version": 1,
+      "source_id": "uci-hydraulic-condition"
+    },
+    {
+      "chunk_id": 467551067585611573,
+      "content_sha256": "53caa4d7ec080d192f54ff69ea9b5c932b493b8b36cb1f9e6d5b3cf5d1fa87bd",
+      "document_id": "doc_stage85_uci_hydraulic_official_description_v1",
+      "evidence_key": "chunk_hydraulic_profile_pump_leakage",
+      "index_version": 1,
+      "source_id": "uci-hydraulic-condition"
+    },
+    {
+      "chunk_id": 467551067585611574,
+      "content_sha256": "caf0ef12f301d7311b86a9adfa22f94e39d414b9c63b2d503bf652ac86fb1cc2",
+      "document_id": "doc_stage85_uci_hydraulic_official_description_v1",
+      "evidence_key": "chunk_hydraulic_profile_accumulator",
+      "index_version": 1,
+      "source_id": "uci-hydraulic-condition"
+    },
+    {
+      "chunk_id": 467551067585611575,
+      "content_sha256": "8a4d4d33c031158307d449e0ba7793445b7c0fe1a0b9f69721e7fdad1c2657db",
+      "document_id": "doc_stage85_uci_hydraulic_official_description_v1",
+      "evidence_key": "chunk_hydraulic_profile_stable_flag",
+      "index_version": 1,
+      "source_id": "uci-hydraulic-condition"
+    }
+  ],
+  "dataset_id": "dataset_default_equipment_ops",
+  "documents": [
+    {
+      "chunk_count": 5,
+      "dataset_id": "dataset_default_equipment_ops",
+      "document_id": "doc_stage85_uci_ai4i_official_description_v1",
+      "import_action": "reused",
+      "index_version": 1,
+      "owner_user_id": "eval_demo_user",
+      "source_hash": "48e55eaefc2ee6838c3f1195957ab116a03d3e4ee2b7f41760d09c4e02660054",
+      "source_id": "uci-ai4i-2020",
+      "source_title": "AI4I 2020 Predictive Maintenance Dataset",
+      "task_id": "task_stage85_gold_fa56250d6107441fb0cf30b5f2ae930b",
+      "visibility": "public"
+    },
+    {
+      "chunk_count": 5,
+      "dataset_id": "dataset_default_equipment_ops",
+      "document_id": "doc_stage85_uci_hydraulic_official_description_v1",
+      "import_action": "reused",
+      "index_version": 1,
+      "owner_user_id": "eval_demo_user",
+      "source_hash": "f21b2390bf6a9f9e296ac276debf4242494396b1d66e965961c54f07b306ab08",
+      "source_id": "uci-hydraulic-condition",
+      "source_title": "Condition Monitoring of Hydraulic Systems",
+      "task_id": "task_stage85_gold_1cb8ff12f67c4338a5b1b3a808850479",
+      "visibility": "public"
+    }
+  ],
+  "gold_version": "stage85-source-grounded-gold-v1",
+  "import_version": "stage85-gold-import-v1",
+  "imported_at": "2026-07-21T02:49:40+00:00",
+  "indexed_case_count": 20,
+  "indexed_cases_path": "evaluation/stage8_5/candidates/gold_cases_indexed.jsonl",
+  "second_review_count": 20,
+  "second_review_path": "evaluation/stage8_5/reviews/gold_case_second_review.jsonl",
+  "second_review_sha256": "9f8ad56146427ab3557e613360d8b07aa4b383d2a07abfa772a662e3f2debe0f",
+  "snapshot_id": "stage85-env-20260721-v1",
+  "snapshot_path": "evaluation/stage8_5/results/environment_snapshot_stage85.json",
+  "snapshot_summary": {
+    "case_count": 20,
+    "case_dataset_ids_missing_from_snapshot": [],
+    "case_reference_check": "passed",
+    "dataset_count": 1,
+    "disabled_chunk_count": 0,
+    "document_count": 14,
+    "enabled_chunk_count": 1816,
+    "snapshot_id": "stage85-env-20260721-v1"
+  },
+  "source_evidence_path": "evaluation/stage8_5/processed/gold_evidence_chunks.jsonl",
+  "source_evidence_sha256": "ec79ed94d0083908398476b9b798ebfe409aa0c58b70dde4df61be7646d4fe5e"
+}

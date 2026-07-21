@@ -106,6 +106,8 @@ class GoldCaseAudit(GoldModel):
     gold_status: str = Field(default="source_verified", description="source_verified 表示所有答案点已完成来源核对。")
     reviewer_type: str = Field(default="primary_agent", description="当前复核者类型；不伪装成人类领域专家。")
     second_review_status: str = Field(default="pending", description="独立第二轮 agent 复审状态，当前默认 pending。")
+    second_reviewer_type: str = Field(default="", description="二审执行者类型；通过前为空，通过后记录 independent_agent。")
+    second_review_artifact: str = Field(default="", description="二审结果文件路径；用于证明 passed 状态来自哪份独立审核。")
     answer_evidence: list[GoldAnswerEvidence] = Field(min_length=1, description="每个答案要点到来源事实的映射。")
     excluded_content: list[str] = Field(default_factory=list, description="从原候选删除的无来源维修动作、根因或推断。")
     review_note: str = Field(min_length=1, description="说明为何本条可以达到 source-grounded gold。")

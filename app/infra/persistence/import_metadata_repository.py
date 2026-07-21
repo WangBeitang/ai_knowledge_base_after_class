@@ -135,13 +135,13 @@ class ImportMetadataRepository:
                     "dataset_id": DEFAULT_DATASET_ID,
                     "name": DEFAULT_DATASET_NAME,
                     "description": "默认设备运维知识库容器。",
-                    "owner_user_id": DEFAULT_DATASET_OWNER_USER_ID,
-                    "tenant_id": DEFAULT_TENANT_ID,
-                    "visibility": "public",
-                    "status": DATASET_STATUS_ACTIVE,
                     "created_by_user_id": DEFAULT_DATASET_OWNER_USER_ID,
                     "created_at": now,
+                    "deleted_at": "",
                 },
+                # Mongo 禁止同一路径同时出现在 $setOnInsert 和 $set。owner/tenant/visibility/status
+                # 属于每次确保默认 dataset 时都要修正的当前状态，因此只放在 $set；创建时间等
+                # 不可变字段只放在 $setOnInsert。这样真实 Mongo 和测试桩的行为保持一致。
                 "$set": {
                     "owner_user_id": DEFAULT_DATASET_OWNER_USER_ID,
                     "tenant_id": DEFAULT_TENANT_ID,
