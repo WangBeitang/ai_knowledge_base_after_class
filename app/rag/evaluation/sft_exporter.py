@@ -547,6 +547,9 @@ def _terminal_behavior_mismatch(result: PlannerEvalResult, case: PlannerEvalCase
 
 
 def _label_source(result: PlannerEvalResult, case: PlannerEvalCase) -> str:
+    label_override = str(result.usage.get("label_source_override", "")).strip()
+    if label_override:
+        return label_override
     if result.planner_mode == PlannerMode.API:
         return "api_teacher"
     if result.planner_mode == PlannerMode.RULE:

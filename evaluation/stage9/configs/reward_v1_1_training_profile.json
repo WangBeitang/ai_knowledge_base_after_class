@@ -1,0 +1,24 @@
+{
+  "profile_name": "planner-training-v1",
+  "reward_version": "reward-v1.1",
+  "weights": {
+    "format": 0.15,
+    "retrieval": 0.12,
+    "citation": 0.08,
+    "answer": 0.15,
+    "behavior": 0.35,
+    "cost": 0.15
+  },
+  "frozen_at": "2026-07-21T12:25:59+00:00",
+  "source_dev_cases": "evaluation/stage8/cases/planner_cases.jsonl",
+  "snapshot_id": "stage8-env-20260715-v1",
+  "snapshot_path": "evaluation/stage8/snapshots/environment_snapshot.json",
+  "action_path_suite_version": "stage9-action-path-suite-v1",
+  "calibration_run_id": "stage9_reward_calibration_20260721T122559Z_d8be6a87",
+  "runner_version": "stage9-reward-calibration-runner-v1",
+  "decision": "frozen",
+  "decision_reasons": [
+    "未发现乱 HyDE、乱 Web、过早拒答或过早回答系统性胜出的关键反模式。"
+  ],
+  "note": "基于当前 dev 多轨迹校准自动冻结；如果后续新增独立 dev Gold，应重新生成 profile。"
+}

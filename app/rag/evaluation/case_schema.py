@@ -96,6 +96,7 @@ class GoldOrigin(str, Enum):
 
     UNSPECIFIED = "unspecified"  # 非 Gold 或历史 case；旧阶段 8 文件默认使用，不自动获得 Gold 身份。
     CURATED_SEED_GOLD = "curated_seed_gold"  # 人工策划原子证据的高置信种子；只允许 train/回归。
+    ROUTE_SEED_GOLD = "route_seed_gold"  # 阶段 9 人工路线种子；用于训练 Planner Action 覆盖，只允许 train，不代表 held-out 事实评测。
     PRODUCTION_CHUNK_GOLD = "production_chunk_gold"  # 生产文档先切分入库、再基于真实 chunk 生成的 Gold。
     HELDOUT_GOLD = "heldout_gold"  # 独立来源冻结 Gold；只用于 dev/test，禁止训练导出。
 

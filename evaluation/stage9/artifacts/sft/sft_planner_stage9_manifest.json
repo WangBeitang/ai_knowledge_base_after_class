@@ -1,0 +1,155 @@
+{
+  "manifest_id": "stage9_sft_manifest_20260721T124918Z",
+  "merge_version": "stage9-sft-merge-v1",
+  "created_at": "2026-07-21T12:49:18+00:00",
+  "artifact_status": "approved_training_seed",
+  "reward_version": "reward-v1.1",
+  "base_sft_path": "/Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage8_5/artifacts/final/sft_curated_seed_train.jsonl",
+  "base_manifest_path": "/Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage8_5/artifacts/final/sft_curated_seed_manifest.json",
+  "route_sft_path": "/Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/route_seed/sft_route_seed_train.jsonl",
+  "route_manifest_path": "/Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/route_seed/sft_route_seed_manifest.json",
+  "sample_count": 155,
+  "source_case_count": 70,
+  "action_counts": {
+    "answer": 30,
+    "ask_clarification": 10,
+    "hyde_search": 20,
+    "local_search": 55,
+    "refuse": 30,
+    "web_search": 10
+  },
+  "route_family_counts": {
+    "ask_clarification": 15,
+    "hyde_fallback": 30,
+    "multi_step_fallback": 30,
+    "refuse": 15,
+    "stop_when_enough": 40,
+    "web_search": 25
+  },
+  "terminal_action_counts": {
+    "answer": 30,
+    "ask_clarification": 10,
+    "refuse": 30
+  },
+  "label_source_counts": {
+    "manual_route_seed": 115,
+    "rule": 40
+  },
+  "gold_origin_counts": {
+    "curated_seed_gold": 40,
+    "route_seed_gold": 115
+  },
+  "review_status_counts": {
+    "reviewed": 155
+  },
+  "split_counts": {
+    "train": 155
+  },
+  "source_manifests": [
+    {
+      "kind": "curated_seed",
+      "manifest": {
+        "manifest_id": "sft_manifest_stage8_eval_20260721T071755Z_e824ffd1",
+        "export_version": "stage8-sft-export-v1",
+        "created_at": "2026-07-21T07:18:13.009054+00:00",
+        "source_run_id": "stage8_eval_20260721T071755Z_e824ffd1",
+        "snapshot_id": "stage85-env-20260721-v2",
+        "reward_version": "reward-v1.1",
+        "artifact_status": "approved_training_seed",
+        "reward_threshold": 0.8,
+        "allowed_splits": [
+          "train"
+        ],
+        "exported_case_count": 20,
+        "exported_trajectory_count": 20,
+        "sample_count": 40,
+        "source_counts": {
+          "rule": 40
+        },
+        "source_ratios": {
+          "rule": 1.0
+        },
+        "split_counts": {
+          "train": 40
+        },
+        "gold_origin_counts": {
+          "curated_seed_gold": 40
+        },
+        "review_status_counts": {
+          "reviewed": 40
+        },
+        "filter_counts": {},
+        "filter_rules": [
+          "test/demo split 永不导出",
+          "格式非法、执行错误、无效引用轨迹不导出",
+          "API teacher 轨迹必须达到 Reward 阈值",
+          "私有文档样本默认必须人工 reviewed",
+          "approved_training_seed 必须来自 train、reviewed 且具有明确 gold_origin 的非 heldout Gold",
+          "导出样本不包含完整 chunk 正文、答案 Prompt 或模型私有思维链"
+        ],
+        "excluded_payloads": [
+          "full_chunk_content",
+          "answer_prompt",
+          "private_chain_of_thought",
+          "model_reasoning_text"
+        ]
+      }
+    },
+    {
+      "kind": "route_seed",
+      "manifest": {
+        "manifest_id": "sft_manifest_stage9_route_seed_20260721T124909Z_58007af6",
+        "export_version": "stage8-sft-export-v1",
+        "created_at": "2026-07-21T12:49:18.612724+00:00",
+        "source_run_id": "stage9_route_seed_20260721T124909Z_58007af6",
+        "snapshot_id": "stage85-env-20260721-v2",
+        "reward_version": "reward-v1.1",
+        "artifact_status": "approved_training_seed",
+        "reward_threshold": 0.8,
+        "allowed_splits": [
+          "train"
+        ],
+        "exported_case_count": 50,
+        "exported_trajectory_count": 50,
+        "sample_count": 115,
+        "source_counts": {
+          "manual_route_seed": 115
+        },
+        "source_ratios": {
+          "manual_route_seed": 1.0
+        },
+        "split_counts": {
+          "train": 115
+        },
+        "gold_origin_counts": {
+          "route_seed_gold": 115
+        },
+        "review_status_counts": {
+          "reviewed": 115
+        },
+        "filter_counts": {},
+        "filter_rules": [
+          "test/demo split 永不导出",
+          "格式非法、执行错误、无效引用轨迹不导出",
+          "API teacher 轨迹必须达到 Reward 阈值",
+          "私有文档样本默认必须人工 reviewed",
+          "approved_training_seed 必须来自 train、reviewed 且具有明确 gold_origin 的非 heldout Gold",
+          "导出样本不包含完整 chunk 正文、答案 Prompt 或模型私有思维链"
+        ],
+        "excluded_payloads": [
+          "full_chunk_content",
+          "answer_prompt",
+          "private_chain_of_thought",
+          "model_reasoning_text"
+        ]
+      }
+    }
+  ],
+  "excluded_payloads": [
+    "full_chunk_content",
+    "answer_prompt",
+    "private_chain_of_thought",
+    "model_reasoning_text"
+  ],
+  "notes": "阶段 9 初始 SFT 数据：20 条 curated seed Gold + 50 条 route_seed_gold。route_seed_gold 只用于 train，不代表 held-out test。"
+}
