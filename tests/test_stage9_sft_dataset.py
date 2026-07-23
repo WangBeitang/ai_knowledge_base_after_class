@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from evaluation.stage9.model_planner.prompt_builder import build_planner_prompt
+from app.rag.query.model_planner.prompt_builder import build_planner_prompt
 from evaluation.stage9.model_planner.sft_dataset import load_sft_train_examples
 
 

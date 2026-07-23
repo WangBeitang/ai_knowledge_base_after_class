@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from app.rag.query.contracts import PlannerContext, PlannerDecision
+from app.rag.query.model_planner.checkpoint_runtime import load_checkpoint_runtime
+from app.rag.query.model_planner.decision_codec import decode_decision
+from app.rag.query.model_planner.prompt_builder import build_planner_prompt
 
 
 class ModelPlannerOutputError(ValueError):
@@ -59,11 +62,9 @@ class ModelPlanner:
         """
         从 checkpoint（检查点）创建 ModelPlanner（模型规划器）。
 
-        这里延迟导入 evaluation.stage9，是为了让线上业务模块在未启用模型 Planner 时不会
-        因训练依赖加载失败而影响规则 Planner。
+        checkpoint runtime（检查点运行时）已经是正式 app（业务模块）能力，不依赖
+        evaluation/stage9（阶段实验目录），因此该方法可被线上查询和离线评测共同复用。
         """
-
-        from evaluation.stage9.model_planner.sft_infer import load_checkpoint_runtime
 
         runtime = load_checkpoint_runtime(checkpoint_dir)
 
@@ -90,9 +91,6 @@ class ModelPlanner:
 
         if not isinstance(context, PlannerContext):
             raise TypeError("context 必须是 PlannerContext")
-
-        from evaluation.stage9.model_planner.decision_codec import decode_decision
-        from evaluation.stage9.model_planner.prompt_builder import build_planner_prompt
 
         prompt = build_planner_prompt(context)
         raw_output = self._generate_text(

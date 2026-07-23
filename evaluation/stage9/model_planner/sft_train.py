@@ -24,8 +24,8 @@ from evaluation.stage9.model_planner.checkpoint_io import (  # noqa: E402
     load_training_config,
     write_json,
 )
-from evaluation.stage9.model_planner.decision_codec import DECISION_CODEC_VERSION  # noqa: E402
-from evaluation.stage9.model_planner.prompt_builder import PROMPT_BUILDER_VERSION, PlannerPromptConfig  # noqa: E402
+from app.rag.query.model_planner.decision_codec import DECISION_CODEC_VERSION  # noqa: E402
+from app.rag.query.model_planner.prompt_builder import PROMPT_BUILDER_VERSION, PlannerPromptConfig  # noqa: E402
 from evaluation.stage9.model_planner.sft_dataset import (  # noqa: E402
     SftDatasetStats,
     SftTrainExample,

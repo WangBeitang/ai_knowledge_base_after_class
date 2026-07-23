@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -91,3 +92,13 @@ def test_debug_smoke_checkpoint_loads_through_model_planner(tmp_path):
     assert decision.model_dump(mode="json") == examples[0].target_decision
     metrics = json.loads((checkpoint_dir / "train_metrics.json").read_text(encoding="utf-8"))
     assert metrics["dataset"]["format_parse_rate"] == 1.0
+
+
+def test_model_planner_runtime_does_not_import_stage9_runtime():
+    runtime_dir = Path("app/rag/query/model_planner")
+    sources = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in runtime_dir.glob("*.py")
+    )
+
+    assert "evaluation.stage9.model_planner" not in sources

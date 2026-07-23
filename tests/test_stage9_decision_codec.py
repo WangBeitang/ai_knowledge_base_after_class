@@ -1,7 +1,7 @@
 import json
 
 from app.rag.query.contracts import PlannerDecision, PlannerReasonCode, QueryAction
-from evaluation.stage9.model_planner.decision_codec import decode_decision, encode_decision
+from app.rag.query.model_planner.decision_codec import decode_decision, encode_decision
 
 
 def test_encode_decision_writes_minimal_json():

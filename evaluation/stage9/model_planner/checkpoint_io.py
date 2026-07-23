@@ -6,28 +6,21 @@ import json
 import subprocess
 import uuid
 from datetime import UTC, datetime
-from enum import Enum
 from importlib import metadata
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.rag.query.model_planner.checkpoint_runtime import (
+    CheckpointManifest,
+    TrainingBackend,
+    load_checkpoint_manifest,
+)
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CHECKPOINT_ROOT = "evaluation/stage9/artifacts/sft/checkpoints"
-
-
-class TrainingBackend(str, Enum):
-    """
-    训练后端枚举。
-
-    DEBUG_MEMORIZED 是本地 smoke（冒烟）后端，只验证数据、prompt、codec、checkpoint 和
-    推理链路；TRANSFORMERS_CAUSAL_LM 才是云端 GPU（显卡算力）实际训练入口。
-    """
-
-    DEBUG_MEMORIZED = "debug_memorized"
-    TRANSFORMERS_CAUSAL_LM = "transformers_causal_lm"
 
 
 class CheckpointModel(BaseModel):
@@ -79,42 +72,6 @@ class Stage9SftTrainingConfig(CheckpointModel):
         return self
 
 
-class CheckpointManifest(CheckpointModel):
-    """
-    checkpoint manifest（检查点清单）。
-
-    它是训练产物的机器可读索引：后续 eval（评测）、SFT（监督微调）对比和 GRPO（组相对
-    策略优化强化训练）必须从这里追踪模型、数据、Reward（奖励）和代码版本。
-    """
-
-    run_id: str = Field(min_length=1)
-    run_name: str = Field(min_length=1)
-    policy_version: str = Field(min_length=1)
-    training_backend: TrainingBackend
-    base_model_id: str = Field(min_length=1)
-    train_data: str = Field(min_length=1)
-    train_manifest: str = Field(min_length=1)
-    reward_profile: str = Field(min_length=1)
-    snapshot_id: str = Field(min_length=1)
-    code_version: str = Field(min_length=1)
-    created_at: str = Field(min_length=1)
-    seed: int = Field(ge=0)
-    framework_versions: dict[str, str] = Field(default_factory=dict)
-    prompt_builder_version: str = Field(min_length=1)
-    decision_codec_version: str = Field(min_length=1)
-    model_path: str = Field(min_length=1)
-    tokenizer_path: str = ""
-    train_metrics_path: str = Field(min_length=1)
-    eval_metrics_path: str = ""
-    training_config_path: str = Field(min_length=1)
-    sample_count: int = Field(ge=0)
-    source_case_count: int = Field(ge=0)
-    action_counts: dict[str, int] = Field(default_factory=dict)
-    reason_code_counts: dict[str, int] = Field(default_factory=dict)
-    max_input_tokens: int = Field(ge=1)
-    max_target_tokens: int = Field(ge=1)
-
-
 def load_training_config(path: str | Path) -> Stage9SftTrainingConfig:
     """读取训练 config（配置）JSON 并校验。"""
 
@@ -141,13 +98,6 @@ def create_checkpoint_dir(config: Stage9SftTrainingConfig) -> tuple[str, Path]:
     checkpoint_dir = output_root / run_id
     checkpoint_dir.mkdir(parents=True, exist_ok=False)
     return run_id, checkpoint_dir
-
-
-def load_checkpoint_manifest(checkpoint_dir: str | Path) -> CheckpointManifest:
-    """读取 checkpoint_manifest.json。"""
-
-    manifest_path = Path(checkpoint_dir) / "checkpoint_manifest.json"
-    return CheckpointManifest.model_validate_json(manifest_path.read_text(encoding="utf-8"))
 
 
 def collect_framework_versions() -> dict[str, str]:
