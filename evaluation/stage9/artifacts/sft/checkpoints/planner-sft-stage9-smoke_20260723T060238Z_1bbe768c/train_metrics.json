@@ -1,0 +1,49 @@
+{
+  "trainer_version": "stage9-planner-sft-trainer-v1",
+  "training_backend": "debug_memorized",
+  "dataset": {
+    "sample_count": 155,
+    "source_case_count": 70,
+    "action_counts": {
+      "answer": 30,
+      "ask_clarification": 10,
+      "hyde_search": 20,
+      "local_search": 55,
+      "refuse": 30,
+      "web_search": 10
+    },
+    "reason_code_counts": {
+      "initial_local_search": 55,
+      "local_evidence_sufficient": 30,
+      "local_low_score": 20,
+      "realtime_query": 10,
+      "safe_guard_triggered": 30,
+      "subject_required": 10
+    },
+    "split_counts": {
+      "train": 155
+    },
+    "label_source_counts": {
+      "manual_route_seed": 115,
+      "rule": 40
+    },
+    "review_status_counts": {
+      "reviewed": 155
+    },
+    "artifact_status_counts": {
+      "approved_training_seed": 155
+    },
+    "format_parse_rate": 1.0,
+    "prompt_char_count_avg": 1721.9032258064517,
+    "target_char_count_avg": 111.51612903225806,
+    "max_prompt_char_count": 2112,
+    "max_target_char_count": 147
+  },
+  "source_manifest_id": "stage9_sft_manifest_20260721T124918Z",
+  "reward_profile": "planner-training-v1",
+  "backend_metrics": {
+    "updated_model_weights": false,
+    "memorized_context_count": 111,
+    "note": "本地 smoke 后端只验证训练/推理/评测链路，不代表真实 SFT 模型效果。"
+  }
+}

@@ -536,6 +536,17 @@ class OfflineRagEnvironment:
             candidates = []
 
         duration_ms = _elapsed_ms(start)
+        recording_error = _notify_provider_observation(
+            self.action_provider,
+            state=state,
+            decision=decision,
+            candidates=candidates,
+            observation=observation,
+            error=error,
+            duration_ms=duration_ms,
+        )
+        if error is None and recording_error is not None:
+            error = recording_error
         state.planner_step += 1
         state.action_history.append(PlannerHistoryItem(
             step=state.planner_step,
@@ -1076,6 +1087,45 @@ def _require_text(value: Any, *, field_name: str) -> str:
 
 def _elapsed_ms(start: float) -> int:
     return max(0, int((time.monotonic() - start) * 1000))
+
+
+def _notify_provider_observation(
+        provider: OfflineActionProvider,
+        *,
+        state: OfflineState,
+        decision: PlannerDecision,
+        candidates: list[RetrievalCandidate],
+        observation: RetrievalObservation,
+        error: OfflineError | None,
+        duration_ms: int,
+) -> OfflineError | None:
+    """
+    通知可选的 RecordingActionProvider（记录型动作执行器）保存 Observation（观察结果）。
+
+    OfflineActionProvider（离线动作执行器）协议仍然只要求返回候选；记录能力是阶段 9.2
+    的可选扩展。这样旧测试和旧 provider 不需要改动，真实训练时又能把每次 Action（动作）
+    看到的 Observation（观察结果）写成审计日志。
+    """
+    record_observation = getattr(provider, "record_observation", None)
+    if record_observation is None:
+        return None
+    try:
+        record_observation(
+            state=state.model_copy(deep=True),
+            decision=decision.model_copy(deep=True),
+            candidates=[candidate.model_copy(deep=True) for candidate in candidates],
+            observation=observation.model_copy(deep=True),
+            error=error.model_copy(deep=True) if error is not None else None,
+            duration_ms=duration_ms,
+        )
+    except Exception as exc:
+        return OfflineError(
+            code="provider_recording_failed",
+            message=f"Provider Observation 记录失败：{exc}",
+            step=state.planner_step + 1,
+            action=decision.action,
+        )
+    return None
 
 
 __all__ = [

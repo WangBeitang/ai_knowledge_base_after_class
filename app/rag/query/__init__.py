@@ -21,6 +21,10 @@ from app.rag.query.planner import (
     RuleBasedPlanner,
     RuleBasedPlannerConfig,
 )
+from app.rag.query.model_planner import (
+    ModelPlanner,
+    ModelPlannerOutputError,
+)
 
 
 __all__ = [
@@ -40,5 +44,7 @@ __all__ = [
     "RULE_BASED_POLICY_VERSION",
     "RuleBasedPlanner",
     "RuleBasedPlannerConfig",
+    "ModelPlanner",
+    "ModelPlannerOutputError",
     "SubjectResolutionStatus",
 ]

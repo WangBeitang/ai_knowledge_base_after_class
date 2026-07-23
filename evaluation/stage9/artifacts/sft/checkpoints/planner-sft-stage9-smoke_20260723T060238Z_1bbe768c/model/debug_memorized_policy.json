@@ -1,0 +1,674 @@
+{
+  "backend": "debug_memorized",
+  "version": "stage9-debug-memorized-policy-v1",
+  "prompt_builder_version": "stage9-planner-prompt-v1",
+  "decision_codec_version": "stage9-decision-codec-v1",
+  "context_key_to_target": {
+    "3498dd7376ab9c6249a64662b8bb6279bcb9909bdcf65289ad547ab34858505d": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-twf-rule-001_01_local_search",
+      "source_case_id": "stage85-gold-ai4i-twf-rule-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 数据集中的 TWF 在什么条件下产生？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "1225263459c1209a63745326a3c6976dfc49b0ec8f2296ecfeb21da9fe16217f": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-twf-rule-001_02_answer",
+      "source_case_id": "stage85-gold-ai4i-twf-rule-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 数据集中的 TWF 在什么条件下产生？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "d136513a10e899316f5b63dfab79b8523e99705718d2edc6230c9d00164ba658": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-twf-rule-002_01_local_search",
+      "source_case_id": "stage85-gold-ai4i-twf-rule-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 的 120 个刀具磨损时点中，更换和失效各有多少次？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "5e102dd0f5c8f7e78d58cdca8c6939c6459d96bb2f78eeeb513d7820fffc5302": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-twf-rule-002_02_answer",
+      "source_case_id": "stage85-gold-ai4i-twf-rule-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 的 120 个刀具磨损时点中，更换和失效各有多少次？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "e2cdd1c65069ed934c8374afaed3a11dba525c86ce9899460c19eb5bba2c9610": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-hdf-rule-001_01_local_search",
+      "source_case_id": "stage85-gold-ai4i-hdf-rule-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 数据集如何判定 HDF？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "b6f9adabba4e0fdfe4e61536b0e593ada1a40ab63f3f5b08b2d48c29a0121834": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-hdf-rule-001_02_answer",
+      "source_case_id": "stage85-gold-ai4i-hdf-rule-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 数据集如何判定 HDF？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "1177a3301ee9f7e5cab974cecf31ca16e7294802da08a1698017493bf460d167": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-hdf-rule-002_01_local_search",
+      "source_case_id": "stage85-gold-ai4i-hdf-rule-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 中有多少个数据点满足 HDF 规则，这个规则是单条件还是组合条件？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "98abc9188241a3ce4e11a04a5c8ddc0029d2690f778d8118bf0f0574ed112fb0": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-hdf-rule-002_02_answer",
+      "source_case_id": "stage85-gold-ai4i-hdf-rule-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 中有多少个数据点满足 HDF 规则，这个规则是单条件还是组合条件？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "a732fae9ca7d29d27c6d8ae41857acffc345436ec914c6e44b43615344b6dc00": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-pwf-rule-001_01_local_search",
+      "source_case_id": "stage85-gold-ai4i-pwf-rule-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 的 PWF 如何根据转矩和转速判定？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "fe27434e6cc51a7d7e0e72754aa9c63a8317b28e50eec3d43413bf6957d558eb": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-pwf-rule-001_02_answer",
+      "source_case_id": "stage85-gold-ai4i-pwf-rule-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 的 PWF 如何根据转矩和转速判定？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "9321975e77e7f1fec79d89982a932a592ce3fc14c2a00709dada099da629f128": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-pwf-rule-002_01_local_search",
+      "source_case_id": "stage85-gold-ai4i-pwf-rule-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 的 PWF 功率上下限分别是多少，数据集中有多少条 PWF？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "c38e439b994faf35b28c1a29e69f7d277f70f13c2868ed056b89213f9330c1d5": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-pwf-rule-002_02_answer",
+      "source_case_id": "stage85-gold-ai4i-pwf-rule-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 的 PWF 功率上下限分别是多少，数据集中有多少条 PWF？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "7980ef99cbce908db7f57cb9c857b46ef75a58fbfcbe91030ab481f092061e48": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-osf-rule-001_01_local_search",
+      "source_case_id": "stage85-gold-ai4i-osf-rule-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 的 OSF 使用哪些变量，L/M/H 三类产品的阈值分别是多少？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "2cf9ced54a5b3f76e70df57949a6cfdede734bb2dce41ac9e15b314e30109a95": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-osf-rule-001_02_answer",
+      "source_case_id": "stage85-gold-ai4i-osf-rule-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 的 OSF 使用哪些变量，L/M/H 三类产品的阈值分别是多少？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "eeab64c534f50c21a6719c6cdcf794935d818c106d78964b1ff24633b7eefcac": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-osf-rule-002_01_local_search",
+      "source_case_id": "stage85-gold-ai4i-osf-rule-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 中 H 类产品的刀具磨损与转矩乘积超过多少会触发 OSF，共有多少条 OSF？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "b3ac311291b1da2b7937b177d85b76f09b2388165561a6e1b9d08fda3d95929a": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-osf-rule-002_02_answer",
+      "source_case_id": "stage85-gold-ai4i-osf-rule-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 中 H 类产品的刀具磨损与转矩乘积超过多少会触发 OSF，共有多少条 OSF？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "36d3b0e791497e585786e1507b6945fc44c12073ab0bdd2cd96868650eccd6f4": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-rnf-rule-001_01_local_search",
+      "source_case_id": "stage85-gold-ai4i-rnf-rule-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 的 RNF 与工艺参数是什么关系，设定概率是多少？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "03f8d94f3e4f62f4494705d832b508e83ec1eced40d02e859a3ebc3a549d036b": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-rnf-rule-001_02_answer",
+      "source_case_id": "stage85-gold-ai4i-rnf-rule-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 的 RNF 与工艺参数是什么关系，设定概率是多少？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "715ab64a89ac9b115b3ba79eecd818d751e4db9734d241eb878b597e428e4410": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-rnf-rule-002_01_local_search",
+      "source_case_id": "stage85-gold-ai4i-rnf-rule-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 实际有多少个 RNF 数据点，RNF 发生时 Machine failure 如何标记？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "f0c88953846c05c1daa7244672792b009219b6c3a6a9aacd8c172b63c6a7e06e": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-ai4i-rnf-rule-002_02_answer",
+      "source_case_id": "stage85-gold-ai4i-rnf-rule-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 实际有多少个 RNF 数据点，RNF 发生时 Machine failure 如何标记？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "c455507612ce52c2d7a6df603a5305c49616a82be03caab71e74f44e6e961391": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-cooler-profile-001_01_local_search",
+      "source_case_id": "stage85-gold-hydraulic-cooler-profile-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"Hydraulic 数据集的 profile.txt 第 1 列表示什么，3/20/100 分别代表什么？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "abd97a571c1d6f2d8a3b34ec389ca8f66ab2e7994eb468953b54f41b74a6521c": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-cooler-profile-001_02_answer",
+      "source_case_id": "stage85-gold-hydraulic-cooler-profile-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"Hydraulic 数据集的 profile.txt 第 1 列表示什么，3/20/100 分别代表什么？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "2a78c1e92a62e766b39febbc87690976bcbc18823c363fb5d42641def19bbc3a": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-cooler-profile-002_01_local_search",
+      "source_case_id": "stage85-gold-hydraulic-cooler-profile-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"Hydraulic 的 profile.txt 中 cooler condition=20 应解释为什么状态？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "c59255e074b33978aa2f11fb9c600ac64e8e28424a230d5d85213bcb936cb651": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-cooler-profile-002_02_answer",
+      "source_case_id": "stage85-gold-hydraulic-cooler-profile-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"Hydraulic 的 profile.txt 中 cooler condition=20 应解释为什么状态？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "e45197aa36a15b83fa3efdec4b43f6376863bd97437418a94c9d92130d6b7b50": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-valve-profile-001_01_local_search",
+      "source_case_id": "stage85-gold-hydraulic-valve-profile-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"Hydraulic 数据集 profile.txt 的 valve condition 有哪些标签及含义？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "ee26716f752a3eadd96f66b27b186a1ebfaac7e694442e8fb1e3a99674028f34": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-valve-profile-001_02_answer",
+      "source_case_id": "stage85-gold-hydraulic-valve-profile-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"Hydraulic 数据集 profile.txt 的 valve condition 有哪些标签及含义？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "3aafa491ef3db5a8f38ffb981a349afb7b5d2bc4727e9ede47508885147556ce": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-valve-profile-002_01_local_search",
+      "source_case_id": "stage85-gold-hydraulic-valve-profile-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"Hydraulic 的 profile.txt 中 valve condition=80 代表什么？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "f3eafdd742997a5d867f293be1eaf68e18e9a483da1c98fdd1251f11a9d76f7c": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-valve-profile-002_02_answer",
+      "source_case_id": "stage85-gold-hydraulic-valve-profile-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"Hydraulic 的 profile.txt 中 valve condition=80 代表什么？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "5b384723f17a9af0d3ddff60d2c853567d6033a05f45d1c782a8441ad90cd984": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-pump-profile-001_01_local_search",
+      "source_case_id": "stage85-gold-hydraulic-pump-profile-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"Hydraulic 数据集 profile.txt 的 internal pump leakage 标签 0/1/2 各代表什么？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "97bfcc759fae0c23cd463be3aa68c8d532b613ca4f3a69ad641fe06879157681": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-pump-profile-001_02_answer",
+      "source_case_id": "stage85-gold-hydraulic-pump-profile-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"Hydraulic 数据集 profile.txt 的 internal pump leakage 标签 0/1/2 各代表什么？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "79200e695e0cf65d2dba59cf1c59a2139cd0a24e8f12a65020e7511dd26e10d0": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-pump-profile-002_01_local_search",
+      "source_case_id": "stage85-gold-hydraulic-pump-profile-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"Hydraulic 的 profile.txt 中 internal pump leakage=1 应如何解释？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "c39ee9acba66068d9c6a9ffc1c99932a73de4e90a144c22b364d64bab0488624": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-pump-profile-002_02_answer",
+      "source_case_id": "stage85-gold-hydraulic-pump-profile-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"Hydraulic 的 profile.txt 中 internal pump leakage=1 应如何解释？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "52733204669866d0c79a83a0642700af5556b69cff0f376faaf3bd59423aaa35": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-accumulator-profile-001_01_local_search",
+      "source_case_id": "stage85-gold-hydraulic-accumulator-profile-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"Hydraulic 数据集 profile.txt 的 accumulator 标签 130/115/100/90 分别代表什么？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "c92cf33a8c1bdd17f0365df7836c3c29eb19fc4853312b53599a1b6312d7e1ce": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-accumulator-profile-001_02_answer",
+      "source_case_id": "stage85-gold-hydraulic-accumulator-profile-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"Hydraulic 数据集 profile.txt 的 accumulator 标签 130/115/100/90 分别代表什么？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "9b5a7ac8098a842f8f35bb6a2cc193cdca4e8829c408dfe9314128404b6f496c": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-accumulator-profile-002_01_local_search",
+      "source_case_id": "stage85-gold-hydraulic-accumulator-profile-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"Hydraulic 的 profile.txt 中 accumulator=100 bar 表示什么状态？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "cdfeb2fb305a599b2f83abc78909ddf7913c9d6a6ac534c2fdb6aa58e8fb4c74": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-accumulator-profile-002_02_answer",
+      "source_case_id": "stage85-gold-hydraulic-accumulator-profile-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"Hydraulic 的 profile.txt 中 accumulator=100 bar 表示什么状态？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "4c59049f369deeac3af9d9ea182af29bfd9d48bd0247f80ef21562760fbb8be3": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-stable-profile-001_01_local_search",
+      "source_case_id": "stage85-gold-hydraulic-stable-profile-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"Hydraulic 数据集 profile.txt 的 stable flag=0 和 1 分别表示什么？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "081d504f31968557bbddda57bf0adb3efa2175d9db7fcddf4bd7ccbd58d474f0": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-stable-profile-001_02_answer",
+      "source_case_id": "stage85-gold-hydraulic-stable-profile-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"Hydraulic 数据集 profile.txt 的 stable flag=0 和 1 分别表示什么？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "1871bd0dc064086f43c90d2c55fce951cd47fc8b66d09fbc12990a761c71f31c": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-stable-profile-002_01_local_search",
+      "source_case_id": "stage85-gold-hydraulic-stable-profile-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"Hydraulic 的 stable flag=1 表示什么，它与前四列组件状态标签是什么关系？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "9f4b9e90670401b539d8371ea28330f6b0c16c42e363ba3f9d47dd39d089c198": {
+      "sample_id": "sft_stage8_eval_20260721T071755Z_e824ffd1_rule_stage85-gold-hydraulic-stable-profile-002_02_answer",
+      "source_case_id": "stage85-gold-hydraulic-stable-profile-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"answer\",\"query\":\"Hydraulic 的 stable flag=1 表示什么，它与前四列组件状态标签是什么关系？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "4285f50666809b34650d827a05bc4c9089b1d866a0c49b7167cdf487560ea46b": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-001_hyde_answer_001_01_local_search",
+      "source_case_id": "stage9-route-hyde-answer-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 数据集中的 TWF 在什么条件下产生？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "cf918a6484a3b069cb10baf997f1c8d44a68b182242a44ad1ae180bab9089922": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-001_hyde_answer_001_02_hyde_search",
+      "source_case_id": "stage9-route-hyde-answer-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"AI4I 2020 数据集中的 TWF 在什么条件下产生？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "86d28c93fb7eb317643a69aff8bd6395c8688fc0d7265e9e25c373d10476e5bf": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-001_hyde_answer_001_03_answer",
+      "source_case_id": "stage9-route-hyde-answer-001",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 数据集中的 TWF 在什么条件下产生？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "7c1055595f67280ea0ebcda41802120212132b202456546b67a62b9184a82bbf": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-002_hyde_answer_002_01_local_search",
+      "source_case_id": "stage9-route-hyde-answer-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 的 120 个刀具磨损时点中，更换和失效各有多少次？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "a7c0a21db0858ac12a9aa26946ddbf3e7107a3bfc85540fa7927f661e3b1cdc6": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-002_hyde_answer_002_02_hyde_search",
+      "source_case_id": "stage9-route-hyde-answer-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"AI4I 2020 的 120 个刀具磨损时点中，更换和失效各有多少次？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "2360d4b932e79bc8e3fc0d2a01a71f76db3648936b17c062c236fa2c7e45bff0": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-002_hyde_answer_002_03_answer",
+      "source_case_id": "stage9-route-hyde-answer-002",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 的 120 个刀具磨损时点中，更换和失效各有多少次？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "7e1b0a614118ecb3b074060caa2c6c4110a3c36bfab6a19d6c3a0f447d73987a": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-003_hyde_answer_003_01_local_search",
+      "source_case_id": "stage9-route-hyde-answer-003",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 数据集如何判定 HDF？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "b29b0a14ebf1179965d2a0c0712ca5c60f3770f4f2da7d4da61a13a13d591d9d": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-003_hyde_answer_003_02_hyde_search",
+      "source_case_id": "stage9-route-hyde-answer-003",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"AI4I 2020 数据集如何判定 HDF？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "939c70a88c7c197ae5e13f5713dd6d475995ed7732a8516848ca1a8fdeda0cf5": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-003_hyde_answer_003_03_answer",
+      "source_case_id": "stage9-route-hyde-answer-003",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 数据集如何判定 HDF？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "c64a44402825f592cca4ade5c940ffd42f4274cad275a9d35394f991a97445dc": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-004_hyde_answer_004_01_local_search",
+      "source_case_id": "stage9-route-hyde-answer-004",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 中有多少个数据点满足 HDF 规则，这个规则是单条件还是组合条件？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "55c84ca50c90744405a2d2003d6d228671a2ab3b45199c099201eacb4862a8c7": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-004_hyde_answer_004_02_hyde_search",
+      "source_case_id": "stage9-route-hyde-answer-004",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"AI4I 2020 中有多少个数据点满足 HDF 规则，这个规则是单条件还是组合条件？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "05b4b49e7b67755808d628448dec5cc46e150a4ebe4c1253d795e065eba2621b": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-004_hyde_answer_004_03_answer",
+      "source_case_id": "stage9-route-hyde-answer-004",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 中有多少个数据点满足 HDF 规则，这个规则是单条件还是组合条件？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "926bf06815cd5b7dca569120ae52d707176ed64070bebb19f95ca9a531e4499f": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-005_hyde_answer_005_01_local_search",
+      "source_case_id": "stage9-route-hyde-answer-005",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 的 PWF 如何根据转矩和转速判定？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "699fec9f37a133b22eb7497d5821e1984ce5b9eb3ade41e23e136127b5e76d85": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-005_hyde_answer_005_02_hyde_search",
+      "source_case_id": "stage9-route-hyde-answer-005",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"AI4I 2020 的 PWF 如何根据转矩和转速判定？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "d15f540894d19910cdf067632c9406bcd70bedc8d6018b6bd699878a402c3708": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-005_hyde_answer_005_03_answer",
+      "source_case_id": "stage9-route-hyde-answer-005",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 的 PWF 如何根据转矩和转速判定？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "fa20eb3244361df3bd810ddac821c1dfe307db1f9c518f45de599aa3d721eb3a": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-006_hyde_answer_006_01_local_search",
+      "source_case_id": "stage9-route-hyde-answer-006",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 的 PWF 功率上下限分别是多少，数据集中有多少条 PWF？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "2d225f735e5f454df838bc734fbf620086d7d0e299a14f3cd9a1c2ca34ffcbae": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-006_hyde_answer_006_02_hyde_search",
+      "source_case_id": "stage9-route-hyde-answer-006",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"AI4I 2020 的 PWF 功率上下限分别是多少，数据集中有多少条 PWF？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "2f1e116c7e28ea940d6acf17477111789764ac325a9fa3ff2c3f72592d8f6f97": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-006_hyde_answer_006_03_answer",
+      "source_case_id": "stage9-route-hyde-answer-006",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 的 PWF 功率上下限分别是多少，数据集中有多少条 PWF？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "815d51c863a612d341bb53e375da11e20734c58ce001fbe91ab7e299c37678a5": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-007_hyde_answer_007_01_local_search",
+      "source_case_id": "stage9-route-hyde-answer-007",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 的 OSF 使用哪些变量，L/M/H 三类产品的阈值分别是多少？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "f4e1f57c14a16b4b464ce49a9673d8e4cef233f3238265173dfb08d0fa3d8ec5": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-007_hyde_answer_007_02_hyde_search",
+      "source_case_id": "stage9-route-hyde-answer-007",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"AI4I 2020 的 OSF 使用哪些变量，L/M/H 三类产品的阈值分别是多少？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "583a8753a9dd0c8bf5ce1fce8dfde673057e86f836a320dc377afc2ebb6b5392": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-007_hyde_answer_007_03_answer",
+      "source_case_id": "stage9-route-hyde-answer-007",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 的 OSF 使用哪些变量，L/M/H 三类产品的阈值分别是多少？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "6641f873c94b2238a30df96991af6b4dca215569a431f0a3d4384b3f8cbb7ca7": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-008_hyde_answer_008_01_local_search",
+      "source_case_id": "stage9-route-hyde-answer-008",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 中 H 类产品的刀具磨损与转矩乘积超过多少会触发 OSF，共有多少条 OSF？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "d15f2e0587732984496351db94d28fe2431afce5ae76f72232c835b9b41c25ac": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-008_hyde_answer_008_02_hyde_search",
+      "source_case_id": "stage9-route-hyde-answer-008",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"AI4I 2020 中 H 类产品的刀具磨损与转矩乘积超过多少会触发 OSF，共有多少条 OSF？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "d78e3485cf4a9055c4c15a7670bc4d614a123fdda2cd304e0333f164a6ccdac6": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-008_hyde_answer_008_03_answer",
+      "source_case_id": "stage9-route-hyde-answer-008",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 中 H 类产品的刀具磨损与转矩乘积超过多少会触发 OSF，共有多少条 OSF？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "b87865f8668fca230c163cbbed43a973c00a8c6a8161cee2e38caf60f29fb4b4": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-009_hyde_answer_009_01_local_search",
+      "source_case_id": "stage9-route-hyde-answer-009",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 的 RNF 与工艺参数是什么关系，设定概率是多少？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "f6d5a7caa11d0d2d45d5974ef0a633a00d6a09a813d4cfd13dbe2dba8b639fef": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-009_hyde_answer_009_02_hyde_search",
+      "source_case_id": "stage9-route-hyde-answer-009",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"AI4I 2020 的 RNF 与工艺参数是什么关系，设定概率是多少？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "abbb17009599e293ea91001581fbd9eecf114824ac17d207d14c8f46f1f32d56": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-009_hyde_answer_009_03_answer",
+      "source_case_id": "stage9-route-hyde-answer-009",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 的 RNF 与工艺参数是什么关系，设定概率是多少？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "78e4dca336dce73696933fc196888a863fd42f9544a6776d071bc7f961b311da": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-010_hyde_answer_010_01_local_search",
+      "source_case_id": "stage9-route-hyde-answer-010",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"AI4I 2020 实际有多少个 RNF 数据点，RNF 发生时 Machine failure 如何标记？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "9fb7a26c91e861140904e798d5041a508d7e92141d96ad004f28b9d1a9d640e1": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-010_hyde_answer_010_02_hyde_search",
+      "source_case_id": "stage9-route-hyde-answer-010",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"AI4I 2020 实际有多少个 RNF 数据点，RNF 发生时 Machine failure 如何标记？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "d9208930d81e7e8466d2b38c7d7216df4d97c3219a3a83d5386bd491c36b7247": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-hyde-answer-010_hyde_answer_010_03_answer",
+      "source_case_id": "stage9-route-hyde-answer-010",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"answer\",\"query\":\"AI4I 2020 实际有多少个 RNF 数据点，RNF 发生时 Machine failure 如何标记？ 本地初次检索证据不足时应怎样继续确认？\",\"reason_code\":\"local_evidence_sufficient\"}"
+    },
+    "f14b419d24327b6447a1f65e501b1b1fdd3c832ca2211306e71d6bde9216922c": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-ask-005_ask_005_01_ask_clarification",
+      "source_case_id": "stage9-route-ask-005",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"ask_clarification\",\"query\":\"这个报警现在应该怎么处理？\",\"reason_code\":\"subject_required\"}"
+    },
+    "41001d922347bda86b26b121cf78ba5201b2539759c885275c22cb838a37017a": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-ask-010_ask_010_01_local_search",
+      "source_case_id": "stage9-route-ask-010",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"HAK180 的 E021 和 E020 能按同一个故障处理吗？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "bcad0ff8fe70f64e83ba581c26bde5d682c479bd6dad359c0e20b147cf7728f2": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-ask-010_ask_010_02_ask_clarification",
+      "source_case_id": "stage9-route-ask-010",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"ask_clarification\",\"query\":\"HAK180 的 E021 和 E020 能按同一个故障处理吗？\",\"reason_code\":\"subject_required\"}"
+    },
+    "facf3ea3121271aa79de07dba6f8aee451c1affbb4ca0e1a209b0fc2b59f8c5d": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-web-refuse-005_web_refuse_005_01_web_search",
+      "source_case_id": "stage9-route-web-refuse-005",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"web_search\",\"query\":\"请联网查一下今天 HAK180 是否有公开召回公告。\",\"reason_code\":\"realtime_query\"}"
+    },
+    "150dd45b81773da4d5cc8a74a998ada5cbbb63249f6dd4e85a1ab086f82d0a8e": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-web-refuse-005_web_refuse_005_02_refuse",
+      "source_case_id": "stage9-route-web-refuse-005",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"请联网查一下今天 HAK180 是否有公开召回公告。\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "c941caa84447751250c6985610b62c9742f52d99cd0bd7efb974215254f54110": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-web-refuse-010_web_refuse_010_01_local_search",
+      "source_case_id": "stage9-route-web-refuse-010",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"本地手册没有结果时，请先查 Web 再判断 HAK180 最新召回公告是否可靠。\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "64763ec345ed5b56e1da157be7ea2c84dcaf76b1082032946478038f81c0b084": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-web-refuse-010_web_refuse_010_02_web_search",
+      "source_case_id": "stage9-route-web-refuse-010",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"web_search\",\"query\":\"本地手册没有结果时，请先查 Web 再判断 HAK180 最新召回公告是否可靠。\",\"reason_code\":\"realtime_query\"}"
+    },
+    "0df3726b1422911c68eca5404f6dbb1414981b8b70bba5cff4bbe7d3502015cf": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-web-refuse-010_web_refuse_010_03_refuse",
+      "source_case_id": "stage9-route-web-refuse-010",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"本地手册没有结果时，请先查 Web 再判断 HAK180 最新召回公告是否可靠。\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "1df23f4cfbd3c7e12abbdd1147db9304367dd3b716377b41c027df9b0a3d2c3a": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-refuse-005_refuse_005_01_refuse",
+      "source_case_id": "stage9-route-refuse-005",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"请告诉我 HAK180 的隐藏维修密码。\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "93235a788ba475a3560e2df339fc0b280d08cb8c9e656b42eade0a31461c0815": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-refuse-010_refuse_010_01_local_search",
+      "source_case_id": "stage9-route-refuse-010",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"在没有授权私有维修记录的情况下，P3500 上次更换了哪个部件？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "7cc8b2c218c070f0172819d7c79e23417fd548ff882d52bcc13c27272201615c": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-refuse-010_refuse_010_02_refuse",
+      "source_case_id": "stage9-route-refuse-010",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"在没有授权私有维修记录的情况下，P3500 上次更换了哪个部件？\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "1c24191a5620efd416b292b7064a2804470dac8af5b09e05c5b202c3a17857b9": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-001_multi_fallback_001_01_local_search",
+      "source_case_id": "stage9-route-multi-fallback-001",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 1 个设备问题应如何安全收口？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "db4fe13a8c583fe7a07fd20e15fb07e28217414cf373b02ec1dac1e4dbdd1486": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-001_multi_fallback_001_02_hyde_search",
+      "source_case_id": "stage9-route-multi-fallback-001",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 1 个设备问题应如何安全收口？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "41e256c9638db5c31187d6cd5bfabd57fbec845c06e6064ac3c1b802379fd940": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-001_multi_fallback_001_03_refuse",
+      "source_case_id": "stage9-route-multi-fallback-001",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 1 个设备问题应如何安全收口？\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "a59b4b5abc35ea9879c6c8b9c7ab4100ba4de772f062a4d7752eeeb9b7e1c30c": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-002_multi_fallback_002_01_local_search",
+      "source_case_id": "stage9-route-multi-fallback-002",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 2 个设备问题应如何安全收口？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "4f3ddb9cd1423b206b0d4be11ec7844bbee7628280866b10f56ee3163edac011": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-002_multi_fallback_002_02_hyde_search",
+      "source_case_id": "stage9-route-multi-fallback-002",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 2 个设备问题应如何安全收口？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "8646d6fa712360380923f978cfd259ab0c7eea175ee3501aa2f4d042e375a6ca": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-002_multi_fallback_002_03_refuse",
+      "source_case_id": "stage9-route-multi-fallback-002",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 2 个设备问题应如何安全收口？\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "5708d398868d9bbdde7dc694470d53190eab26cea466b19b2c3e9f9ddad7ce9b": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-003_multi_fallback_003_01_local_search",
+      "source_case_id": "stage9-route-multi-fallback-003",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 3 个设备问题应如何安全收口？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "4798382d7dce3b6bc08edeeafd034905f243baa3deb4bbe6be6bac983cd498be": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-003_multi_fallback_003_02_hyde_search",
+      "source_case_id": "stage9-route-multi-fallback-003",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 3 个设备问题应如何安全收口？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "3d70db632e69297e7c88c8562f2fb01bed96f9377e8a7a20517863a26ea9b1dc": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-003_multi_fallback_003_03_refuse",
+      "source_case_id": "stage9-route-multi-fallback-003",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 3 个设备问题应如何安全收口？\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "5a6d7c44a448667667355a659c1cda2d5791eeca5ed11435708b28f73fd1c716": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-004_multi_fallback_004_01_local_search",
+      "source_case_id": "stage9-route-multi-fallback-004",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 4 个设备问题应如何安全收口？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "1c67ec060aa43592730608d79bec456cf78464ba57b6b75f93cd0a6311bfc371": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-004_multi_fallback_004_02_hyde_search",
+      "source_case_id": "stage9-route-multi-fallback-004",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 4 个设备问题应如何安全收口？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "4bf0d6327778350e660ad50c645095cd022e73162d6cae2130262085dcc3f09d": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-004_multi_fallback_004_03_refuse",
+      "source_case_id": "stage9-route-multi-fallback-004",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 4 个设备问题应如何安全收口？\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "b6be108ac737416043f982ab7ca4bc034d642dfc4f99e650c56880942c5cb9c2": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-005_multi_fallback_005_01_local_search",
+      "source_case_id": "stage9-route-multi-fallback-005",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 5 个设备问题应如何安全收口？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "55c494f33a363ee12166427e89df892755453432af6e9e65e6b670ab0549b71d": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-005_multi_fallback_005_02_hyde_search",
+      "source_case_id": "stage9-route-multi-fallback-005",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 5 个设备问题应如何安全收口？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "cde8f10950983f6edad29e8d9c63701819160cdfd7c72b24dcc7736ef64ef7ad": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-005_multi_fallback_005_03_refuse",
+      "source_case_id": "stage9-route-multi-fallback-005",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 5 个设备问题应如何安全收口？\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "e82b055a77ca5d8f8d666d199a160819490f45112072f27853a9225a38e258b9": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-006_multi_fallback_006_01_local_search",
+      "source_case_id": "stage9-route-multi-fallback-006",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 6 个设备问题应如何安全收口？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "e1612ae1cb5efcfaa14c3190520e7b8be2efa20802dec4c85b6b00dfa15b2397": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-006_multi_fallback_006_02_hyde_search",
+      "source_case_id": "stage9-route-multi-fallback-006",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 6 个设备问题应如何安全收口？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "d041a3461807481d470f04e96ce9d494c7fcd4ea4353654848976601c4cdda99": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-006_multi_fallback_006_03_refuse",
+      "source_case_id": "stage9-route-multi-fallback-006",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 6 个设备问题应如何安全收口？\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "77cd55a9d42a5effa352dce0cbf40127f288a34a36ea532578428f20f6dd3524": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-007_multi_fallback_007_01_local_search",
+      "source_case_id": "stage9-route-multi-fallback-007",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 7 个设备问题应如何安全收口？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "c9cc85fe19d01c393769cb8e79870d37ebf0ac5d0ff219b7d49512ceedb0fe65": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-007_multi_fallback_007_02_hyde_search",
+      "source_case_id": "stage9-route-multi-fallback-007",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 7 个设备问题应如何安全收口？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "4c51da7db7bfee3bf4eb8a5c27d69b2d51fb04c8e22dcc3099ca9e68b7d6a2cc": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-007_multi_fallback_007_03_refuse",
+      "source_case_id": "stage9-route-multi-fallback-007",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 7 个设备问题应如何安全收口？\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "add811afe4d059ca38a1ddcc2699d0374a7c06bc71739db8ff5a3e61f1e26877": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-008_multi_fallback_008_01_local_search",
+      "source_case_id": "stage9-route-multi-fallback-008",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 8 个设备问题应如何安全收口？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "ff9f85c95a07500c14c4e32f20eb95044d5aa9915b84125683ba7995fd4cee0b": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-008_multi_fallback_008_02_hyde_search",
+      "source_case_id": "stage9-route-multi-fallback-008",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 8 个设备问题应如何安全收口？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "7211789c1b69c701208acb6d28d7a54ac04a4940d01557910f653d32277a75e8": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-008_multi_fallback_008_03_refuse",
+      "source_case_id": "stage9-route-multi-fallback-008",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 8 个设备问题应如何安全收口？\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "4116676417e8e5195df08ce2a5f550dce5278190725ae053c4620de836e8ca84": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-009_multi_fallback_009_01_local_search",
+      "source_case_id": "stage9-route-multi-fallback-009",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 9 个设备问题应如何安全收口？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "4d2c5bb05e0a03d459b2331952d2d655e90f95f46075d38189569fb48d6de970": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-009_multi_fallback_009_02_hyde_search",
+      "source_case_id": "stage9-route-multi-fallback-009",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 9 个设备问题应如何安全收口？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "f0463e9c8b7c25f55696323708556a9911a494fcc8e6424d267002a24a4a99c7": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-009_multi_fallback_009_03_refuse",
+      "source_case_id": "stage9-route-multi-fallback-009",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 9 个设备问题应如何安全收口？\",\"reason_code\":\"safe_guard_triggered\"}"
+    },
+    "06b9e49c454d775890a4e59548cd09ee6a6e3cebeeb327995da38fb13619ef17": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-010_multi_fallback_010_01_local_search",
+      "source_case_id": "stage9-route-multi-fallback-010",
+      "turn_index": 1,
+      "target_json": "{\"action\":\"local_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 10 个设备问题应如何安全收口？\",\"reason_code\":\"initial_local_search\"}"
+    },
+    "69e8f46536fe2e5da2812615dc2d486c244d62eff56120a61270b18c37c4c8ba": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-010_multi_fallback_010_02_hyde_search",
+      "source_case_id": "stage9-route-multi-fallback-010",
+      "turn_index": 2,
+      "target_json": "{\"action\":\"hyde_search\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 10 个设备问题应如何安全收口？\",\"reason_code\":\"local_low_score\"}"
+    },
+    "85fd72d9084a6ebb579acb54ef4de2cf7ba6c0188c1ef22f9fedce552d6f3ce2": {
+      "sample_id": "sft_stage9_route_seed_20260721T124909Z_58007af6_stage9-route-multi-fallback-010_multi_fallback_010_03_refuse",
+      "source_case_id": "stage9-route-multi-fallback-010",
+      "turn_index": 3,
+      "target_json": "{\"action\":\"refuse\",\"query\":\"本地检索和 HyDE 都没有可靠证据时，第 10 个设备问题应如何安全收口？\",\"reason_code\":\"safe_guard_triggered\"}"
+    }
+  }
+}

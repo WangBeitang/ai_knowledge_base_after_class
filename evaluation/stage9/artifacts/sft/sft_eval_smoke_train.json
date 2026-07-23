@@ -1,0 +1,358 @@
+{
+  "run_id": "stage9_sft_eval_20260723T060346Z_ff8ff474",
+  "runner_version": "stage9-model-planner-eval-v1",
+  "created_at": "2026-07-23T06:03:46+00:00",
+  "split": "train",
+  "snapshot_id": "stage85-env-20260721-v2",
+  "reward_version": "reward-v1.1",
+  "requested_planners": [
+    "sft"
+  ],
+  "action_provider": "SnapshotExpectedChunkActionProvider",
+  "case_count": 2,
+  "planner_summaries": [
+    {
+      "planner_mode": "sft",
+      "status": "completed",
+      "config": {
+        "runner_version": "stage9-model-planner-eval-v1",
+        "policy_version": "debug_memorized:planner-sft-stage9-smoke_20260723T060238Z_1bbe768c",
+        "checkpoint": "evaluation/stage9/artifacts/sft/checkpoints/planner-sft-stage9-smoke_20260723T060238Z_1bbe768c",
+        "action_provider": "snapshot_expected_chunks",
+        "path_counts": {
+          "refuse": 2
+        }
+      },
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 1,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "planner_calls": 2,
+        "failed_case_count": 0
+      },
+      "reward": {
+        "average_total_reward": 0.382,
+        "scored_case_count": 2,
+        "component_average_scores": {
+          "answer": 0.0,
+          "behavior": 0.2,
+          "citation": 0.0,
+          "cost": 1.0,
+          "format": 1.0,
+          "retrieval": 0.1
+        }
+      },
+      "case_count": 2,
+      "completed_case_count": 2,
+      "failed_case_count": 0,
+      "skip_reason": ""
+    }
+  ],
+  "results": [
+    {
+      "run_id": "stage9_sft_eval_20260723T060346Z_ff8ff474",
+      "case_id": "stage9-route-hyde-answer-001",
+      "split": "train",
+      "planner_mode": "sft",
+      "snapshot_id": "stage85-env-20260721-v2",
+      "reward_version": "reward-v1.1",
+      "trace_id": "stage9_sft_eval_20260723T060346Z_ff8ff474_sft_stage9-route-hyde-answer-001",
+      "action_path": [
+        "refuse"
+      ],
+      "terminal_action": "refuse",
+      "terminal_reason_code": "safe_guard_triggered",
+      "retrieved_chunk_ids": [],
+      "citation_chunk_ids": [],
+      "metrics": {
+        "total_reward": 0.382,
+        "raw_total_reward": 0.382,
+        "format_valid": true,
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0,
+        "citation_hit_rate": 0.0,
+        "answer_point_coverage": 0.0,
+        "path_match": false
+      },
+      "reward": {
+        "reward_version": "reward-v1.1",
+        "total_reward": 0.382,
+        "raw_total_reward": 0.382,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "refuse",
+              "action_path": [
+                "refuse"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 0.1,
+            "weight": 0.12,
+            "weighted_score": 0.012,
+            "details": {
+              "recall_at_k": 0.0,
+              "mrr": 0.0,
+              "ndcg_at_k": 0.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {},
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 0,
+              "top_k": 10
+            },
+            "reasons": [
+              "未完全召回 expected_chunks"
+            ]
+          },
+          "citation": {
+            "name": "citation",
+            "score": 0.0,
+            "weight": 0.08,
+            "weighted_score": 0.0,
+            "details": {
+              "citation_hit_rate": 0.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 0,
+              "invalid_citation_count": 0
+            },
+            "reasons": [
+              "最终 Citation 没有完全覆盖 expected_chunks"
+            ]
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.15,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "TWF 的触发时点是在 200 至 240 分钟之间随机选定的刀具磨损时间。",
+                "到达该时点时，数据生成过程会让刀具被更换或发生失效。"
+              ],
+              "answer_length": 24
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points",
+              "回答型样本没有到达 answer 终态"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 0.2,
+            "weight": 0.35,
+            "weighted_score": 0.06999999999999999,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "refuse",
+              "path_match": false,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": [
+              "终态行为不符合 expected_behavior：expected=answer, actual=refuse",
+              "实际 Action 路径不在 acceptable_action_paths 中"
+            ]
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "action_count": 1,
+              "shortest_acceptable_path_length": 3,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "planner_calls": 1,
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    },
+    {
+      "run_id": "stage9_sft_eval_20260723T060346Z_ff8ff474",
+      "case_id": "stage9-route-hyde-answer-002",
+      "split": "train",
+      "planner_mode": "sft",
+      "snapshot_id": "stage85-env-20260721-v2",
+      "reward_version": "reward-v1.1",
+      "trace_id": "stage9_sft_eval_20260723T060346Z_ff8ff474_sft_stage9-route-hyde-answer-002",
+      "action_path": [
+        "refuse"
+      ],
+      "terminal_action": "refuse",
+      "terminal_reason_code": "safe_guard_triggered",
+      "retrieved_chunk_ids": [],
+      "citation_chunk_ids": [],
+      "metrics": {
+        "total_reward": 0.382,
+        "raw_total_reward": 0.382,
+        "format_valid": true,
+        "recall_at_k": 0.0,
+        "mrr": 0.0,
+        "ndcg_at_k": 0.0,
+        "citation_hit_rate": 0.0,
+        "answer_point_coverage": 0.0,
+        "path_match": false
+      },
+      "reward": {
+        "reward_version": "reward-v1.1",
+        "total_reward": 0.382,
+        "raw_total_reward": 0.382,
+        "capped_by": null,
+        "format_valid": true,
+        "components": {
+          "format": {
+            "name": "format",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "terminal_action": "refuse",
+              "action_path": [
+                "refuse"
+              ],
+              "format_error_codes": []
+            },
+            "reasons": []
+          },
+          "retrieval": {
+            "name": "retrieval",
+            "score": 0.1,
+            "weight": 0.12,
+            "weighted_score": 0.012,
+            "details": {
+              "recall_at_k": 0.0,
+              "mrr": 0.0,
+              "ndcg_at_k": 0.0,
+              "identifier_hit_rate": 1.0,
+              "identifier_hits": {},
+              "identifier_misses": {},
+              "expected_chunk_count": 1,
+              "retrieved_chunk_count": 0,
+              "top_k": 10
+            },
+            "reasons": [
+              "未完全召回 expected_chunks"
+            ]
+          },
+          "citation": {
+            "name": "citation",
+            "score": 0.0,
+            "weight": 0.08,
+            "weighted_score": 0.0,
+            "details": {
+              "citation_hit_rate": 0.0,
+              "expected_chunk_count": 1,
+              "citation_chunk_count": 0,
+              "invalid_citation_count": 0
+            },
+            "reasons": [
+              "最终 Citation 没有完全覆盖 expected_chunks"
+            ]
+          },
+          "answer": {
+            "name": "answer",
+            "score": 0.0,
+            "weight": 0.15,
+            "weighted_score": 0.0,
+            "details": {
+              "answer_point_coverage": 0.0,
+              "hit_points": [],
+              "missing_points": [
+                "数据集中共有 120 个这样的时点，其中 69 次更换刀具、51 次标为失效。",
+                "更换还是失效是随机分配的。"
+              ],
+              "answer_length": 24
+            },
+            "reasons": [
+              "答案缺少部分 expected_answer_points",
+              "回答型样本没有到达 answer 终态"
+            ]
+          },
+          "behavior": {
+            "name": "behavior",
+            "score": 0.2,
+            "weight": 0.35,
+            "weighted_score": 0.06999999999999999,
+            "details": {
+              "expected_terminal": "answer",
+              "actual_terminal": "refuse",
+              "path_match": false,
+              "forbidden_used": [],
+              "should_call_web": false,
+              "used_web": false
+            },
+            "reasons": [
+              "终态行为不符合 expected_behavior：expected=answer, actual=refuse",
+              "实际 Action 路径不在 acceptable_action_paths 中"
+            ]
+          },
+          "cost": {
+            "name": "cost",
+            "score": 1.0,
+            "weight": 0.15,
+            "weighted_score": 0.15,
+            "details": {
+              "action_count": 1,
+              "shortest_acceptable_path_length": 3,
+              "extra_steps": 0,
+              "used_hyde": false,
+              "used_web": false,
+              "total_duration_ms": 0
+            },
+            "reasons": []
+          }
+        },
+        "errors": []
+      },
+      "usage": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "duration_ms": 0,
+        "estimated_cost": 0.0,
+        "currency": "CNY",
+        "planner_calls": 1,
+        "trajectory_status": "completed",
+        "config_match_status": "match",
+        "corpus_match_status": "match"
+      },
+      "errors": []
+    }
+  ]
+}

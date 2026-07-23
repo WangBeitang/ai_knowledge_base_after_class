@@ -1,0 +1,47 @@
+{
+  "run_id": "planner-sft-stage9-smoke_20260723T060238Z_1bbe768c",
+  "run_name": "planner-sft-stage9-smoke",
+  "policy_version": "debug_memorized:planner-sft-stage9-smoke_20260723T060238Z_1bbe768c",
+  "training_backend": "debug_memorized",
+  "base_model_id": "stage9-debug-memorized",
+  "train_data": "evaluation/stage9/artifacts/sft/sft_planner_stage9_train.jsonl",
+  "train_manifest": "evaluation/stage9/artifacts/sft/sft_planner_stage9_manifest.json",
+  "reward_profile": "evaluation/stage9/configs/reward_v1_1_training_profile.json",
+  "snapshot_id": "stage85-env-20260721-v2",
+  "code_version": "cdb4915-dirty",
+  "created_at": "2026-07-23T06:02:38+00:00",
+  "seed": 20260721,
+  "framework_versions": {
+    "python": "3.13.9",
+    "torch": "2.10.0",
+    "transformers": "4.57.6",
+    "datasets": "4.8.4"
+  },
+  "prompt_builder_version": "stage9-planner-prompt-v1",
+  "decision_codec_version": "stage9-decision-codec-v1",
+  "model_path": "evaluation/stage9/artifacts/sft/checkpoints/planner-sft-stage9-smoke_20260723T060238Z_1bbe768c/model",
+  "tokenizer_path": "",
+  "train_metrics_path": "evaluation/stage9/artifacts/sft/checkpoints/planner-sft-stage9-smoke_20260723T060238Z_1bbe768c/train_metrics.json",
+  "eval_metrics_path": "",
+  "training_config_path": "evaluation/stage9/artifacts/sft/checkpoints/planner-sft-stage9-smoke_20260723T060238Z_1bbe768c/training_config.json",
+  "sample_count": 155,
+  "source_case_count": 70,
+  "action_counts": {
+    "answer": 30,
+    "ask_clarification": 10,
+    "hyde_search": 20,
+    "local_search": 55,
+    "refuse": 30,
+    "web_search": 10
+  },
+  "reason_code_counts": {
+    "initial_local_search": 55,
+    "local_evidence_sufficient": 30,
+    "local_low_score": 20,
+    "realtime_query": 10,
+    "safe_guard_triggered": 30,
+    "subject_required": 10
+  },
+  "max_input_tokens": 2048,
+  "max_target_tokens": 128
+}
