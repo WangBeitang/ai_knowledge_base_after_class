@@ -4,6 +4,7 @@ from evaluation.stage9.model_planner.checkpoint_io import (
     CheckpointManifest,
     Stage9SftTrainingConfig,
     TrainingBackend,
+    TuningMethod,
     load_checkpoint_manifest,
     load_training_config,
 )
@@ -39,6 +40,7 @@ __all__ = [
     "SftTrainExample",
     "Stage9SftTrainingConfig",
     "TrainingBackend",
+    "TuningMethod",
     "build_planner_prompt",
     "build_sft_train_examples",
     "decode_decision",

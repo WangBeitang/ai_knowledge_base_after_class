@@ -18,6 +18,7 @@ from evaluation.stage9.model_planner.checkpoint_io import (  # noqa: E402
     CheckpointManifest,
     Stage9SftTrainingConfig,
     TrainingBackend,
+    TuningMethod,
     collect_framework_versions,
     create_checkpoint_dir,
     current_code_version,
@@ -78,6 +79,7 @@ def run_sft_training(config: Stage9SftTrainingConfig) -> CheckpointManifest:
         backend_metrics = _run_transformers_backend(
             config=config,
             model_profile=model_profile,
+            run_id=run_id,
             examples=examples,
             model_dir=model_dir,
             tokenizer_dir=tokenizer_dir,
@@ -103,6 +105,11 @@ def run_sft_training(config: Stage9SftTrainingConfig) -> CheckpointManifest:
         base_model_id=config.base_model_id,
         model_profile_id=model_profile.profile_id if model_profile else config.model_profile_id,
         model_profile=model_profile,
+        tuning_method=backend_metrics.get("tuning_method", config.tuning_method.value),
+        adapter_id=backend_metrics.get("adapter_id", ""),
+        adapter_path=backend_metrics.get("adapter_path", ""),
+        quantization=backend_metrics.get("quantization", ""),
+        peft_config=backend_metrics.get("peft_config", {}),
         train_data=config.train_data,
         train_manifest=config.train_manifest,
         reward_profile=config.reward_profile,
@@ -113,7 +120,7 @@ def run_sft_training(config: Stage9SftTrainingConfig) -> CheckpointManifest:
         framework_versions=collect_framework_versions(),
         prompt_builder_version=PROMPT_BUILDER_VERSION,
         decision_codec_version=DECISION_CODEC_VERSION,
-        model_path=_portable_path(model_dir),
+        model_path=backend_metrics.get("model_path", _portable_path(model_dir)),
         tokenizer_path=tokenizer_path,
         train_metrics_path=_portable_path(metrics_path),
         training_config_path=_portable_path(config_path),
@@ -164,6 +171,7 @@ def _run_transformers_backend(
         *,
         config: Stage9SftTrainingConfig,
         model_profile: Any | None,
+        run_id: str,
         examples: list[SftTrainExample],
         model_dir: Path,
         tokenizer_dir: Path,
@@ -179,69 +187,134 @@ def _run_transformers_backend(
     from datasets import Dataset
     from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
 
+    # model_load_id（模型加载身份）优先来自 profile（配置档案），允许云端用本地模型目录加载，
+    # 同时让 base_model_id（基础模型身份）继续保持稳定审计语义。
     model_load_id = model_profile.training_model_id if model_profile else config.base_model_id
+    # tokenizer（分词器）必须和训练加载的基础模型一致，否则 prompt（提示词）和 target_json（目标 JSON）
+    # 的 token（分词单元）切分会漂，后续 checkpoint（检查点）推理也无法复现训练输入。
     tokenizer = AutoTokenizer.from_pretrained(
         model_load_id,
         trust_remote_code=config.trust_remote_code,
         use_fast=config.use_fast_tokenizer,
     )
+    # 部分 causal LM（因果语言模型）没有显式 pad_token（填充符），这里优先复用 eos/unk，
+    # 只影响 batch padding（批量填充），不会改变监督目标。
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token or tokenizer.unk_token
+    # 如果仍然没有 pad/eos/unk token（填充/结束/未知符），批量训练无法构造等长 tensor（张量）。
     if tokenizer.pad_token is None:
         raise ValueError("tokenizer 必须有 pad/eos/unk token 才能进行批量训练")
 
+    # model_kwargs（模型加载参数）只放真实加载时需要的框架参数，避免把项目审计字段传给 transformers。
     model_kwargs: dict[str, Any] = {"trust_remote_code": config.trust_remote_code}
+    # torch_dtype（张量精度）用于 LoRA（低秩适配）和 full（全量微调）加载；QLoRA 的计算精度另由 bnb 配置控制。
     dtype = _torch_dtype(config.torch_dtype, torch)
     if dtype is not None:
         model_kwargs["torch_dtype"] = dtype
-    model = AutoModelForCausalLM.from_pretrained(model_load_id, **model_kwargs)
-    if config.device != "auto":
-        model.to(config.device)
+    # QLoRA（4 位量化低秩适配）需要 bitsandbytes 的 4bit（4 位）量化配置，减少基础模型显存占用。
+    if config.tuning_method == TuningMethod.QLORA:
+        from transformers import BitsAndBytesConfig
 
+        model_kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=config.load_in_4bit,
+            bnb_4bit_compute_dtype=_torch_dtype(config.bnb_compute_dtype, torch),
+            bnb_4bit_quant_type=config.bnb_4bit_quant_type,
+            bnb_4bit_use_double_quant=config.bnb_4bit_use_double_quant,
+        )
+        # 4bit（4 位）模型不能再随意 model.to(device)，因此加载阶段直接交给 device_map（设备映射）放置。
+        model_kwargs["device_map"] = "auto" if config.device == "auto" else {"": config.device}
+
+    # 这里真正加载基础模型；LoRA/QLoRA 都是在这个基础模型上挂 adapter（适配器）。
+    model = AutoModelForCausalLM.from_pretrained(model_load_id, **model_kwargs)
+    # 非 QLoRA 场景仍允许显式把模型移动到 cuda/mps/cpu；QLoRA 的设备放置已由 device_map 管。
+    if config.tuning_method != TuningMethod.QLORA and config.device != "auto":
+        model.to(config.device)
+    # gradient checkpointing（梯度检查点）用计算换显存，云端大模型微调默认打开更稳。
+    if config.gradient_checkpointing and hasattr(model, "gradient_checkpointing_enable"):
+        model.gradient_checkpointing_enable()
+    # LoRA/QLoRA 只训练 adapter（适配器）；full（全量微调）保持原模型可训练。
+    if config.tuning_method in {TuningMethod.LORA, TuningMethod.QLORA}:
+        from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
+
+        # QLoRA（4 位量化低秩适配）在挂 LoRA adapter 前要先准备量化模型的梯度与输入层。
+        if config.tuning_method == TuningMethod.QLORA:
+            try:
+                model = prepare_model_for_kbit_training(
+                    model,
+                    use_gradient_checkpointing=config.gradient_checkpointing,
+                )
+            except TypeError:
+                model = prepare_model_for_kbit_training(model)
+        # LoraConfig（低秩适配配置）决定哪些模块挂 adapter，以及 adapter 的秩、缩放和 dropout。
+        lora_config = LoraConfig(
+            r=config.lora_r,
+            lora_alpha=config.lora_alpha,
+            lora_dropout=config.lora_dropout,
+            target_modules=config.target_modules,
+            bias="none",
+            task_type=TaskType.CAUSAL_LM,
+        )
+        # get_peft_model（创建参数高效微调模型）会冻结基础模型，只让 adapter 参数 requires_grad=True。
+        model = get_peft_model(model, lora_config)
+
+    # Dataset（数据集）只保存 prompt 和 target_json，保持和本地 smoke（冒烟）训练完全同源。
     dataset = Dataset.from_list([
         {"prompt": example.prompt, "target_json": example.target_json}
         for example in examples
     ])
 
     def tokenize(record: dict[str, str]) -> dict[str, list[int]]:
+        # prompt_ids（提示词 token）参与前向计算，但不参与 loss（损失）监督。
         prompt_ids = tokenizer(
             record["prompt"],
             add_special_tokens=True,
             truncation=True,
             max_length=config.max_input_tokens,
         )["input_ids"]
+        # target_text（目标文本）只包含 PlannerDecision（规划器决策）JSON，末尾补 eos 让模型学会停止。
         target_text = record["target_json"] + (tokenizer.eos_token or "")
+        # target_ids（目标 token）才是 SFT（监督微调）真正要预测的部分。
         target_ids = tokenizer(
             target_text,
             add_special_tokens=False,
             truncation=True,
             max_length=config.max_target_tokens,
         )["input_ids"]
+        # labels（训练标签）里 prompt 部分填 -100，表示 Trainer（训练器）计算 loss 时忽略上下文。
         return {
             "input_ids": prompt_ids + target_ids,
             "attention_mask": [1] * (len(prompt_ids) + len(target_ids)),
             "labels": [-100] * len(prompt_ids) + target_ids,
         }
 
+    # tokenized（已分词数据）在训练开始前一次性生成，避免每个 step 重复构造 prompt/target。
     tokenized = dataset.map(tokenize, remove_columns=dataset.column_names)
 
     def collate(batch: list[dict[str, list[int]]]) -> dict[str, torch.Tensor]:
+        # pad_id（填充 token）用于把同一个 batch（批量）里的不同长度样本补齐成矩阵。
         pad_id = int(tokenizer.pad_token_id)
+        # max_length（本批最大长度）只按当前 batch 动态补齐，减少无效 padding（填充）计算。
         max_length = max(len(item["input_ids"]) for item in batch)
         input_ids: list[list[int]] = []
         attention_mask: list[list[int]] = []
         labels: list[list[int]] = []
         for item in batch:
+            # pad_count（填充数量）表示当前样本距离本批最大长度还差多少 token。
             pad_count = max_length - len(item["input_ids"])
+            # input_ids（输入 token）用 tokenizer 的 pad_id 补齐。
             input_ids.append(item["input_ids"] + [pad_id] * pad_count)
+            # attention_mask（注意力掩码）中 padding 部分填 0，避免模型关注填充 token。
             attention_mask.append(item["attention_mask"] + [0] * pad_count)
+            # labels（训练标签）中 padding 部分也填 -100，避免 padding 进入 loss。
             labels.append(item["labels"] + [-100] * pad_count)
+        # Trainer（训练器）期望 collate 返回 torch.Tensor（张量）字典。
         return {
             "input_ids": torch.tensor(input_ids, dtype=torch.long),
             "attention_mask": torch.tensor(attention_mask, dtype=torch.long),
             "labels": torch.tensor(labels, dtype=torch.long),
         }
 
+    # TrainingArguments（训练参数）只负责训练循环、batch（批量）、保存策略和日志，不保存业务审计字段。
     args = TrainingArguments(
         output_dir=str(model_dir),
         learning_rate=config.learning_rate,
@@ -254,19 +327,103 @@ def _run_transformers_backend(
         report_to=config.report_to,
         seed=config.seed,
         remove_unused_columns=False,
+        bf16=config.torch_dtype == "bfloat16",
+        fp16=config.torch_dtype == "float16",
     )
+    # Trainer（训练器）接管反向传播；模型是否为 full/lora/qlora 已在上方准备完成。
     trainer = Trainer(model=model, args=args, train_dataset=tokenized, data_collator=collate)
+    # train_output（训练输出）只保存关键数值，完整审计信息由 checkpoint manifest（检查点清单）负责。
     train_output = trainer.train()
-    model_dir.mkdir(parents=True, exist_ok=True)
+    # tokenizer（分词器）独立保存，推理时必须复用同一个 tokenizer 才能稳定还原训练分布。
     tokenizer_dir.mkdir(parents=True, exist_ok=True)
-    model.save_pretrained(model_dir)
     tokenizer.save_pretrained(tokenizer_dir)
+    # total/trainable parameter（总参数/可训练参数）用于确认 LoRA/QLoRA 没有误训全量权重。
+    total_parameters, trainable_parameters = _count_parameters(model)
+    # adapter_id（适配器身份）进入 manifest（清单），后续 SFT/GRPO 对比不能只靠目录名猜。
+    adapter_id = _build_adapter_id(config, run_id)
+    # LoRA/QLoRA 只保存 adapter（适配器）；full 才保存完整模型权重。
+    if config.tuning_method in {TuningMethod.LORA, TuningMethod.QLORA}:
+        adapter_dir = model_dir / "adapter"
+        adapter_dir.mkdir(parents=True, exist_ok=True)
+        model.save_pretrained(adapter_dir)
+        model_path = _portable_path(adapter_dir)
+        adapter_path = model_path
+    else:
+        model_dir.mkdir(parents=True, exist_ok=True)
+        model.save_pretrained(model_dir)
+        model_path = _portable_path(model_dir)
+        adapter_path = ""
+        adapter_id = ""
     return {
         "updated_model_weights": True,
         "model_load_id": str(model_load_id),
+        "model_path": model_path,
+        "adapter_id": adapter_id,
+        "adapter_path": adapter_path,
+        "tuning_method": config.tuning_method.value,
+        "quantization": _quantization_label(config),
+        "peft_config": _peft_config_snapshot(config),
+        "trainable_parameter_count": trainable_parameters,
+        "total_parameter_count": total_parameters,
         "train_loss": float(train_output.training_loss),
         "global_step": int(train_output.global_step),
     }
+
+
+def _build_adapter_id(config: Stage9SftTrainingConfig, run_id: str) -> str:
+    """生成 adapter_id（适配器身份），把模型 profile、训练方法和 run_id 串起来便于审计。"""
+
+    profile_id = config.model_profile_id or "unknown_profile"
+    return f"{profile_id}:{config.tuning_method.value}:{run_id}"
+
+
+def _quantization_label(config: Stage9SftTrainingConfig) -> str:
+    """返回 quantization（量化方式）标签，写入 checkpoint manifest（检查点清单）。"""
+
+    if config.tuning_method == TuningMethod.QLORA:
+        return f"4bit:{config.bnb_4bit_quant_type}:{config.bnb_compute_dtype}"
+    return "none"
+
+
+def _peft_config_snapshot(config: Stage9SftTrainingConfig) -> dict[str, Any]:
+    """
+    构造 PEFT（参数高效微调）配置快照。
+
+    full（全量微调）没有 adapter（适配器），返回空对象；LoRA/QLoRA 需要记录完整参数，
+    否则后续报告只能知道“用了适配器”，但不知道训练容量和目标模块。
+    """
+
+    if config.tuning_method == TuningMethod.FULL:
+        return {}
+    return {
+        "tuning_method": config.tuning_method.value,
+        "lora_r": config.lora_r,
+        "lora_alpha": config.lora_alpha,
+        "lora_dropout": config.lora_dropout,
+        "target_modules": list(config.target_modules),
+        "load_in_4bit": config.load_in_4bit,
+        "bnb_compute_dtype": config.bnb_compute_dtype,
+        "bnb_4bit_quant_type": config.bnb_4bit_quant_type,
+        "bnb_4bit_use_double_quant": config.bnb_4bit_use_double_quant,
+        "gradient_checkpointing": config.gradient_checkpointing,
+    }
+
+
+def _count_parameters(model: Any) -> tuple[int, int]:
+    """
+    统计 total/trainable parameters（总参数量/可训练参数量）。
+
+    LoRA/QLoRA 的核心验收点就是可训练参数远小于总参数；这个统计会进入 train_metrics（训练指标）。
+    """
+
+    total = 0
+    trainable = 0
+    for parameter in model.parameters():
+        parameter_count = int(parameter.numel())
+        total += parameter_count
+        if parameter.requires_grad:
+            trainable += parameter_count
+    return total, trainable
 
 
 def _validate_config_against_inputs(

@@ -30,6 +30,20 @@ class TrainingBackend(str, Enum):
     TRANSFORMERS_CAUSAL_LM = "transformers_causal_lm"
 
 
+class TuningMethod(str, Enum):
+    """
+    SFT（监督微调）训练方法枚举。
+
+    FULL（全量微调）会更新并保存完整模型权重，阶段 9 第一版默认禁止，除非配置显式打开；
+    LORA（低秩适配）只训练 adapter（适配器），适合 A800 这类显存较大的云端卡；
+    QLORA（4 位量化低秩适配）用 4bit（4 位）加载基础模型并训练 adapter，适合 RTX 5090。
+    """
+
+    FULL = "full"
+    LORA = "lora"
+    QLORA = "qlora"
+
+
 class RuntimeModel(BaseModel):
     """Planner runtime（规划器运行时）schema（结构）基类。"""
 
@@ -82,6 +96,11 @@ class CheckpointManifest(RuntimeModel):
     base_model_id: str = Field(min_length=1)
     model_profile_id: str = ""
     model_profile: ModelProfileSnapshot | None = None
+    tuning_method: TuningMethod = TuningMethod.FULL
+    adapter_id: str = ""
+    adapter_path: str = ""
+    quantization: str = ""
+    peft_config: dict[str, Any] = Field(default_factory=dict)
     train_data: str = Field(min_length=1)
     train_manifest: str = Field(min_length=1)
     reward_profile: str = Field(min_length=1)
@@ -209,7 +228,18 @@ class PlannerCheckpointRuntime:
             tokenizer_path = _resolve_project_path(self.manifest.tokenizer_path or self.manifest.model_path)
             model_path = _resolve_project_path(self.manifest.model_path)
             self._tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-            self._model = AutoModelForCausalLM.from_pretrained(model_path)
+            if self.manifest.adapter_path:
+                from peft import PeftModel
+
+                base_model_id = (
+                    self.manifest.model_profile.training_model_id
+                    if self.manifest.model_profile
+                    else self.manifest.base_model_id
+                )
+                base_model = AutoModelForCausalLM.from_pretrained(base_model_id)
+                self._model = PeftModel.from_pretrained(base_model, model_path)
+            else:
+                self._model = AutoModelForCausalLM.from_pretrained(model_path)
             self._model.eval()
         tokenizer = self._tokenizer
         model = self._model

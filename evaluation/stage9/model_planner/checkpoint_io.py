@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.rag.query.model_planner.checkpoint_runtime import (
     CheckpointManifest,
     TrainingBackend,
+    TuningMethod,
     load_checkpoint_manifest,
 )
 
@@ -71,6 +72,30 @@ class Stage9SftTrainingConfig(CheckpointModel):
     max_steps: int | None = Field(default=None, ge=1, description="transformers Trainer 最大训练步数；空按 epoch。")
     device: str = Field(default="auto", min_length=1, description="训练设备，auto/cpu/cuda/mps。")
     torch_dtype: str = Field(default="auto", min_length=1, description="torch dtype（张量精度），如 auto/float16/bfloat16。")
+    tuning_method: TuningMethod = Field(
+        default=TuningMethod.FULL,
+        description="训练方法：full 全量微调、lora 低秩适配、qlora 4 位量化低秩适配。",
+    )
+    allow_full_finetune: bool = Field(
+        default=False,
+        description="是否允许 full（全量微调）；阶段 9 第一版默认 false，避免云端误跑完整权重微调。",
+    )
+    lora_r: int = Field(default=16, ge=1, description="LoRA rank（低秩秩数），越大可训练容量越高但显存开销越大。")
+    lora_alpha: int = Field(default=32, ge=1, description="LoRA alpha（低秩缩放），通常与 lora_r 配合控制更新幅度。")
+    lora_dropout: float = Field(default=0.05, ge=0, lt=1, description="LoRA dropout（低秩随机丢弃），降低小数据过拟合。")
+    target_modules: list[str] = Field(
+        default_factory=lambda: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+        description="LoRA target_modules（目标模块），限定哪些线性层挂 adapter。",
+    )
+    load_in_4bit: bool = Field(default=False, description="是否 4bit（4 位）加载基础模型；仅 qlora 允许为 true。")
+    bnb_compute_dtype: str = Field(
+        default="bfloat16",
+        min_length=1,
+        description="bitsandbytes 4bit 计算 dtype（计算精度），如 bfloat16/float16/float32。",
+    )
+    bnb_4bit_quant_type: str = Field(default="nf4", min_length=1, description="bitsandbytes 4bit 量化类型，默认 nf4。")
+    bnb_4bit_use_double_quant: bool = Field(default=True, description="是否启用 nested quantization（双重量化）。")
+    gradient_checkpointing: bool = Field(default=True, description="是否启用 gradient checkpointing（梯度检查点）节省显存。")
     trust_remote_code: bool = Field(default=False, description="是否信任远端模型自定义代码。")
     use_fast_tokenizer: bool = Field(default=True, description="是否优先使用 fast tokenizer（快速分词器）。")
     report_to: list[str] = Field(default_factory=list, description="Trainer 上报目标，默认空避免本地误连外部服务。")
@@ -84,6 +109,15 @@ class Stage9SftTrainingConfig(CheckpointModel):
                 not self.model_profile_id or not self.model_profile_path
         ):
             raise ValueError("transformers_causal_lm 训练必须设置 model_profile_id 和 model_profile_path")
+        if self.training_backend == TrainingBackend.TRANSFORMERS_CAUSAL_LM:
+            if self.tuning_method == TuningMethod.FULL and not self.allow_full_finetune:
+                raise ValueError("阶段 9 第一版默认禁止 full 全量微调；确需使用时必须 allow_full_finetune=true")
+            if self.tuning_method in {TuningMethod.LORA, TuningMethod.QLORA} and not self.target_modules:
+                raise ValueError("lora/qlora 训练必须配置 target_modules")
+            if self.tuning_method == TuningMethod.QLORA and not self.load_in_4bit:
+                raise ValueError("qlora 训练必须设置 load_in_4bit=true")
+            if self.tuning_method == TuningMethod.LORA and self.load_in_4bit:
+                raise ValueError("lora 训练不能设置 load_in_4bit=true；4bit 训练请使用 qlora")
         return self
 
 
@@ -119,7 +153,7 @@ def collect_framework_versions() -> dict[str, str]:
     """收集训练框架版本；缺失依赖写 unavailable，避免本地 smoke（冒烟）被重依赖卡住。"""
 
     versions: dict[str, str] = {}
-    for package in ("python", "torch", "transformers", "datasets"):
+    for package in ("python", "torch", "transformers", "datasets", "peft", "bitsandbytes"):
         if package == "python":
             versions[package] = _python_version()
             continue

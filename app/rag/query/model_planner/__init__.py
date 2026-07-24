@@ -6,6 +6,7 @@ from app.rag.query.model_planner.checkpoint_runtime import (
     PlannerCheckpointRuntime,
     PlannerInferenceResult,
     TrainingBackend,
+    TuningMethod,
     load_checkpoint_manifest,
     load_checkpoint_runtime,
 )
@@ -50,6 +51,7 @@ __all__ = [
     "PlannerPrompt",
     "PlannerPromptConfig",
     "TrainingBackend",
+    "TuningMethod",
     "build_planner_prompt",
     "decode_decision",
     "encode_decision",

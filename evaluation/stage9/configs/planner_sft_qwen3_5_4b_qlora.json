@@ -1,5 +1,5 @@
 {
-  "run_name": "planner-sft-stage9-cloud",
+  "run_name": "planner-sft-stage9-qwen3-5-4b-qlora",
   "training_backend": "transformers_causal_lm",
   "base_model_id": "Qwen/Qwen3.5-4B",
   "model_profile_id": "qwen3_5_4b",
@@ -21,7 +21,7 @@
   "max_steps": null,
   "device": "auto",
   "torch_dtype": "bfloat16",
-  "tuning_method": "lora",
+  "tuning_method": "qlora",
   "allow_full_finetune": false,
   "lora_r": 16,
   "lora_alpha": 32,
@@ -35,7 +35,7 @@
     "up_proj",
     "down_proj"
   ],
-  "load_in_4bit": false,
+  "load_in_4bit": true,
   "bnb_compute_dtype": "bfloat16",
   "bnb_4bit_quant_type": "nf4",
   "bnb_4bit_use_double_quant": true,
