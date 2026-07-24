@@ -7,7 +7,7 @@ from evaluation.stage9.model_planner.checkpoint_io import (
     collect_framework_versions,
     load_training_config,
 )
-from evaluation.stage9.model_planner.model_profile import load_model_profile
+from app.rag.query.model_planner.model_profile import load_model_profile
 
 
 LORA_CONFIG = "evaluation/stage9/configs/planner_sft_qwen3_5_4b_lora.json"
@@ -123,7 +123,7 @@ def _base_transformers_config(**overrides):
         "training_backend": "transformers_causal_lm",
         "base_model_id": "Qwen/Qwen3.5-4B",
         "model_profile_id": "qwen3_5_4b",
-        "model_profile_path": "evaluation/stage9/configs/model_profiles/qwen3_5_4b.json",
+        "model_profile_path": "configs/planner_model_profiles/qwen3_5_4b.json",
         "train_data": "evaluation/stage9/artifacts/sft/sft_planner_stage9_train.jsonl",
         "train_manifest": "evaluation/stage9/artifacts/sft/sft_planner_stage9_manifest.json",
         "reward_profile": "evaluation/stage9/configs/reward_v1_1_training_profile.json",

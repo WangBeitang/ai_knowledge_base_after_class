@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # PlannerModelServer（规划器模型服务）正式入口。
-# 这里使用 vLLM（大模型推理服务框架）把本地或云端模型暴露成
+# 使用 vLLM（大模型推理服务框架）把本地或云端模型暴露成
 # OpenAI-compatible chat completions（兼容 OpenAI 的聊天补全接口）。
 
 PLANNER_MODEL_PATH="${PLANNER_MODEL_PATH:-Qwen/Qwen3.5-4B}"

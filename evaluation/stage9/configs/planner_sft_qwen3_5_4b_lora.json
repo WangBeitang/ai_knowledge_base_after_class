@@ -3,7 +3,7 @@
   "training_backend": "transformers_causal_lm",
   "base_model_id": "Qwen/Qwen3.5-4B",
   "model_profile_id": "qwen3_5_4b",
-  "model_profile_path": "evaluation/stage9/configs/model_profiles/qwen3_5_4b.json",
+  "model_profile_path": "configs/planner_model_profiles/qwen3_5_4b.json",
   "train_data": "evaluation/stage9/artifacts/sft/sft_planner_stage9_train.jsonl",
   "train_manifest": "evaluation/stage9/artifacts/sft/sft_planner_stage9_manifest.json",
   "reward_profile": "evaluation/stage9/configs/reward_v1_1_training_profile.json",

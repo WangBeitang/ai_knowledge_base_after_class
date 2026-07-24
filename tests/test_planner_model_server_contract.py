@@ -6,12 +6,12 @@ from typing import Any
 
 from app.rag.query.contracts import PlannerDecision, PlannerReasonCode, QueryAction
 from app.rag.query.model_planner.decision_codec import encode_decision
-from evaluation.stage9.model_planner.mock_planner_server import make_handler
-from evaluation.stage9.model_server.healthcheck_planner_server import main as healthcheck_main
+from scripts.planner_model_server.mock_planner_server import make_handler
+from scripts.planner_model_server.healthcheck_planner_server import main as healthcheck_main
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-MODEL_SERVER_DIR = PROJECT_ROOT / "evaluation/stage9/model_server"
+MODEL_SERVER_DIR = PROJECT_ROOT / "deploy/planner_model_server"
 
 
 class _RunningHandlerServer:

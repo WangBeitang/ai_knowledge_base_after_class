@@ -15,7 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from app.rag.evaluation.baseline_runner import load_environment_snapshot  # noqa: E402
 from app.rag.evaluation.case_schema import load_planner_cases  # noqa: E402
 from app.rag.evaluation.offline_environment import OfflineRagEnvironment  # noqa: E402
-from evaluation.stage9.providers import MilvusActionProvider, RecordingActionProvider  # noqa: E402
+from app.rag.evaluation.action_providers import MilvusActionProvider, RecordingActionProvider  # noqa: E402
 from evaluation.stage9.route_seed.build_route_seed_cases import (  # noqa: E402
     DEFAULT_OUTPUT,
     DEFAULT_PATHS,

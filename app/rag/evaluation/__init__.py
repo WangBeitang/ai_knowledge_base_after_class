@@ -1,8 +1,8 @@
 """
-阶段 8 离线评测契约与工具包。
+离线评测契约与工具包。
 
-本包暴露阶段 8 离线评测的稳定对象：数据契约、边界校验、离线 Environment 和
-Reward v1 评分入口。它不执行真实检索或模型推理；Reward 计算只读取已经产生的
+本包暴露离线评测的稳定对象：数据契约、边界校验、离线 Environment（环境）、
+ActionProvider（动作执行器）和 Reward（奖励）评分入口。Reward 计算只读取已经产生的
 OfflineTrajectoryResult，不连接 Mongo/Milvus/Web。这样做是为了让后续脚本、测试和
 训练导出都复用同一套 schema（数据形状约束），避免 JSONL 样本、环境快照、评测结果
 和 SFT/GRPO 导出之间各自定义一套字段。
@@ -45,6 +45,17 @@ from app.rag.evaluation.offline_environment import (
     OfflineTraceStep,
     OfflineTrajectoryResult,
     OfflineTrajectoryStatus,
+)
+from app.rag.evaluation.action_providers import (
+    # 正式 ActionProvider（动作执行器）。它们复用真实检索节点或回放记录，供评测、
+    # 云端 smoke（冒烟）和后续 GRPO（组相对策略优化强化训练）共同调用。
+    PROVIDER_OBSERVATION_RECORD_VERSION,
+    MilvusActionProvider,
+    ProviderObservationRecord,
+    RealActionProvider,
+    RecordingActionProvider,
+    ReplayActionProvider,
+    read_provider_observation_records,
 )
 from app.rag.evaluation.reward import (
     # Reward v1 评分入口和结果 schema。Reward 的中文含义是“奖励/评分信号”，阶段 8
@@ -117,6 +128,14 @@ __all__ = [
     "OfflineTraceStep",
     "OfflineTrajectoryResult",
     "OfflineTrajectoryStatus",
+    # 正式 ActionProvider。
+    "PROVIDER_OBSERVATION_RECORD_VERSION",
+    "MilvusActionProvider",
+    "ProviderObservationRecord",
+    "RealActionProvider",
+    "RecordingActionProvider",
+    "ReplayActionProvider",
+    "read_provider_observation_records",
     # 阶段 8.5 Reward v1 评分器。
     "REWARD_VERSION",
     "RewardComponent",

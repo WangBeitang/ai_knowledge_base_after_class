@@ -120,7 +120,7 @@ def _build_provider(
     if provider_name == "empty":
         return EmptyOfflineActionProvider()
     if provider_name == "milvus":
-        from evaluation.stage9.providers.milvus_action_provider import MilvusActionProvider
+        from app.rag.evaluation.action_providers import MilvusActionProvider
 
         return MilvusActionProvider()
     raise ValueError(f"未知 action provider：{provider_name}")

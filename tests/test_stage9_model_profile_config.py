@@ -5,12 +5,12 @@ import pytest
 
 from app.rag.query.model_planner import load_checkpoint_manifest
 from evaluation.stage9.model_planner.checkpoint_io import Stage9SftTrainingConfig, load_training_config
-from evaluation.stage9.model_planner.model_profile import load_model_profile
+from app.rag.query.model_planner.model_profile import load_model_profile
 from evaluation.stage9.model_planner.sft_train import run_sft_training
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PROFILE_DIR = PROJECT_ROOT / "evaluation/stage9/configs/model_profiles"
+PROFILE_DIR = PROJECT_ROOT / "configs/planner_model_profiles"
 CLOUD_TEMPLATE = PROJECT_ROOT / "evaluation/stage9/configs/planner_sft_cloud_template.json"
 
 
@@ -66,7 +66,7 @@ def test_training_checkpoint_manifest_embeds_profile_snapshot(tmp_path):
         training_backend="debug_memorized",
         base_model_id=profile.base_model_id,
         model_profile_id=profile.profile_id,
-        model_profile_path="evaluation/stage9/configs/model_profiles/qwen3_5_4b.json",
+        model_profile_path="configs/planner_model_profiles/qwen3_5_4b.json",
         train_data="evaluation/stage9/artifacts/sft/sft_planner_stage9_train.jsonl",
         train_manifest="evaluation/stage9/artifacts/sft/sft_planner_stage9_manifest.json",
         reward_profile="evaluation/stage9/configs/reward_v1_1_training_profile.json",
@@ -97,7 +97,7 @@ def test_training_rejects_model_profile_mismatch(tmp_path):
         training_backend="debug_memorized",
         base_model_id="Qwen/Qwen3.5-9B",
         model_profile_id="qwen3_5_4b",
-        model_profile_path="evaluation/stage9/configs/model_profiles/qwen3_5_4b.json",
+        model_profile_path="configs/planner_model_profiles/qwen3_5_4b.json",
         train_data="evaluation/stage9/artifacts/sft/sft_planner_stage9_train.jsonl",
         train_manifest="evaluation/stage9/artifacts/sft/sft_planner_stage9_manifest.json",
         reward_profile="evaluation/stage9/configs/reward_v1_1_training_profile.json",

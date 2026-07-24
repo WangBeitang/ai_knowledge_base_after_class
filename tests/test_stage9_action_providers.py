@@ -14,7 +14,7 @@ from app.rag.query.contracts import (
     RetrievalCandidate,
     RetrievalChannel,
 )
-from evaluation.stage9.providers import (
+from app.rag.evaluation.action_providers import (
     MilvusActionProvider,
     RecordingActionProvider,
     ReplayActionProvider,

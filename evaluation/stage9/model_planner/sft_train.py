@@ -34,7 +34,7 @@ from evaluation.stage9.model_planner.sft_dataset import (  # noqa: E402
     load_sft_train_examples,
     write_examples_preview,
 )
-from evaluation.stage9.model_planner.model_profile import load_model_profile  # noqa: E402
+from app.rag.query.model_planner.model_profile import load_model_profile  # noqa: E402
 
 
 TRAINER_VERSION = "stage9-planner-sft-trainer-v1"

@@ -10,7 +10,7 @@ PLANNER_MOCK_ACTION="${PLANNER_MOCK_ACTION:-refuse}"
 PLANNER_MOCK_QUERY="${PLANNER_MOCK_QUERY:-mock planner decision}"
 PLANNER_MOCK_REASON_CODE="${PLANNER_MOCK_REASON_CODE:-safe_guard_triggered}"
 
-exec uv run python evaluation/stage9/model_planner/mock_planner_server.py \
+exec uv run python scripts/planner_model_server/mock_planner_server.py \
   --host "$PLANNER_HOST" \
   --port "$PLANNER_PORT" \
   --action "$PLANNER_MOCK_ACTION" \

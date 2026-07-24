@@ -16,7 +16,7 @@ from app.rag.query.contracts import (
 from app.rag.query.model_planner.decision_codec import encode_decision
 from app.rag.query.model_planner.http_client import PlannerClient, PlannerClientError
 from app.shared.config.planner_model_config import PlannerModelConfig
-from evaluation.stage9.model_planner.mock_planner_server import make_handler
+from scripts.planner_model_server.mock_planner_server import make_handler
 
 
 def _context() -> PlannerContext:

@@ -21,6 +21,11 @@ from app.rag.query.model_planner.http_client import (
     PlannerClientError,
     PlannerHttpResult,
 )
+from app.rag.query.model_planner.model_profile import (
+    DEFAULT_MODEL_PROFILE_DIR,
+    load_model_profile,
+    resolve_model_profile_path,
+)
 from app.rag.query.model_planner.planner import (
     ModelDecisionGenerator,
     ModelPlanner,
@@ -43,6 +48,7 @@ __all__ = [
     "ModelPlannerOutputError",
     "ModelProfileSnapshot",
     "PROMPT_BUILDER_VERSION",
+    "DEFAULT_MODEL_PROFILE_DIR",
     "PlannerClient",
     "PlannerClientError",
     "PlannerCheckpointRuntime",
@@ -57,4 +63,6 @@ __all__ = [
     "encode_decision",
     "load_checkpoint_manifest",
     "load_checkpoint_runtime",
+    "load_model_profile",
+    "resolve_model_profile_path",
 ]
