@@ -42,7 +42,18 @@ class Stage9SftTrainingConfig(CheckpointModel):
         default=TrainingBackend.DEBUG_MEMORIZED,
         description="训练后端：本地 smoke 用 debug_memorized，云端真实 SFT 用 transformers_causal_lm。",
     )
-    base_model_id: str = Field(min_length=1, description="基础模型 ID 或本地模型路径，必须写入 checkpoint。")
+    base_model_id: str = Field(
+        min_length=1,
+        description="基础模型身份，必须写入 checkpoint；真实加载路径由 model profile 的 training_model_id 描述。",
+    )
+    model_profile_id: str = Field(
+        default="",
+        description="model profile（模型配置档案）身份；真实模型训练必须填写，debug smoke 可为空。",
+    )
+    model_profile_path: str = Field(
+        default="",
+        description="model profile（模型配置档案）JSON 路径；真实模型训练必须填写并写入 checkpoint。",
+    )
     train_data: str = Field(min_length=1, description="SFT 训练 JSONL 路径。")
     train_manifest: str = Field(min_length=1, description="SFT 数据 manifest（清单）路径。")
     reward_profile: str = Field(min_length=1, description="冻结 Reward profile（奖励配置）路径。")
@@ -69,6 +80,10 @@ class Stage9SftTrainingConfig(CheckpointModel):
     def validate_training_backend(self) -> "Stage9SftTrainingConfig":
         if self.training_backend == TrainingBackend.TRANSFORMERS_CAUSAL_LM and self.num_epochs == 0 and self.max_steps is None:
             raise ValueError("transformers_causal_lm 训练必须设置 num_epochs>0 或 max_steps")
+        if self.training_backend == TrainingBackend.TRANSFORMERS_CAUSAL_LM and (
+                not self.model_profile_id or not self.model_profile_path
+        ):
+            raise ValueError("transformers_causal_lm 训练必须设置 model_profile_id 和 model_profile_path")
         return self
 
 

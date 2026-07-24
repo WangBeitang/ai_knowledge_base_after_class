@@ -33,6 +33,7 @@ from evaluation.stage9.model_planner.sft_dataset import (  # noqa: E402
     load_sft_train_examples,
     write_examples_preview,
 )
+from evaluation.stage9.model_planner.model_profile import load_model_profile  # noqa: E402
 
 
 TRAINER_VERSION = "stage9-planner-sft-trainer-v1"
@@ -57,6 +58,7 @@ def run_sft_training(config: Stage9SftTrainingConfig) -> CheckpointManifest:
     manifest_payload = load_sft_manifest(PROJECT_ROOT / config.train_manifest)
     reward_profile = json.loads((PROJECT_ROOT / config.reward_profile).read_text(encoding="utf-8"))
     _validate_config_against_inputs(config, manifest_payload, reward_profile)
+    model_profile = _load_config_model_profile(config)
 
     run_id, checkpoint_dir = create_checkpoint_dir(config)
     model_dir = checkpoint_dir / "model"
@@ -75,6 +77,7 @@ def run_sft_training(config: Stage9SftTrainingConfig) -> CheckpointManifest:
     else:
         backend_metrics = _run_transformers_backend(
             config=config,
+            model_profile=model_profile,
             examples=examples,
             model_dir=model_dir,
             tokenizer_dir=tokenizer_dir,
@@ -87,6 +90,7 @@ def run_sft_training(config: Stage9SftTrainingConfig) -> CheckpointManifest:
         "dataset": dataset_stats.model_dump(mode="json"),
         "source_manifest_id": manifest_payload.get("manifest_id", ""),
         "reward_profile": reward_profile.get("profile_name", ""),
+        "model_profile": model_profile.model_dump(mode="json") if model_profile else None,
         "backend_metrics": backend_metrics,
     }
     write_json(metrics_path, train_metrics)
@@ -97,6 +101,8 @@ def run_sft_training(config: Stage9SftTrainingConfig) -> CheckpointManifest:
         policy_version=f"{config.training_backend.value}:{run_id}",
         training_backend=config.training_backend,
         base_model_id=config.base_model_id,
+        model_profile_id=model_profile.profile_id if model_profile else config.model_profile_id,
+        model_profile=model_profile,
         train_data=config.train_data,
         train_manifest=config.train_manifest,
         reward_profile=config.reward_profile,
@@ -157,6 +163,7 @@ def _run_debug_memorized_backend(examples: list[SftTrainExample], model_dir: Pat
 def _run_transformers_backend(
         *,
         config: Stage9SftTrainingConfig,
+        model_profile: Any | None,
         examples: list[SftTrainExample],
         model_dir: Path,
         tokenizer_dir: Path,
@@ -172,8 +179,9 @@ def _run_transformers_backend(
     from datasets import Dataset
     from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
 
+    model_load_id = model_profile.training_model_id if model_profile else config.base_model_id
     tokenizer = AutoTokenizer.from_pretrained(
-        config.base_model_id,
+        model_load_id,
         trust_remote_code=config.trust_remote_code,
         use_fast=config.use_fast_tokenizer,
     )
@@ -186,7 +194,7 @@ def _run_transformers_backend(
     dtype = _torch_dtype(config.torch_dtype, torch)
     if dtype is not None:
         model_kwargs["torch_dtype"] = dtype
-    model = AutoModelForCausalLM.from_pretrained(config.base_model_id, **model_kwargs)
+    model = AutoModelForCausalLM.from_pretrained(model_load_id, **model_kwargs)
     if config.device != "auto":
         model.to(config.device)
 
@@ -255,6 +263,7 @@ def _run_transformers_backend(
     tokenizer.save_pretrained(tokenizer_dir)
     return {
         "updated_model_weights": True,
+        "model_load_id": str(model_load_id),
         "train_loss": float(train_output.training_loss),
         "global_step": int(train_output.global_step),
     }
@@ -276,6 +285,39 @@ def _validate_config_against_inputs(
         raise ValueError(
             f"Reward profile={reward_version} 与 SFT manifest reward_version={manifest_reward} 不一致"
         )
+
+
+def _load_config_model_profile(config: Stage9SftTrainingConfig):
+    """
+    读取并校验训练绑定的 model profile（模型配置档案）。
+
+    debug_memorized（调试记忆）允许为空；真实 transformers（训练框架）后端必须绑定 profile，
+    否则 checkpoint manifest（检查点清单）无法追踪模型身份和模板边界。
+    """
+
+    if not config.model_profile_id and not config.model_profile_path:
+        return None
+    profile_ref = config.model_profile_path or config.model_profile_id
+    profile = load_model_profile(profile_ref)
+    if config.model_profile_id and config.model_profile_id != profile.profile_id:
+        raise ValueError(
+            f"训练配置 model_profile_id={config.model_profile_id} 与 profile_id={profile.profile_id} 不一致"
+        )
+    if profile.base_model_id != config.base_model_id:
+        raise ValueError(
+            f"训练配置 base_model_id={config.base_model_id} 与 model profile base_model_id={profile.base_model_id} 不一致"
+        )
+    if profile.enable_thinking:
+        raise ValueError("Planner SFT model profile 必须设置 enable_thinking=false")
+    if config.max_input_tokens > profile.max_context_tokens:
+        raise ValueError(
+            f"max_input_tokens={config.max_input_tokens} 超过 profile max_context_tokens={profile.max_context_tokens}"
+        )
+    if config.max_target_tokens > profile.max_target_tokens:
+        raise ValueError(
+            f"max_target_tokens={config.max_target_tokens} 超过 profile max_target_tokens={profile.max_target_tokens}"
+        )
+    return profile
 
 
 def _torch_dtype(raw_dtype: str, torch_module: Any) -> Any:

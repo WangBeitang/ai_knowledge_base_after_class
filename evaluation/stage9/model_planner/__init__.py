@@ -7,6 +7,7 @@ from evaluation.stage9.model_planner.checkpoint_io import (
     load_checkpoint_manifest,
     load_training_config,
 )
+from evaluation.stage9.model_planner.model_profile import load_model_profile
 from evaluation.stage9.model_planner.decision_codec import (
     DECISION_CODEC_VERSION,
     DecisionDecodeResult,
@@ -43,6 +44,7 @@ __all__ = [
     "decode_decision",
     "encode_decision",
     "load_checkpoint_manifest",
+    "load_model_profile",
     "load_sft_train_examples",
     "load_training_config",
 ]

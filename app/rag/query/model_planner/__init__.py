@@ -2,6 +2,7 @@
 
 from app.rag.query.model_planner.checkpoint_runtime import (
     CheckpointManifest,
+    ModelProfileSnapshot,
     PlannerCheckpointRuntime,
     PlannerInferenceResult,
     TrainingBackend,
@@ -39,6 +40,7 @@ __all__ = [
     "ModelDecisionGenerator",
     "ModelPlanner",
     "ModelPlannerOutputError",
+    "ModelProfileSnapshot",
     "PROMPT_BUILDER_VERSION",
     "PlannerClient",
     "PlannerClientError",

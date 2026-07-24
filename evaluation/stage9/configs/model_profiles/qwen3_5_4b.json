@@ -1,0 +1,20 @@
+{
+  "profile_id": "qwen3_5_4b",
+  "display_name": "Qwen3.5-4B",
+  "model_family": "qwen3.5",
+  "role": "default_base_model",
+  "auto_train_enabled": true,
+  "base_model_id": "Qwen/Qwen3.5-4B",
+  "training_model_id": "Qwen/Qwen3.5-4B",
+  "serving_model_id": "qwen3.5:4b",
+  "parameter_count_b": 4.7,
+  "chat_template": "qwen3.5-chat",
+  "enable_thinking": false,
+  "max_context_tokens": 4096,
+  "max_target_tokens": 128,
+  "recommended_backend": "transformers_causal_lm",
+  "recommended_training_backend": "transformers_causal_lm",
+  "recommended_inference_backend": "ollama_openai_compatible",
+  "quantization": "none_for_training; ollama_q4_k_m_for_local_smoke",
+  "license": "Apache-2.0"
+}

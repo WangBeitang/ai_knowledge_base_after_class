@@ -7,7 +7,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.rag.query.contracts import PlannerContext, PlannerDecision, PlannerReasonCode, QueryAction
 from app.rag.query.model_planner.decision_codec import DecisionDecodeResult, decode_decision, encode_decision
@@ -36,6 +36,35 @@ class RuntimeModel(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, validate_assignment=True)
 
 
+class ModelProfileSnapshot(RuntimeModel):
+    """
+    model profile（模型配置档案）快照。
+
+    checkpoint manifest（检查点清单）保存的是训练当时的 profile 内容，而不是只保存
+    profile_id（配置档案身份）。这样后续 profile 文件被修改时，旧 checkpoint 仍能说明
+    自己当时到底以哪个模型、模板和 token（分词单元）边界训练。
+    """
+
+    profile_id: str = Field(min_length=1)
+    display_name: str = Field(min_length=1)
+    model_family: str = Field(min_length=1)
+    role: str = Field(min_length=1)
+    auto_train_enabled: bool
+    base_model_id: str = Field(min_length=1)
+    training_model_id: str = Field(min_length=1)
+    serving_model_id: str = Field(min_length=1)
+    parameter_count_b: float | None = Field(default=None, gt=0)
+    chat_template: str = Field(min_length=1)
+    enable_thinking: bool
+    max_context_tokens: int = Field(ge=1)
+    max_target_tokens: int = Field(ge=1)
+    recommended_backend: str = Field(min_length=1)
+    recommended_training_backend: str = ""
+    recommended_inference_backend: str = ""
+    quantization: str = ""
+    license: str = ""
+
+
 class CheckpointManifest(RuntimeModel):
     """
     checkpoint manifest（检查点清单）。
@@ -51,6 +80,8 @@ class CheckpointManifest(RuntimeModel):
     policy_version: str = Field(min_length=1)
     training_backend: TrainingBackend
     base_model_id: str = Field(min_length=1)
+    model_profile_id: str = ""
+    model_profile: ModelProfileSnapshot | None = None
     train_data: str = Field(min_length=1)
     train_manifest: str = Field(min_length=1)
     reward_profile: str = Field(min_length=1)
@@ -72,6 +103,22 @@ class CheckpointManifest(RuntimeModel):
     reason_code_counts: dict[str, int] = Field(default_factory=dict)
     max_input_tokens: int = Field(ge=1)
     max_target_tokens: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def validate_model_profile(self) -> "CheckpointManifest":
+        """校验 checkpoint（检查点）记录的模型身份和 profile（配置档案）一致。"""
+
+        if self.model_profile is None:
+            return self
+        if self.model_profile_id and self.model_profile.profile_id != self.model_profile_id:
+            raise ValueError("model_profile_id 与 model_profile.profile_id 不一致")
+        if self.model_profile.base_model_id != self.base_model_id:
+            raise ValueError("base_model_id 与 model_profile.base_model_id 不一致")
+        if self.max_target_tokens > self.model_profile.max_target_tokens:
+            raise ValueError("max_target_tokens 不能超过 model_profile.max_target_tokens")
+        if self.max_input_tokens > self.model_profile.max_context_tokens:
+            raise ValueError("max_input_tokens 不能超过 model_profile.max_context_tokens")
+        return self
 
 
 class PlannerInferenceResult(RuntimeModel):
