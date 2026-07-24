@@ -39,13 +39,16 @@ class PlannerHttpResult(PlannerHttpModel):
     一次 PlannerClient（规划器客户端）调用结果。
 
     raw_output（原始输出）来自模型服务；decision（规划器决策）只有在 decode_result.success
-    （解析成功）为 True 时才可以交给查询图执行。
+    （解析成功）为 True 时才可以交给查询图执行。response_model_id（响应模型身份）来自
+    PlannerModelServer（规划器模型服务）响应顶层 `model` 字段，用于 healthcheck（健康检查）
+    确认请求没有打到错误模型。
     """
 
     decision: PlannerDecision
     raw_output: str = Field(min_length=1)
     decode_result: DecisionDecodeResult
     model_id: str = Field(min_length=1)
+    response_model_id: str = ""
     endpoint: str = Field(min_length=1)
     prompt_hash: str = Field(min_length=1)
     request_payload: dict[str, Any]
@@ -92,7 +95,8 @@ class PlannerClient:
             raise TypeError("context 必须是 PlannerContext")
         prompt = build_planner_prompt(context)
         request_payload = self.build_request_payload(prompt)
-        raw_output = self._post_chat_completion(request_payload)
+        response_payload = self._post_chat_completion_payload(request_payload)
+        raw_output = self._extract_non_empty_chat_content(response_payload)
         decode_result = decode_decision(raw_output, allowed_actions=context.allowed_actions)
         if not decode_result.success or decode_result.decision is None:
             raise PlannerClientError(
@@ -109,6 +113,7 @@ class PlannerClient:
             raw_output=raw_output,
             decode_result=decode_result,
             model_id=self.config.planner_model_id,
+            response_model_id=str(response_payload.get("model") or "") if isinstance(response_payload, dict) else "",
             endpoint=self.config.planner_model_endpoint,
             prompt_hash=prompt.payload_hash,
             request_payload=request_payload,
@@ -146,8 +151,9 @@ class PlannerClient:
         保留 max_new_tokens 是为了和训练配置语义一致。
 
         enable_thinking（是否启用思考模式）会同时映射到 reasoning_effort（推理强度）、
-        顶层字段和 chat_template_kwargs（聊天模板参数），让 Ollama（本地大模型运行器）、
-        vLLM/SGLang（大模型推理服务框架）尽量使用同一份业务侧调用代码。
+        顶层字段和 chat_template_kwargs（聊天模板参数），让 Ollama（本地大模型运行器）和
+        vLLM（大模型推理服务框架）尽量使用同一份业务侧调用代码；SGLang（大模型推理服务框架）
+        后续如接入，也应兼容这份请求协议。
         """
 
         model_id = str(self.config.planner_model_id or "").strip()
@@ -176,13 +182,31 @@ class PlannerClient:
         }
 
     def _post_chat_completion(self, request_payload: dict[str, Any]) -> str:
+        """发送请求并返回非空 message.content（消息正文）。"""
+
+        response_payload = self._post_chat_completion_payload(request_payload)
+        return self._extract_non_empty_chat_content(response_payload)
+
+    def _post_chat_completion_payload(self, request_payload: dict[str, Any]) -> dict[str, Any]:
+        """
+        发送 OpenAI-compatible chat completions（兼容 OpenAI 的聊天补全）请求。
+
+        api_key（接口密钥）只进入 Authorization（鉴权）请求头，不写入 request_payload（请求体）
+        或 PlannerHttpResult（规划器 HTTP 结果），避免 Trace（轨迹记录）误保存密钥。
+        """
+
         endpoint = str(self.config.planner_model_endpoint or "").strip()
         if not endpoint:
             raise PlannerClientError("endpoint_missing", "PLANNER_MODEL_ENDPOINT 不能为空")
+        headers = {}
+        api_key = str(self.config.planner_api_key or "").strip()
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
         try:
             response = self._session.post(
                 endpoint,
                 json=request_payload,
+                headers=headers or None,
                 timeout=self.config.planner_timeout_seconds,
             )
         except requests.Timeout as exc:
@@ -217,6 +241,23 @@ class PlannerClient:
                 "PlannerModelServer 响应不是合法 JSON",
                 details={"response_excerpt": str(response.text or "")[:500]},
             ) from exc
+        if not isinstance(response_payload, dict):
+            raise PlannerClientError(
+                "response_json_invalid",
+                "PlannerModelServer 响应 JSON 必须是 object",
+                details={"response_excerpt": str(response_payload)[:500]},
+            )
+        return response_payload
+
+    @staticmethod
+    def _extract_non_empty_chat_content(response_payload: dict[str, Any]) -> str:
+        """
+        从服务响应提取非空模型正文。
+
+        空 content（正文）统一转成 empty_model_content（空模型正文）错误，防止空响应继续进入
+        decision_codec（决策编解码器）。
+        """
+
         raw_output = _extract_openai_chat_content(response_payload)
         if not raw_output.strip():
             raise PlannerClientError(

@@ -33,7 +33,7 @@ def _context() -> PlannerContext:
     )
 
 
-def _config(endpoint: str) -> PlannerModelConfig:
+def _config(endpoint: str, *, api_key: str = "") -> PlannerModelConfig:
     return PlannerModelConfig(
         planner_mode="sft",
         planner_backend="http",
@@ -43,6 +43,7 @@ def _config(endpoint: str) -> PlannerModelConfig:
         planner_max_new_tokens=128,
         planner_temperature=0.0,
         planner_enable_thinking=False,
+        planner_api_key=api_key,
     )
 
 
@@ -64,14 +65,17 @@ def _openai_response(content: str) -> dict[str, Any]:
 class _RunningServer:
     def __init__(self, *, status_code: int = 200, body: Any = None, raw_body: bytes | None = None) -> None:
         self.captured_requests: list[dict[str, Any]] = []
+        self.captured_headers: list[dict[str, str]] = []
 
         captured_requests = self.captured_requests
+        captured_headers = self.captured_headers
 
         class Handler(BaseHTTPRequestHandler):
             def do_POST(self) -> None:  # noqa: N802
                 content_length = int(self.headers.get("Content-Length", "0"))
                 request_body = self.rfile.read(content_length) if content_length else b"{}"
                 captured_requests.append(json.loads(request_body.decode("utf-8")))
+                captured_headers.append({key: value for key, value in self.headers.items()})
                 if raw_body is not None:
                     response_body = raw_body
                 else:
@@ -129,6 +133,7 @@ def test_planner_client_calls_openai_compatible_chat_completion():
     assert result.decision.action == QueryAction.LOCAL_SEARCH
     assert result.decode_result.success is True
     assert result.model_id == "qwen3.5:4b"
+    assert result.response_model_id == "qwen3.5:4b"
     request_payload = server.captured_requests[0]
     assert request_payload["model"] == "qwen3.5:4b"
     assert request_payload["temperature"] == 0.0
@@ -138,6 +143,22 @@ def test_planner_client_calls_openai_compatible_chat_completion():
     assert request_payload["chat_template_kwargs"]["enable_thinking"] is False
     assert "Planner（规划器）" in request_payload["messages"][0]["content"]
     assert "allowed_actions" in request_payload["messages"][1]["content"]
+
+
+def test_planner_client_sends_authorization_header_without_leaking_key_to_payload():
+    target_json = encode_decision({
+        "action": "refuse",
+        "query": "mock refusal",
+        "reason_code": "safe_guard_triggered",
+    })
+    with _RunningServer(body=_openai_response(target_json)) as server:
+        client = PlannerClient(config=_config(server.endpoint, api_key="stage9-secret"))
+
+        result = client.request_decision(_context())
+
+    assert result.decision.action == QueryAction.REFUSE
+    assert server.captured_headers[0]["Authorization"] == "Bearer stage9-secret"
+    assert "stage9-secret" not in json.dumps(server.captured_requests[0], ensure_ascii=False)
 
 
 def test_planner_client_reports_non_2xx_status():

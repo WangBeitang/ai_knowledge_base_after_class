@@ -42,6 +42,9 @@ class PlannerModelConfig:
     planner_temperature: float
     # enable_thinking（是否启用思考模式）。Planner 不保存私有思维链，默认关闭。
     planner_enable_thinking: bool
+    # api_key（接口密钥）。本地 Ollama/mock 可以为空；vLLM 云端服务如启用 --api-key，
+    # PlannerClient 会把它写入 Authorization Bearer 头。
+    planner_api_key: str = ""
 
 
 def _env_int(name: str, default: int) -> int:
@@ -63,4 +66,5 @@ planner_model_config = PlannerModelConfig(
     planner_max_new_tokens=_env_int("PLANNER_MAX_NEW_TOKENS", 128),
     planner_temperature=env_float("PLANNER_TEMPERATURE", 0.0),
     planner_enable_thinking=env_bool("PLANNER_ENABLE_THINKING", False),
+    planner_api_key=env_str("PLANNER_API_KEY"),
 )
