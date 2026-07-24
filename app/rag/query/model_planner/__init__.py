@@ -14,6 +14,11 @@ from app.rag.query.model_planner.decision_codec import (
     decode_decision,
     encode_decision,
 )
+from app.rag.query.model_planner.http_client import (
+    PlannerClient,
+    PlannerClientError,
+    PlannerHttpResult,
+)
 from app.rag.query.model_planner.planner import (
     ModelDecisionGenerator,
     ModelPlanner,
@@ -35,7 +40,10 @@ __all__ = [
     "ModelPlanner",
     "ModelPlannerOutputError",
     "PROMPT_BUILDER_VERSION",
+    "PlannerClient",
+    "PlannerClientError",
     "PlannerCheckpointRuntime",
+    "PlannerHttpResult",
     "PlannerInferenceResult",
     "PlannerPrompt",
     "PlannerPromptConfig",
