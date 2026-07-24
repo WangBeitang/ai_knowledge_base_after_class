@@ -3,6 +3,8 @@
 本目录保存阶段 9 上云所需的可执行脚本和环境模板。它是部署资产，不是一次性
 `evaluation/stage9（阶段实验目录）`产物；训练配置、训练数据和报告仍放在 `evaluation/stage9/`。
 
+AutoDL（云 GPU 平台）执行细节见 `AUTODL_SFT_GUIDE.md（AutoDL 监督微调上云指引）`。
+
 ## 运行顺序
 
 1. 把完整项目代码同步到 GPU（显卡算力）服务器。

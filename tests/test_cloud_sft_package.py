@@ -9,6 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED_DEPLOY_FILES = [
     Path("deploy/cloud_sft/README.md"),
+    Path("deploy/cloud_sft/AUTODL_SFT_GUIDE.md"),
     Path("deploy/cloud_sft/env.example"),
     Path("deploy/cloud_sft/bootstrap_gpu_server.sh"),
     Path("deploy/cloud_sft/run_sft_smoke.sh"),
