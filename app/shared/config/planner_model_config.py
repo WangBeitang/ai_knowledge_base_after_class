@@ -1,9 +1,9 @@
 """
 模型 Planner（规划器）服务配置。
 
-这些配置只描述业务服务如何调用 PlannerModelServer（规划器模型服务），不负责加载模型
-权重，也不决定当前查询链路是否启用模型 Planner；真正的模式切换由后续 planner_registry
-（规划器注册表）处理。
+这些配置描述业务服务如何选择 Planner（规划器）模式，以及如何调用 PlannerModelServer
+（规划器模型服务）。它不负责加载模型权重；真正的实例选择和可用性判断由
+planner_registry（规划器注册表）处理。
 """
 
 from __future__ import annotations
@@ -23,6 +23,10 @@ class PlannerModelConfig:
     base model（基础模型）和 SFT checkpoint（监督微调检查点）。
     """
 
+    # planner_mode 的中文含义是“规划器模式”。它决定业务查询节点当前选择哪一种
+    # QueryPlanner（查询规划器）：rule/local_base/sft/grpo/http_mock。默认 rule，避免
+    # 开发环境缺少模型服务时影响现有查询链路。
+    planner_mode: str
     # planner_backend 的中文含义是“规划器后端”。9.3.2 只实现 http 客户端；默认 rule
     # 保持现有业务启动不依赖外部模型服务。
     planner_backend: str
@@ -51,6 +55,7 @@ def _env_int(name: str, default: int) -> int:
 
 
 planner_model_config = PlannerModelConfig(
+    planner_mode=env_str("PLANNER_MODE", "rule"),
     planner_backend=env_str("PLANNER_BACKEND", "rule"),
     planner_model_endpoint=env_str("PLANNER_MODEL_ENDPOINT"),
     planner_model_id=env_str("PLANNER_MODEL_ID", "qwen3.5:4b"),

@@ -25,6 +25,15 @@ from app.rag.query.model_planner import (
     ModelPlanner,
     ModelPlannerOutputError,
 )
+from app.rag.query.planner_registry import (
+    PlannerMode,
+    PlannerRegistryError,
+    PlannerRuntime,
+    build_planner_runtime,
+    get_current_planner_runtime,
+    get_planner_registry_status,
+    get_registered_planners,
+)
 
 
 __all__ = [
@@ -46,5 +55,12 @@ __all__ = [
     "RuleBasedPlannerConfig",
     "ModelPlanner",
     "ModelPlannerOutputError",
+    "PlannerMode",
+    "PlannerRegistryError",
+    "PlannerRuntime",
+    "build_planner_runtime",
+    "get_current_planner_runtime",
+    "get_planner_registry_status",
+    "get_registered_planners",
     "SubjectResolutionStatus",
 ]

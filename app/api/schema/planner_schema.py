@@ -13,9 +13,16 @@ class PlannerRegistryItemSchema(PlannerSchemaModel):
     """一个已注册 Planner 实现的状态。"""
 
     planner_mode: str
+    planner_type: str = ""
     enabled_online: bool = False
     enabled_for_eval: bool = False
     unavailable_reason: str = ""
+    policy_version: str = ""
+    provider: str | None = None
+    model_id: str | None = None
+    model_revision: str | None = None
+    prompt_version: str | None = None
+    endpoint: str | None = None
 
 
 class PlannerStatusSchema(PlannerSchemaModel):
@@ -23,7 +30,14 @@ class PlannerStatusSchema(PlannerSchemaModel):
 
     code: int = 200
     online_mode: str = "rule"
+    planner_type: str = "rule"
     policy_version: str
+    provider: str | None = None
+    model_id: str | None = None
+    model_revision: str | None = None
+    prompt_version: str | None = None
+    endpoint: str | None = None
+    current_unavailable_reason: str = ""
     retrieval_config_version: str
     max_steps: int = Field(ge=1)
     web_fallback_enabled: bool

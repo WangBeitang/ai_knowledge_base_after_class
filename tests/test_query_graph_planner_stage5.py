@@ -12,6 +12,7 @@ from app.process.query.agent.nodes import node_subject_name_confirm as subject_n
 from app.process.query.agent.nodes import node_terminal_response as terminal_node
 from app.process.query.agent.nodes import node_web_search_mcp as web_node
 from app.process.query.agent.state import create_query_default_state
+from app.rag.query.planner import RULE_BASED_POLICY_VERSION
 from app.rag.query import subject_name_confirm_service as subject_service
 from app.rag.query.contracts import (
     EvidenceSourceType,
@@ -145,7 +146,8 @@ def test_graph_uses_planner_loop_and_skips_hyde_web_when_local_evidence_is_suffi
         QueryAction.ANSWER,
     ]
     assert result["planner_step"] == 2
-    assert result["policy_version"] == planner_node.rule_based_planner.policy_version
+    assert result["policy_version"] == RULE_BASED_POLICY_VERSION
+    assert result["planner_mode"] == "rule"
     assert result["terminal_reason_code"] == PlannerReasonCode.LOCAL_EVIDENCE_SUFFICIENT
 
 

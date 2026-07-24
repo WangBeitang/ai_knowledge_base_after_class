@@ -35,6 +35,7 @@ def _context() -> PlannerContext:
 
 def _config(endpoint: str) -> PlannerModelConfig:
     return PlannerModelConfig(
+        planner_mode="sft",
         planner_backend="http",
         planner_model_endpoint=endpoint,
         planner_model_id="qwen3.5:4b",

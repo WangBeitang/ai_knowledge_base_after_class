@@ -129,6 +129,12 @@ class QueryGraphState(TypedDict):
     # 默认空字符串；阶段 9 Planner 节点首次执行时写入 rule-v1。
     policy_version: str
 
+    # planner mode 的中文含义是“规划器模式”。它记录本次查询实际选择 rule/local_base/sft/
+    # grpo/http_mock 中哪一个具体模式；同一条查询只应使用一个 mode，便于 baseline
+    #（基线对比）、rollback（回滚）和线上审计。
+    # 默认空字符串；阶段 9.3.3 由 planner_registry 在 Planner 节点写入。
+    planner_mode: str
+
     # current planner decision 的中文含义是“当前 Planner 决策”。保存最近一次经过 Pydantic
     # 校验的 action/query/reason_code，后续路由只读取 decision.action。
     # 默认 None；阶段 9 Planner 节点每轮决策后覆盖为最新 Decision。
@@ -309,6 +315,7 @@ query_graph_default_state: QueryGraphState = {
     "trace_id": "",
     "planner_step": 0,
     "policy_version": "",
+    "planner_mode": "",
     "current_planner_decision": None,
     "planner_action_history": [],
     "planner_type": "",

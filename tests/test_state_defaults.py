@@ -87,6 +87,7 @@ def test_query_default_state_fields_are_complete():
         "trace_id",
         "planner_step",
         "policy_version",
+        "planner_mode",
         "current_planner_decision",
         "planner_action_history",
         "planner_type",
@@ -130,6 +131,7 @@ def test_query_default_state_fields_are_complete():
     assert state["trace_id"] == ""
     assert state["planner_step"] == 0
     assert state["policy_version"] == ""
+    assert state["planner_mode"] == ""
     assert state["current_planner_decision"] is None
     assert state["planner_type"] == ""
     assert state["web_search_allowed"] is True

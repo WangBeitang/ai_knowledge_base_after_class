@@ -1,33 +1,28 @@
-"""把无 I/O 的 RuleBasedPlanner 接入 LangGraph State。"""
+"""把可切换 Planner（规划器）接入 LangGraph State（图状态）。"""
 
 from time import perf_counter
 
 from app.process.query.agent.state import QueryGraphState
 from app.rag.query.config import (
     PLANNER_MAX_STEPS,
-    RERANK_EVIDENCE_THRESHOLD,
     RETRIEVAL_CONFIG_VERSION,
 )
 from app.rag.query.contracts import (
     PlannerContext,
+    PlannerDecision,
     PlannerHistoryItem,
+    PlannerReasonCode,
     QueryAction,
     RetrievalObservation,
     SubjectResolutionStatus,
 )
-from app.rag.query.planner import RuleBasedPlanner, RuleBasedPlannerConfig
+from app.rag.query.model_planner import ModelPlannerOutputError, PlannerClientError
+from app.rag.query.planner_registry import (
+    PlannerRegistryError,
+    get_current_planner_runtime,
+)
 from app.rag.query.trace_service import safe_record_planner_decision
 from app.shared.runtime.logger import node_log
-
-
-# 规则 Planner 是无状态纯函数，配置在进程启动后不可变，因此可以安全复用一个实例。
-# 这里显式注入阈值和版本，不在节点内部散落魔法数字，后续评测换配置时只修改 config。
-rule_based_planner = RuleBasedPlanner(
-    config=RuleBasedPlannerConfig(
-        rerank_evidence_threshold=RERANK_EVIDENCE_THRESHOLD,
-        retrieval_config_version=RETRIEVAL_CONFIG_VERSION,
-    )
-)
 
 
 def build_planner_context(state: QueryGraphState) -> PlannerContext:
@@ -71,24 +66,63 @@ def build_planner_context(state: QueryGraphState) -> PlannerContext:
 
 @node_log("node_query_planner")
 def node_query_planner(state: QueryGraphState) -> dict:
-    """调用规则 Planner，并只写入本轮经过契约校验的 PlannerDecision。"""
+    """调用当前 registry（注册表）选中的 Planner，并写入本轮契约校验后的 Decision。"""
     started_at = perf_counter()
     context = build_planner_context(state)
-    decision = rule_based_planner.plan(context)
-    duration_ms = int((perf_counter() - started_at) * 1000)
-
-    planner_runtime_metadata = {
-        "provider": None,
-        "model_id": None,
-        "model_revision": None,
-        "prompt_version": None,
-        "realtime_rule_version": rule_based_planner.realtime_rule_version,
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "estimated_cost": 0,
-        "duration_ms": duration_ms,
-    }
+    try:
+        runtime = get_current_planner_runtime()
+        decision = runtime.plan(context)
+        duration_ms = int((perf_counter() - started_at) * 1000)
+        planner_runtime_metadata = runtime.runtime_metadata(duration_ms=duration_ms)
+        policy_version = runtime.policy_version
+        planner_type = runtime.planner_type
+        planner_mode = runtime.mode.value
+        retrieval_config_version = runtime.retrieval_config_version
+    except PlannerRegistryError as error:
+        duration_ms = int((perf_counter() - started_at) * 1000)
+        decision = PlannerDecision(
+            action=QueryAction.REFUSE,
+            query=context.current_query,
+            reason_code=PlannerReasonCode.ACTION_EXECUTION_ERROR,
+        )
+        planner_mode = error.planner_mode or "unknown"
+        policy_version = "planner-registry-error"
+        planner_type = "unavailable"
+        retrieval_config_version = RETRIEVAL_CONFIG_VERSION
+        planner_runtime_metadata = {
+            "planner_mode": planner_mode,
+            "provider": None,
+            "model_id": None,
+            "model_revision": None,
+            "prompt_version": None,
+            "endpoint": None,
+            "realtime_rule_version": None,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "estimated_cost": 0,
+            "duration_ms": duration_ms,
+            "error_code": error.error_code,
+            "error_message": error.message,
+        }
+    except (PlannerClientError, ModelPlannerOutputError) as error:
+        duration_ms = int((perf_counter() - started_at) * 1000)
+        decision = PlannerDecision(
+            action=QueryAction.REFUSE,
+            query=context.current_query,
+            reason_code=PlannerReasonCode.ACTION_EXECUTION_ERROR,
+        )
+        error_code = getattr(error, "error_code", type(error).__name__)
+        error_message = getattr(error, "message", str(error))
+        planner_runtime_metadata = runtime.runtime_metadata(
+            duration_ms=duration_ms,
+            error_code=str(error_code),
+            error_message=str(error_message),
+        )
+        policy_version = runtime.policy_version
+        planner_type = runtime.planner_type
+        planner_mode = runtime.mode.value
+        retrieval_config_version = runtime.retrieval_config_version
     # Planner Decision 一产生就先写 pending step。即使后续 Milvus/LLM 发生未处理异常，
     # Trace 仍能说明最后选择了哪个 Action，而不是只剩一条模糊 failed 终态。
     safe_record_planner_decision(
@@ -99,11 +133,12 @@ def node_query_planner(state: QueryGraphState) -> dict:
 
     return {
         "current_planner_decision": decision,
-        "policy_version": rule_based_planner.policy_version,
-        "planner_type": "rule",
-        "retrieval_config_version": rule_based_planner.config.retrieval_config_version,
-        # runtime metadata 的中文含义是“本次决策运行信息”。规则 Planner 不调用模型，
-        # 所以 token 和费用固定为 0；不保存自由文本推理或隐藏思维链。
+        "policy_version": policy_version,
+        "planner_mode": planner_mode,
+        "planner_type": planner_type,
+        "retrieval_config_version": retrieval_config_version,
+        # runtime metadata 的中文含义是“本次决策运行信息”。9.3.3 尚未接入模型 token
+        # usage（token 用量）回传，所以 token 和费用暂为 0；不保存自由文本推理或隐藏思维链。
         "planner_runtime_metadata": planner_runtime_metadata,
         "planner_total_duration_ms": int(state.get("planner_total_duration_ms", 0)) + duration_ms,
         # 每个新检索 Action 从 0 开始累计本轮外部调用和 rerank 耗时。
