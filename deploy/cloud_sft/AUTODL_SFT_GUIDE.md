@@ -16,6 +16,8 @@
 - 9.3.8 跑 `run_sft_smoke.sh（监督微调冒烟脚本）`，只验证链路。
 - 9.3.9 跑 `run_sft_train.sh（监督微调训练脚本）`，产出正式 checkpoint（检查点）。
 - 正常情况下，9.3.9 不再改核心代码，只改 `env.local（本机环境变量文件）`和训练 config（配置）。
+- SFT（监督微调）训练依赖和 vLLM（大模型推理服务框架）依赖都优先在 no-card mode（无卡模式）安装；
+  vLLM 必须使用独立虚拟环境和可复用缓存，避免在 GPU（显卡）计费时等待大依赖下载。
 
 ## AutoDL 平台边界
 
@@ -26,7 +28,10 @@
 - 实例关机后数据通常保留，但本地数据盘无冗余保证，连续关机 15 天会触发释放风险；重要 checkpoint（检查点）必须备份。参考 [AutoDL 实例数据](https://www.autodl.com/docs/instance_data/)。
 - 长时间训练要用 JupyterLab（浏览器开发环境）终端、`screen（会话守护工具）`或 `tmux（会话守护工具）`，并保存日志，避免 SSH（安全远程登录）断开导致训练中断。参考 [AutoDL 守护进程](https://www.autodl.com/docs/daemon/)。
 - AutoDL 实例通常没有独立公网 IP（公网地址），任意端口访问建议用 SSH tunnel（SSH 隧道）；平台默认只对 `6006/6008` 提供自定义服务映射。参考 [AutoDL 开放端口](https://www.autodl.com/docs/port/) 和 [AutoDL SSH 隧道](https://www.autodl.com/docs/ssh_proxy/)。
-- 不需要 GPU（显卡）时可以用 no-card mode（无卡模式）做文件管理和轻量调试，但无卡模式会释放 GPU，重新有卡开机时可能遇到空闲 GPU 不足。参考 [AutoDL 省钱绝招](https://www.autodl.com/docs/save_money/)。
+- 不需要 GPU（显卡）时可以用 no-card mode（无卡模式）同步代码、安装依赖、整理文件和下载产物；
+  无卡模式会释放 GPU，重新有卡开机时可能遇到空闲 GPU 不足。依赖预装最好在正式占用目标 GPU 前完成，
+  已经拿到稀缺 GPU 后是否切换要权衡重新拿不到同型号 GPU 的风险。参考
+  [AutoDL 省钱绝招](https://www.autodl.com/docs/save_money/)。
 
 ## 推荐实例配置
 
@@ -213,6 +218,23 @@ rsync -av \
 
 ## 安装依赖
 
+推荐顺序：
+
+```text
+no-card mode（无卡模式）
+-> 同步项目和配置 env.local
+-> 安装 .venv-sft（监督微调环境）
+-> 安装 .venv-vllm（模型服务环境）
+-> 记录依赖版本
+-> 正常有卡开机
+-> CUDA（英伟达 GPU 计算平台）最终门禁
+-> cloud smoke（云端冒烟）
+```
+
+这条顺序把耗时较长、但不需要 GPU 的下载放在低价无卡实例完成。不要等 SFT（监督微调）训练结束后
+才第一次安装 vLLM；vLLM 会解析大量 PyTorch/CUDA（深度学习框架/显卡计算平台）wheel（预编译包），
+网络较慢时可能耗时很久。
+
 ### 1. 安装 uv（Python 包管理器）
 
 如果镜像里已经有 `uv`，跳过这步。
@@ -258,30 +280,22 @@ export UV_CACHE_DIR=/root/autodl-tmp/cache/uv
 - `Qwen/Qwen3.5-4B（通义千问 3.5 4B）`模型权重会占用明显磁盘空间。
 - 放系统盘容易导致系统盘空间不足。
 
-### 3. 运行 bootstrap（初始化）
+### 3. 创建 env.local（本机环境变量文件）
 
 ```bash
 cd /root/autodl-tmp/ai_knowledge_base_after_class
-CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/bootstrap_gpu_server.sh
-```
-
-如果还没有 `env.local（本机环境变量文件）`，先复制：
-
-```bash
 cp deploy/cloud_sft/env.example deploy/cloud_sft/env.local
 ```
 
 这步做什么：
 
-- 安装训练依赖。
-- 检查 `nvidia-smi（显卡状态工具）`。
-- 检查 PyTorch（深度学习框架）是否能看到 CUDA（英伟达 GPU 计算平台）。
-- 打印 `torch/transformers/peft/bitsandbytes（训练框架/参数高效微调库/量化库）`版本。
+- 创建当前 AutoDL 实例专用的环境文件。
 
 为什么要做：
 
-- 这是正式训练前的环境门禁。
-- 如果这里都不能识别 GPU（显卡），正式 SFT（监督微调）一定不可靠。
+- no-card mode（无卡模式）和正常有卡模式需要切换 `REQUIRE_CUDA（是否强制要求 CUDA）`，
+  同时要固定 SFT、vLLM、模型缓存和产物路径。
+- 复制后必须按下一节修改，不能直接使用模板中的 `/workspace`示例路径。
 
 ## 配置 env.local
 
@@ -300,6 +314,13 @@ PYTHON_BIN=/root/autodl-tmp/ai_knowledge_base_after_class/.venv-sft/bin/python
 SFT_PYTHON_VERSION=3.12
 BOOTSTRAP_INSTALL_DEPS=1
 REQUIRE_CUDA=1
+
+# vLLM（大模型推理服务框架）必须与训练环境隔离。
+# 下面示例适合系统盘剩余空间更大时；如果数据盘更大，venv 和 cache 要一起改到数据盘。
+VLLM_VERSION=0.25.1
+VLLM_VENV_PATH=/root/.venv-vllm
+VLLM_UV_CACHE_DIR=/root/.cache/uv-vllm
+VLLM_TORCH_BACKEND=cu130
 
 CLOUD_RUN_ROOT=evaluation/stage9/artifacts/cloud_runs
 SFT_OUTPUT_ROOT=evaluation/stage9/artifacts/sft/checkpoints
@@ -326,14 +347,14 @@ MODELSCOPE_CACHE=/root/autodl-tmp/cache/modelscope
 UV_CACHE_DIR=/root/autodl-tmp/cache/uv
 ```
 
-如果当前使用 AutoDL 的 no-card mode（无卡模式）只准备依赖，把 `REQUIRE_CUDA`临时改成：
+如果当前使用 AutoDL 的 no-card mode（无卡模式）准备依赖，把 `REQUIRE_CUDA`临时改成：
 
 ```dotenv
 REQUIRE_CUDA=0
 ```
 
 此时 `bootstrap（初始化脚本）`允许 `nvidia-smi（显卡状态工具）`不可用，但仍会完成独立
-训练环境安装和版本检查。切换到 5090 正式实例后，必须恢复为 `REQUIRE_CUDA=1`，
+训练环境安装和版本检查。切换到正常有卡实例后，必须恢复为 `REQUIRE_CUDA=1`，
 让 CUDA（英伟达 GPU 计算平台）不可用时立即停止。
 
 这里的 `.venv-sft（监督微调虚拟环境）`只安装
@@ -357,6 +378,181 @@ SFT_SMOKE_BASE_CONFIG=evaluation/stage9/configs/planner_sft_qwen3_5_4b_qlora.jso
 
 - `env.example（环境变量模板）`不能写真实密钥或机器路径。
 - `env.local（本机环境变量文件）`不提交到仓库，只服务当前 AutoDL 实例。
+
+## no-card mode（无卡模式）预装全部依赖
+
+这一节推荐在正式占用 GPU（显卡）前完成。如果已经拿到稀缺 GPU，切换无卡模式前要知道：
+实例文件会保留，但当前 GPU 会被释放，重新正常开机时可能没有同型号空闲 GPU。
+
+### 1. 检查磁盘并选择 vLLM 安装位置
+
+```bash
+cd /root/autodl-tmp/ai_knowledge_base_after_class
+
+set -a
+source deploy/cloud_sft/env.local
+set +a
+
+df -h / /root/autodl-tmp
+```
+
+选择规则：
+
+- `VLLM_VENV_PATH（vLLM 虚拟环境路径）`和
+  `VLLM_UV_CACHE_DIR（vLLM 的 uv 下载缓存路径）`放在同一个文件系统，避免跨盘复制大 wheel。
+- 优先选择剩余空间更大的盘；第一次安装会同时存在环境文件和下载缓存，建议所选盘至少保留
+  25 GB 可用空间。
+- 模型缓存、训练 checkpoint（检查点）和 cloud run（云端运行记录）仍放数据盘。
+- 如果两个盘都不满足空间门禁，先扩容或清理可再生成缓存，不要让安装把系统盘写满。
+
+### 2. 安装 SFT（监督微调）训练依赖
+
+确认 `env.local（本机环境变量文件）`中：
+
+```dotenv
+BOOTSTRAP_INSTALL_DEPS=1
+REQUIRE_CUDA=0
+```
+
+然后执行：
+
+```bash
+cd /root/autodl-tmp/ai_knowledge_base_after_class
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/bootstrap_gpu_server.sh
+```
+
+通过标准：
+
+- `.venv-sft（监督微调虚拟环境）`创建成功。
+- `torch/transformers/peft/bitsandbytes（训练框架/参数高效微调库/量化库）`版本可以输出。
+- no-card mode 下 `torch.cuda.is_available（CUDA 是否可用）=False`是预期结果，不是失败。
+
+### 3. 安装独立 vLLM（大模型推理服务框架）环境
+
+vLLM 不能安装进 `.venv-sft（监督微调虚拟环境）`。两套环境的 PyTorch/Transformers
+（深度学习框架/模型框架）依赖由各自流程管理，避免为了部署推理服务破坏已经通过 smoke（冒烟）的训练环境。
+
+本文当前固定：
+
+```text
+vLLM 版本：0.25.1
+目标 torch backend（PyTorch 后端）：cu130
+```
+
+`VLLM_TORCH_BACKEND（vLLM 的 PyTorch 后端）`必须根据目标 GPU 实例的驱动兼容范围预先确定。
+当前 RTX 4090 + driver 580.76.05 的有卡实测中，`--torch-backend=auto`解析为 CUDA 13
+相关 wheel，因此对应无卡预装固定为 `cu130`。无卡模式没有 GPU 供 `auto`再次探测，更新 vLLM
+或 CUDA 路线前，先查 [vLLM GPU 安装文档](https://docs.vllm.ai/en/stable/getting_started/installation/gpu/)；
+未经验证不要改成 nightly（每日构建版）或不固定版本的 latest（最新版）。
+
+打开守护会话：
+
+```bash
+screen -S stage9_vllm_install
+```
+
+进入会话后执行：
+
+```bash
+cd /root/autodl-tmp/ai_knowledge_base_after_class
+
+set -a
+source deploy/cloud_sft/env.local
+set +a
+
+mkdir -p "$VLLM_UV_CACHE_DIR"
+
+if [[ ! -x "$VLLM_VENV_PATH/bin/python" ]]; then
+  uv venv --python 3.12 "$VLLM_VENV_PATH"
+fi
+
+UV_CACHE_DIR="$VLLM_UV_CACHE_DIR" \
+UV_CONCURRENT_DOWNLOADS=4 \
+UV_HTTP_TIMEOUT=600 \
+UV_HTTP_RETRIES=10 \
+uv pip install \
+  --python "$VLLM_VENV_PATH/bin/python" \
+  "vllm==$VLLM_VERSION" \
+  --torch-backend="$VLLM_TORCH_BACKEND"
+```
+
+这里不要加 `--no-cache（不保留缓存）`：
+
+- vLLM 会下载大量 NVIDIA CUDA/PyTorch wheel（英伟达显卡运行库/深度学习框架预编译包）。
+- 使用持久化 `VLLM_UV_CACHE_DIR`后，安装失败或网络中断时，已完成的包可以复用。
+- `--no-cache`使用临时缓存；长时间下载中断后更容易从头重来，不适合 AutoDL 慢网络。
+- `UV_CONCURRENT_DOWNLOADS=4（最大并发下载数）`降低大量 CUDA 大包同时抢连接的概率；
+  `UV_HTTP_TIMEOUT=600（读取超时秒数）`和 `UV_HTTP_RETRIES=10（请求重试次数）`
+  避免慢连接频繁从头重试。参数说明参考
+  [uv 环境变量文档](https://docs.astral.sh/uv/configuration/environment/)。
+- uv（Python 包管理器）建议 cache（缓存）和虚拟环境位于同一文件系统。参考
+  [uv cache 文档](https://docs.astral.sh/uv/concepts/cache/)。
+
+如果出现以下任一情况，停止安装并检查，不要反复重跑：
+
+- `No space left on device（磁盘空间不足）`。
+- `No solution found（依赖无法解析）`。
+- 找不到目标 CUDA wheel（预编译包）。
+- 开始从源码编译 vLLM，而不是下载预编译 wheel。
+
+### 4. 无卡模式下记录版本
+
+```bash
+"$VLLM_VENV_PATH/bin/vllm" --version
+
+"$VLLM_VENV_PATH/bin/python" -c \
+  'import torch, vllm; print("vllm=", vllm.__version__); print("torch=", torch.__version__); print("torch_cuda=", torch.version.cuda); print("cuda_available=", torch.cuda.is_available())'
+
+mkdir -p evaluation/stage9/artifacts/cloud_runs
+UV_CACHE_DIR="$VLLM_UV_CACHE_DIR" \
+uv pip freeze --python "$VLLM_VENV_PATH/bin/python" \
+  > evaluation/stage9/artifacts/cloud_runs/vllm_environment_freeze.txt
+```
+
+无卡模式通过标准：
+
+- `vllm=0.25.1`。
+- `torch_cuda（PyTorch 编译对应的 CUDA 版本）`与 `VLLM_TORCH_BACKEND`一致。
+- `cuda_available=False`是预期结果；真正的 CUDA 可用性要在正常有卡开机后确认。
+- `vllm_environment_freeze.txt（vLLM 环境冻结清单）`存在。
+
+### 5. 切回正常有卡模式后的最终门禁
+
+先把 `env.local（本机环境变量文件）`恢复为：
+
+```dotenv
+REQUIRE_CUDA=1
+```
+
+然后执行：
+
+```bash
+cd /root/autodl-tmp/ai_knowledge_base_after_class
+
+set -a
+source deploy/cloud_sft/env.local
+set +a
+
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/bootstrap_gpu_server.sh
+
+"$VLLM_VENV_PATH/bin/python" -c \
+  'import torch, vllm; print("vllm=", vllm.__version__); print("cuda_available=", torch.cuda.is_available()); print("gpu=", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "none")'
+```
+
+有卡模式通过标准：
+
+- `bootstrap（初始化）`通过且训练环境 `torch.cuda.is_available=True`。
+- vLLM 独立环境 `cuda_available=True`，能输出正确 GPU 名称。
+- 两个环境都通过后，才开始 9.3.8 cloud smoke（云端冒烟），避免在 GPU 计费时临时补大依赖。
+
+如果 vLLM 安装和 GPU 门禁都已通过、且磁盘空间紧张，可以清理仅属于 vLLM 的下载缓存：
+
+```bash
+UV_CACHE_DIR="$VLLM_UV_CACHE_DIR" uv cache clean
+```
+
+这只删除可重新下载的 vLLM uv cache（下载缓存），不删除 `.venv-vllm（模型服务虚拟环境）`、
+模型缓存或训练 checkpoint（检查点）。
 
 ## 9.3.8：cloud smoke（云端冒烟）
 
@@ -589,12 +785,23 @@ PLANNER_MODEL_ENDPOINT=http://127.0.0.1:8019/v1/chat/completions
 ```bash
 screen -S stage9_planner_server
 cd /root/autodl-tmp/ai_knowledge_base_after_class
-CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_planner_server.sh
+
+set -a
+source deploy/cloud_sft/env.local
+set +a
+
+"$VLLM_VENV_PATH/bin/vllm" --version
+
+PATH="$VLLM_VENV_PATH/bin:$PATH" \
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local \
+bash deploy/cloud_sft/run_planner_server.sh
 ```
 
 这步做什么：
 
 - 在 AutoDL 实例内启动 PlannerModelServer（规划器模型服务）。
+- 显式把 `.venv-vllm/bin（vLLM 可执行文件目录）`加入当前启动命令的 `PATH（命令搜索路径）`；
+  训练专用 `.venv-sft`中没有 vLLM，直接运行脚本会报 `vllm: command not found`。
 
 为什么要做：
 
@@ -716,6 +923,9 @@ du -sh evaluation/stage9/artifacts/cloud_runs
 | CUDA OOM（显存不足） | `nvidia-smi` 显存占用 | 切 QLoRA（4 位量化低秩适配）或换 A800 |
 | `bitsandbytes（量化库）`报错 | CUDA/PyTorch/bitsandbytes 版本 | 5090 优先换更新镜像；仍失败则用 A800 + LoRA |
 | 模型下载慢或失败 | 网络、缓存目录、磁盘空间 | 预下载模型到 `/root/autodl-tmp`，或重试；避免写系统盘 |
+| vLLM 安装超过预期时间 | 是否在 GPU 计费模式、下载进度、`VLLM_UV_CACHE_DIR`、磁盘空间 | 优先在无卡模式安装；保留持久化 cache，不要使用 `--no-cache` |
+| `vllm: command not found` | `VLLM_VENV_PATH`、启动命令的 `PATH` | 不要装进 `.venv-sft`；用 `PATH="$VLLM_VENV_PATH/bin:$PATH"`启动模型服务 |
+| 无卡安装选错 CUDA wheel | `VLLM_TORCH_BACKEND`、`torch.version.cuda`、目标 GPU 驱动 | 无卡模式固定已验证 backend；切回有卡后必须验证 `torch.cuda.is_available=True` |
 | 系统盘满 | `df -h`、缓存路径 | 把 HF/UV/ModelScope 缓存迁到 `/root/autodl-tmp/cache` |
 | SSH 断开训练停了 | 是否用了 screen/tmux | 用 `screen/tmux` 重新跑，脚本会重新生成 run_dir（运行目录） |
 | 模型服务外部访问失败 | AutoDL 端口策略 | 同机评测优先；本地访问用 SSH tunnel（SSH 隧道） |
@@ -730,6 +940,8 @@ du -sh evaluation/stage9/artifacts/cloud_runs
 - `model/adapter（适配器目录）`存在。
 - `tokenizer（分词器目录）`存在。
 - `cloud_run_report.json（云端运行报告）`存在。
+- vLLM 独立环境已固定版本，`vllm_environment_freeze.txt（vLLM 环境冻结清单）`存在。
+- vLLM 环境在正常有卡模式下 `torch.cuda.is_available=True`。
 - PlannerModelServer（规划器模型服务）可启动。
 - healthcheck（健康检查）通过。
 - dev eval（开发集评测）至少跑通 `snapshot_expected_chunks（快照期望文本块执行器）`。
