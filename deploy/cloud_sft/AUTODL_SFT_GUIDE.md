@@ -314,6 +314,9 @@ PYTHON_BIN=/root/autodl-tmp/ai_knowledge_base_after_class/.venv-sft/bin/python
 SFT_PYTHON_VERSION=3.12
 BOOTSTRAP_INSTALL_DEPS=1
 REQUIRE_CUDA=1
+OMP_NUM_THREADS=1
+HF_HUB_OFFLINE=1
+TRANSFORMERS_OFFLINE=1
 
 # vLLM（大模型推理服务框架）必须与训练环境隔离。
 # 下面示例适合系统盘剩余空间更大时；如果数据盘更大，venv 和 cache 要一起改到数据盘。
@@ -321,6 +324,8 @@ VLLM_VERSION=0.25.1
 VLLM_VENV_PATH=/root/.venv-vllm
 VLLM_UV_CACHE_DIR=/root/.cache/uv-vllm
 VLLM_TORCH_BACKEND=cu130
+VLLM_ENV_FREEZE=evaluation/stage9/artifacts/cloud_runs/vllm_environment_freeze.txt
+REQUIRE_GPU_PREFLIGHT=1
 
 CLOUD_RUN_ROOT=evaluation/stage9/artifacts/cloud_runs
 SFT_OUTPUT_ROOT=evaluation/stage9/artifacts/sft/checkpoints
@@ -341,6 +346,11 @@ PLANNER_HOST=127.0.0.1
 PLANNER_PORT=8019
 PLANNER_MODEL_ENDPOINT=http://127.0.0.1:8019/v1/chat/completions
 PLANNER_API_KEY=
+
+CLOUD_PLANNER_HTTP_PROBE_OUTPUT=evaluation/stage9/artifacts/sft/cloud_smoke_planner_http.json
+CLOUD_PROVIDER_PROBE_OUTPUT=evaluation/stage9/artifacts/provider_records/cloud_smoke_provider_observations.jsonl
+CLOUD_PROBE_STRICT_ACTION_MATCH=0
+CLOUD_PROBE_OVERWRITE=0
 
 HF_HOME=/root/autodl-tmp/cache/huggingface
 MODELSCOPE_CACHE=/root/autodl-tmp/cache/modelscope
@@ -519,7 +529,33 @@ uv pip freeze --python "$VLLM_VENV_PATH/bin/python" \
 - `cuda_available=False`是预期结果；真正的 CUDA 可用性要在正常有卡开机后确认。
 - `vllm_environment_freeze.txt（vLLM 环境冻结清单）`存在。
 
-### 5. 切回正常有卡模式后的最终门禁
+### 5. 无卡模式运行结构化 runtime preflight（运行时前置检查）
+
+已有正式 checkpoint 时，先在无卡模式执行：
+
+```bash
+cd /root/autodl-tmp/ai_knowledge_base_after_class
+
+sed -i 's/^REQUIRE_CUDA=.*/REQUIRE_CUDA=0/' deploy/cloud_sft/env.local
+
+CLOUD_PREFLIGHT_MODE=no-card \
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local \
+bash deploy/cloud_sft/run_runtime_preflight.sh
+```
+
+该命令只读检查，不会安装依赖、下载模型或启动服务。它会生成
+`runtime_preflight_no-card_<UTC时间>/preflight.json（无卡前置检查报告）`，并按以下层级给出失败：
+
+- `environment（环境）`：`OMP_NUM_THREADS`、离线开关和 `REQUIRE_CUDA`。
+- `storage（存储）`：系统盘、数据盘剩余空间。
+- `artifact（产物）`：checkpoint、adapter、manifest 和 vLLM freeze。
+- `dependency/model_cache（依赖/模型缓存）`：vLLM/PyTorch 版本、CUDA backend 和基础模型离线缓存。
+- `network（网络端口）`：启动端口是否空闲。
+
+停止条件：任何 check（检查）为 `failed`时都不要开 GPU。尤其是
+`model_cache`失败，表示基础模型无法通过 `local_files_only（只读本地缓存）`解析；必须留在无卡模式补齐。
+
+### 6. 切回正常有卡模式后的最终门禁
 
 先把 `env.local（本机环境变量文件）`恢复为：
 
@@ -527,28 +563,39 @@ uv pip freeze --python "$VLLM_VENV_PATH/bin/python" \
 REQUIRE_CUDA=1
 ```
 
-然后执行：
+恢复有卡后，不再安装依赖。当前 SFT v1 的正式验收直接在 `screen`中执行一条命令：
 
 ```bash
 cd /root/autodl-tmp/ai_knowledge_base_after_class
 
-set -a
-source deploy/cloud_sft/env.local
-set +a
-
-CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/bootstrap_gpu_server.sh
-
-"$VLLM_VENV_PATH/bin/vllm" --version
-
-"$VLLM_VENV_PATH/bin/python" -c \
-  'import torch, vllm; print("vllm=", vllm.__version__); print("cuda_available=", torch.cuda.is_available()); print("gpu=", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "none")'
+screen -S stage9_gpu_gate
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local \
+bash deploy/cloud_sft/run_gpu_acceptance_gate.sh
 ```
+
+该入口严格串联：
+
+```text
+GPU preflight（GPU 前置检查）
+-> 启动 vLLM
+-> 等待 /health
+-> 7 个 HTTP probe（六类 Action + Web 禁用边界）
+-> 停止本次 vLLM
+-> 记录停服后的 GPU 进程
+```
+
+默认最多等待服务 600 秒。服务提前退出或等待超时，脚本会打印
+`planner_server.log（规划器服务日志）`末尾并停止；不要另开一条安装命令救场。
 
 有卡模式通过标准：
 
-- `bootstrap（初始化）`通过且训练环境 `torch.cuda.is_available=True`。
-- vLLM 独立环境 `cuda_available=True`，能输出正确 GPU 名称。
-- 两个环境都通过后，才开始 9.3.8 cloud smoke（云端冒烟），避免在 GPU 计费时临时补大依赖。
+- `preflight.json`的 `ok=true`，CUDA、vLLM、checkpoint identity（检查点身份）和模型缓存均通过。
+- `cloud_smoke_planner_http.json`存在，六类目标 Action 输入齐全，HTTP/解析/model_id 和 Web 禁用边界通过。
+- `planner_server.log`出现 application startup complete，结束后本次服务进程已停止。
+
+`CLOUD_PROBE_STRICT_ACTION_MATCH=0`是刻意设置：9.3.10 把 Action 不匹配记录下来，但只把
+HTTP 协议、结构化解析、model_id 和 Web 权限当作工程门禁。模型是否选择了期望 Action 属于
+9.3.11 quality gate（质量门禁），不能把工程连通性和模型泛化混为一个结论。
 
 如果 vLLM 安装和 GPU 门禁都已通过、且磁盘空间紧张，可以清理仅属于 vLLM 的下载缓存：
 
@@ -871,6 +918,30 @@ http://127.0.0.1:8019/v1/chat/completions
 - AutoDL 通常不能任意开放端口。
 - 训练评测阶段优先在同一台 AutoDL 实例内调用模型服务，减少网络变量。
 
+### 4. 真实 Web Provider（网页执行器）最小观察记录
+
+HTTP probe（接口探针）只验证 Planner 输出；它不会真的调用网页检索。真实 Provider 记录不依赖
+GPU，建议在无卡模式、业务环境的 Web/Milvus 配置就绪后单独执行：
+
+```bash
+cd /root/autodl-tmp/ai_knowledge_base_after_class
+
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local \
+bash deploy/cloud_sft/run_provider_probe.sh
+```
+
+默认只执行已审核的 `stage9-route-web-refuse-001`，输出
+`cloud_smoke_provider_observations.jsonl（云端执行器观察记录）`。每条记录包含
+`case_id（样本身份）`、`action（动作）`、候选数量、Observation（观察）、耗时和结构化错误。
+
+Web 关闭时，`web_search`在 Environment/Planner 的 allowed_actions（允许动作）边界就应被拒绝，
+因此不会伪造一次“真实 Provider 调用”。这一关闭边界记录在
+`cloud_smoke_planner_http.json`的 `policy-web-disabled`探针中；Web 开启后的真实执行结果记录在
+Provider JSONL。两份产物合起来构成 Web 开/关证据。
+
+默认拒绝覆盖旧结果。只有明确废弃旧探针产物并准备重新生成时，才临时设置
+`CLOUD_PROBE_OVERWRITE=1`；正式产物生成后应恢复为 `0`。
+
 ## 跑 dev eval（开发集评测）
 
 `run_dev_eval.sh`当前使用 `ModelPlanner.from_checkpoint()`直接加载基础模型和 LoRA adapter，
@@ -990,7 +1061,7 @@ du -sh evaluation/stage9/artifacts/cloud_runs
 | 模型服务外部访问失败 | AutoDL 端口策略 | 同机评测优先；本地访问用 SSH tunnel（SSH 隧道） |
 | dev eval（开发集评测）找不到 checkpoint | `SFT_CHECKPOINT_DIR` 是否设置 | 把正式训练日志里的 checkpoint 路径写入 `env.local` |
 
-## 进入 9.4 前的验收清单
+## 9.3.10 闭环与进入 9.3.11 的验收清单
 
 - 9.3.8 cloud smoke（云端冒烟）已通过。
 - 9.3.9 正式 SFT（监督微调）已完成。
@@ -1001,9 +1072,13 @@ du -sh evaluation/stage9/artifacts/cloud_runs
 - `cloud_run_report.json（云端运行报告）`存在。
 - vLLM 独立环境已固定版本，`vllm_environment_freeze.txt（vLLM 环境冻结清单）`存在。
 - vLLM 环境在正常有卡模式下 `torch.cuda.is_available=True`。
+- no-card 和 gpu runtime preflight（无卡/有卡运行时前置检查）均生成报告，且 GPU 报告 `ok=true`。
 - PlannerModelServer（规划器模型服务）可启动。
 - healthcheck（健康检查）通过。
+- 六类 Action 与 Web 禁用边界 HTTP 探针报告已生成；工程错误与 Action 质量偏差分开记录。
+- Web 开启的真实 Provider observation 已生成；Web 关闭边界记录为“不允许调用”，没有伪造检索结果。
 - dev eval（开发集评测）至少跑通 `snapshot_expected_chunks（快照期望文本块执行器）`。
 - 训练产物已经从 AutoDL 下载或备份。
 
-达到以上条件后，才进入 9.4 baseline compare（基线对比）。
+达到以上条件后，9.3.10 才算闭环，随后进入 9.3.11 做现有 dev 结果分析。9.4 baseline compare
+（基线对比）仍需等待 9.3.11～9.3.16 的评测集补强和准入结论，本节不提前放行。

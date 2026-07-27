@@ -18,6 +18,10 @@ REQUIRED_DEPLOY_FILES = [
     Path("deploy/cloud_sft/run_sft_smoke.sh"),
     Path("deploy/cloud_sft/run_sft_train.sh"),
     Path("deploy/cloud_sft/run_planner_server.sh"),
+    Path("deploy/cloud_sft/run_runtime_preflight.sh"),
+    Path("deploy/cloud_sft/run_planner_action_probe.sh"),
+    Path("deploy/cloud_sft/run_provider_probe.sh"),
+    Path("deploy/cloud_sft/run_gpu_acceptance_gate.sh"),
     Path("deploy/cloud_sft/run_dev_eval.sh"),
 ]
 
@@ -26,6 +30,10 @@ REQUIRED_SHELL_SCRIPTS = [
     Path("deploy/cloud_sft/run_sft_smoke.sh"),
     Path("deploy/cloud_sft/run_sft_train.sh"),
     Path("deploy/cloud_sft/run_planner_server.sh"),
+    Path("deploy/cloud_sft/run_runtime_preflight.sh"),
+    Path("deploy/cloud_sft/run_planner_action_probe.sh"),
+    Path("deploy/cloud_sft/run_provider_probe.sh"),
+    Path("deploy/cloud_sft/run_gpu_acceptance_gate.sh"),
     Path("deploy/cloud_sft/run_dev_eval.sh"),
 ]
 
@@ -35,6 +43,8 @@ def test_cloud_sft_package_files_exist():
         assert (PROJECT_ROOT / path).exists(), f"缺少云端 SFT（监督微调）文件：{path}"
     assert (PROJECT_ROOT / "scripts/cloud_sft/collect_cloud_run_report.py").exists()
     assert (PROJECT_ROOT / "scripts/cloud_sft/freeze_sft_artifacts.py").exists()
+    assert (PROJECT_ROOT / "scripts/cloud_sft/preflight_cloud_runtime.py").exists()
+    assert (PROJECT_ROOT / "scripts/cloud_sft/probe_planner_actions.py").exists()
 
 
 def test_cloud_sft_shell_scripts_have_valid_syntax():
@@ -57,12 +67,17 @@ def test_cloud_sft_scripts_keep_bootstrap_and_training_separate():
     smoke = (PROJECT_ROOT / "deploy/cloud_sft/run_sft_smoke.sh").read_text(encoding="utf-8")
     train = (PROJECT_ROOT / "deploy/cloud_sft/run_sft_train.sh").read_text(encoding="utf-8")
     planner_server = (PROJECT_ROOT / "deploy/cloud_sft/run_planner_server.sh").read_text(encoding="utf-8")
+    gpu_gate = (PROJECT_ROOT / "deploy/cloud_sft/run_gpu_acceptance_gate.sh").read_text(encoding="utf-8")
 
     assert "sft_train.py" not in bootstrap
     assert "STAGE9_SFT_SMOKE_MAX_SAMPLES" in smoke
     assert "STAGE9_SFT_SMOKE_MAX_STEPS" in smoke
     assert "evaluation/stage9/model_planner/sft_train.py" in train
     assert "deploy/planner_model_server/run_vllm_planner_server.sh" in planner_server
+    assert "run_runtime_preflight.sh" in planner_server
+    assert "run_planner_server.sh" in gpu_gate
+    assert "run_planner_action_probe.sh" in gpu_gate
+    assert "kill -TERM" in gpu_gate
 
 
 def test_cloud_sft_uses_an_isolated_training_environment():
@@ -86,6 +101,11 @@ def test_cloud_sft_uses_an_isolated_training_environment():
     assert "SFT_VENV_PATH=" in env_example
     assert "UV_SYNC_ARGS=" not in env_example
     assert "TRANSFORMERS_CACHE=" not in env_example
+    assert "OMP_NUM_THREADS=1" in env_example
+    assert "HF_HUB_OFFLINE=1" in env_example
+    assert "TRANSFORMERS_OFFLINE=1" in env_example
+    assert "REQUIRE_GPU_PREFLIGHT=1" in env_example
+    assert "VLLM_ENV_FREEZE=" in env_example
 
 
 def test_collect_cloud_run_report_writes_auditable_json(tmp_path):

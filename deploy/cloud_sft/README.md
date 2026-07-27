@@ -47,7 +47,19 @@ CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_sft_trai
 CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_planner_server.sh
 ```
 
-8. 运行 dev eval（开发集评测）：
+8. 服务启动后运行六类 Action（动作）和 Web 禁用边界 HTTP probe（探针）：
+
+```bash
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_planner_action_probe.sh
+```
+
+也可以在 `screen（终端持久化工具）`中用一条命令完成 preflight、启服、探针和停服：
+
+```bash
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_gpu_acceptance_gate.sh
+```
+
+9. 停止 vLLM、确认显存释放后运行 dev eval（开发集评测）：
 
 ```bash
 CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_dev_eval.sh
@@ -64,6 +76,13 @@ CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_dev_eval
 - `run_sft_smoke.sh`：从正式训练配置派生临时小样本配置，默认只跑 4 条样本和 1 个 step（训练步）。
 - `run_sft_train.sh`：调用 `evaluation/stage9/model_planner/sft_train.py` 执行正式 SFT（监督微调）。
 - `run_planner_server.sh`：复用 `deploy/planner_model_server/run_vllm_planner_server.sh` 启动 vLLM（大模型推理服务框架）。
+- `run_runtime_preflight.sh`：只读检查环境、磁盘、checkpoint 身份、离线模型缓存、
+  vLLM/PyTorch/CUDA 版本和端口；检查失败时禁止启动 vLLM。
+- `run_planner_action_probe.sh`：通过真实 vLLM HTTP 服务覆盖六类 Action，并额外验证 Web 禁用边界。
+- `run_gpu_acceptance_gate.sh`：串联 GPU preflight、vLLM 启停、健康等待和 HTTP 探针，
+  结束时主动停止本次启动的服务并记录显存进程。
+- `run_provider_probe.sh`：通过真实业务 Provider 执行一条已审核 Web 路线并写入 JSONL 审计记录；
+  不依赖 GPU，但依赖业务侧 Web/Milvus 配置。
 - `run_dev_eval.sh`：用指定 checkpoint（检查点）跑 dev case（开发样本）并生成报告。
 - `scripts/cloud_sft/collect_cloud_run_report.py`：收集 code version（代码版本）、config hash（配置哈希）、
   model profile（模型配置档案）、train manifest（训练清单）、Reward profile（奖励函数配置）、

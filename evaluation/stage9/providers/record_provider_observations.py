@@ -34,6 +34,9 @@ def record_provider_observations(
         snapshot_path: str | Path,
         output_path: str | Path,
         chunk_status_filter_enabled: bool,
+        case_ids: set[str] | None = None,
+        max_cases: int | None = None,
+        overwrite: bool = False,
 ) -> Counter[str]:
     """
     按 route seed（路线种子）Action path（动作路径）调用真实 Provider（执行器）并记录观察结果。
@@ -41,13 +44,25 @@ def record_provider_observations(
     本函数会直接调用 Milvus（向量数据库）、HyDE（假设式改写检索）和 Web（网页检索）
     相关服务；只有在 GPU（显卡算力）服务器或本地真实环境配置完成后才应该运行。
     """
+    if max_cases is not None and max_cases <= 0:
+        raise ValueError("max_cases 必须大于 0")
+    output = Path(output_path)
+    if output.exists():
+        if not overwrite:
+            raise FileExistsError(f"Provider 记录已存在；如需明确覆盖请传 --overwrite：{output}")
+        output.unlink()
+
     cases = load_planner_cases(cases_path)
     paths = read_route_seed_paths(paths_path)
     path_by_case = {path.case_id: path for path in paths if path.export_to_sft and path.review_status == "reviewed"}
+    if case_ids:
+        unknown_case_ids = sorted(case_ids - set(path_by_case))
+        if unknown_case_ids:
+            raise ValueError(f"未找到 reviewed route path（已审核路线）：{unknown_case_ids}")
     snapshot = load_environment_snapshot(snapshot_path)
     provider = RecordingActionProvider(
         MilvusActionProvider(chunk_status_filter_enabled=chunk_status_filter_enabled),
-        output_path=output_path,
+        output_path=output,
     )
     environment = OfflineRagEnvironment(
         snapshot=snapshot,
@@ -57,9 +72,18 @@ def record_provider_observations(
     )
     counts: Counter[str] = Counter()
     for case in cases:
+        if case_ids and case.case_id not in case_ids:
+            continue
         path = path_by_case.get(case.case_id)
         if path is None:
             continue
+        if max_cases is not None and counts["case_count"] >= max_cases:
+            break
+        print(
+            f"[provider_probe] case={counts['case_count'] + 1} "
+            f"case_id={case.case_id} route_family={path.route_family} status=running",
+            flush=True,
+        )
         trajectory = environment.run_action_path(
             case,
             list(path.action_path),
@@ -69,6 +93,13 @@ def record_provider_observations(
         counts["case_count"] += 1
         counts[f"status:{trajectory.status.value}"] += 1
         counts[f"route_family:{path.route_family}"] += 1
+        print(
+            f"[provider_probe] case={counts['case_count']} "
+            f"case_id={case.case_id} status=completed trajectory_status={trajectory.status.value}",
+            flush=True,
+        )
+    if counts["case_count"] == 0:
+        raise ValueError("没有匹配到可执行的 reviewed route path（已审核路线）")
     return counts
 
 
@@ -80,6 +111,9 @@ def main(argv: list[str] | None = None) -> int:
         snapshot_path=args.snapshot,
         output_path=args.output,
         chunk_status_filter_enabled=not args.disable_chunk_status_filter,
+        case_ids=set(args.case_id) if args.case_id else None,
+        max_cases=args.max_cases,
+        overwrite=args.overwrite,
     )
     print(f"output={args.output}")
     for key, value in sorted(counts.items()):
@@ -93,6 +127,14 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--paths", type=Path, default=DEFAULT_PATHS)
     parser.add_argument("--snapshot", type=Path, default=DEFAULT_SNAPSHOT)
     parser.add_argument("--output", type=Path, default=DEFAULT_RECORDS)
+    parser.add_argument(
+        "--case-id",
+        action="append",
+        default=[],
+        help="只录制指定 case_id；可重复传入。默认录制全部 reviewed route path。",
+    )
+    parser.add_argument("--max-cases", type=int)
+    parser.add_argument("--overwrite", action="store_true")
     parser.add_argument(
         "--disable-chunk-status-filter",
         action="store_true",

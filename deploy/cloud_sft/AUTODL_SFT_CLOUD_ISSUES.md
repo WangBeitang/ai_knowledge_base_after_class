@@ -116,9 +116,18 @@ checkpoint runtime、评测数据覆盖和产物路径。因此多个本应在�
 - [x] 修复 checkpoint runtime 的模型/输入 CUDA 设备迁移和 BF16/FP16 加载。
 - [x] dev eval 增加逐 case 日志，完整 7 条 dev 已成功运行。
 - [x] 区分 vLLM HTTP 服务验证和 direct-checkpoint dev eval。
+- [x] 新增分层 runtime preflight（运行时前置检查），自动检查 `OMP_NUM_THREADS`、离线开关、
+  磁盘、checkpoint/adapter 身份、vLLM/PyTorch/CUDA 版本、模型本地缓存和端口。
+- [x] vLLM 启动入口强制先过 GPU preflight，缺依赖、缺缓存或身份不一致时不再启动长任务。
+- [x] 新增六类 Action HTTP probe（动作接口探针）和 Web 禁用边界；工程连通性与
+  9.3.11 模型质量判断分开。
+- [x] 新增一键 GPU 验收入口，自动启服、等待 `/health`、运行探针并停止本次服务释放显存。
+- [ ] 在下一次有卡窗口实际生成 `cloud_smoke_planner_http.json`；本地代码和测试通过不替代真实 GPU 结果。
+- [ ] 在无卡业务环境配置就绪后生成真实 Web Provider observation（网页执行器观察记录）。
 - [ ] 补充独立且路线均衡的 dev/test；当前 35 条 test 不能代表完整 Planner 路线。
 - [ ] 冻结新的评测边界后再做正式 test 和 9.4 baseline compare（基线对比）。
-- [ ] 下载或长期备份 checkpoint、cloud run report、dev eval 和环境冻结清单。
+- [x] checkpoint、cloud run report、dev eval 和环境冻结清单已归档到本地长期目录；
+  归档整体 SHA256、manifest 和 26 个内部文件逐文件 SHA256 均通过。
 
 ## 已踩问题
 
@@ -143,6 +152,9 @@ checkpoint runtime、评测数据覆盖和产物路径。因此多个本应在�
 | dev eval 权重加载后十多分钟没有输出 | 代码问题：旧版 checkpoint runtime 加载模型后缺少 `.to("cuda")`，tokenizer 生成的输入 tensor 也缺少 `.to(device)`，因此实际在 CPU 上做 4B 推理；评测脚本还没有逐 case 日志 | 模型执行 `self._model.to(self._device)`、输入逐项执行 `value.to(self._device)`，CUDA 使用 BF16/FP16；每条 case 打印 `running/completed`、耗时和 Action 路线 |
 | dev eval 显示加速库安装网址，误以为正在下载 | Transformers 只是在提示缺少可选 fast path，并已回退 PyTorch 实现 | 不安装、不等待下载；`HF_HUB_OFFLINE=1`下缺少本地模型缓存会直接报错 |
 | vLLM 健康检查后直接跑 checkpoint dev eval | 两条链路会分别加载模型，vLLM 已占约 41GB 时再加载 checkpoint 容易 OOM | healthcheck 通过后停止 vLLM并确认显存释放，再运行当前 direct-checkpoint dev eval |
+| 开卡后才发现 checkpoint、缓存或端口问题 | 过去只有人工命令，没有同一份结构化门禁 | 开卡后第一条业务命令运行 `run_gpu_acceptance_gate.sh`；preflight 任一层失败立即停卡 |
+| 单条 healthcheck 被误当成完整 smoke | healthcheck 只证明一个输入能走通 HTTP，不能覆盖全部 Action 和 Web 权限 | 固定运行 7 个 HTTP 探针：六类 Action 各一条，外加 Web 禁用边界 |
+| Action 不匹配导致工程验证和模型质量混在一起 | 协议故障与模型路由错误使用了同一个成败口径 | 9.3.10 默认只卡 HTTP/解析/model_id/Web 权限；Action 命中率留给 9.3.11 分析 |
 
 不要使用 `uv add transformers==5.9.0 --frozen`强行修改主业务环境。
 
@@ -226,7 +238,10 @@ HF_HUB_OFFLINE=1
 
 ## 下一步
 
-1. 在无卡模式补充并冻结独立、路线均衡的 dev/test 设计，先解决评测证据不足。
-2. 明确本轮 checkpoint 是保留为 v1 baseline（第一版基线），还是补数据后重新训练。
-3. 模型与评测规则冻结后再开 GPU 跑正式 test 和 9.4 baseline compare。
-4. 下载或长期备份 checkpoint、cloud run report、dev eval 和环境冻结清单；暂不进入 GRPO。
+1. 同步 9.3.10 代码到 AutoDL；无卡执行 `run_runtime_preflight.sh`和真实 Provider 最小探针。
+2. 下一次开 4090 后只执行 `run_gpu_acceptance_gate.sh`，生成六类 Action/Web 边界 HTTP 记录；
+   preflight 失败立即停卡，不在有卡模式安装或下载。
+3. 回传两份 smoke 产物后进入 9.3.11，分析 7 条 dev 结果并区分工程问题和模型质量问题。
+4. 在无卡模式补充并冻结独立、路线均衡的 dev/test 设计，先解决评测证据不足。
+5. 已完成 checkpoint、cloud run report、dev eval 和环境冻结清单的本地长期备份；后续不得
+   覆盖 `SFT v1 baseline（监督微调第一版基线）`，暂不进入 GRPO。
