@@ -69,7 +69,13 @@ def run_model_planner_eval(
     results: list[PlannerEvalResult] = []
     rewards: list[TrajectoryReward] = []
     start = time.monotonic()
-    for case in selected_cases:
+    for case_index, case in enumerate(selected_cases, start=1):
+        case_start = time.monotonic()
+        print(
+            f"[dev_eval] case={case_index}/{len(selected_cases)} "
+            f"case_id={case.case_id} status=running",
+            flush=True,
+        )
         trajectory = environment.run_planner(
             case,
             planner,
@@ -84,6 +90,13 @@ def run_model_planner_eval(
             reward=reward,
         ))
         rewards.append(reward)
+        print(
+            f"[dev_eval] case={case_index}/{len(selected_cases)} "
+            f"case_id={case.case_id} status=completed "
+            f"duration_ms={_elapsed_ms(case_start)} "
+            f"action_path={' -> '.join(action.value for action in trajectory.action_path)}",
+            flush=True,
+        )
 
     output = BaselineEvalOutput(
         run_id=normalized_run_id,

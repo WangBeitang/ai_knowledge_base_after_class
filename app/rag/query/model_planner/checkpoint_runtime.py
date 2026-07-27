@@ -172,6 +172,7 @@ class PlannerCheckpointRuntime:
         self._debug_policy: dict[str, Any] | None = None
         self._tokenizer: Any | None = None
         self._model: Any | None = None
+        self._device: Any | None = None
         if self.manifest.training_backend == TrainingBackend.DEBUG_MEMORIZED:
             self._debug_policy = json.loads(
                 _resolve_project_path(self.manifest.model_path, base_dir=self.checkpoint_dir)
@@ -228,6 +229,8 @@ class PlannerCheckpointRuntime:
             tokenizer_path = _resolve_project_path(self.manifest.tokenizer_path or self.manifest.model_path)
             model_path = _resolve_project_path(self.manifest.model_path)
             self._tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+            self._device = _select_inference_device(torch)
+            model_kwargs = _inference_model_kwargs(torch, self._device)
             if self.manifest.adapter_path:
                 from peft import PeftModel
 
@@ -236,14 +239,22 @@ class PlannerCheckpointRuntime:
                     if self.manifest.model_profile
                     else self.manifest.base_model_id
                 )
-                base_model = AutoModelForCausalLM.from_pretrained(base_model_id)
+                base_model = AutoModelForCausalLM.from_pretrained(base_model_id, **model_kwargs)
                 self._model = PeftModel.from_pretrained(base_model, model_path)
             else:
-                self._model = AutoModelForCausalLM.from_pretrained(model_path)
+                self._model = AutoModelForCausalLM.from_pretrained(model_path, **model_kwargs)
+            # checkpoint runtime（检查点运行时）必须显式把模型放到推理设备。仅调用
+            # from_pretrained（加载模型）时，非量化模型默认留在 CPU，会让云端 GPU 评测
+            # 看似卡住并产生不必要的计费。
+            self._model.to(self._device)
             self._model.eval()
         tokenizer = self._tokenizer
         model = self._model
         inputs = tokenizer(prompt.prompt, return_tensors="pt", truncation=True, max_length=self.manifest.max_input_tokens)
+        inputs = {
+            name: value.to(self._device) if hasattr(value, "to") else value
+            for name, value in inputs.items()
+        }
         with torch.no_grad():
             output_ids = model.generate(
                 **inputs,
@@ -253,6 +264,31 @@ class PlannerCheckpointRuntime:
             )
         generated_ids = output_ids[0][inputs["input_ids"].shape[-1]:]
         return tokenizer.decode(generated_ids, skip_special_tokens=True).strip()
+
+
+def _select_inference_device(torch_module: Any) -> Any:
+    """
+    选择 checkpoint runtime（检查点运行时）的实际推理设备。
+
+    云端 CUDA（显卡计算平台）可用时必须使用 GPU；否则保持 CPU fallback（回退），
+    方便本地无卡调试。device（设备）只在 runtime 生命周期内保存，不写回 checkpoint。
+    """
+
+    return torch_module.device("cuda" if torch_module.cuda.is_available() else "cpu")
+
+
+def _inference_model_kwargs(torch_module: Any, device: Any) -> dict[str, Any]:
+    """
+    返回模型加载精度参数。
+
+    CUDA 推理优先使用 bfloat16（脑浮点 16 位）；不支持时退回 float16，避免 4B 模型
+    按 float32（32 位浮点）加载造成额外显存。CPU 保持 Transformers 默认精度。
+    """
+
+    if str(getattr(device, "type", device)) != "cuda":
+        return {}
+    supports_bf16 = bool(getattr(torch_module.cuda, "is_bf16_supported", lambda: False)())
+    return {"dtype": torch_module.bfloat16 if supports_bf16 else torch_module.float16}
 
 
 def load_checkpoint_manifest(checkpoint_dir: str | Path) -> CheckpointManifest:

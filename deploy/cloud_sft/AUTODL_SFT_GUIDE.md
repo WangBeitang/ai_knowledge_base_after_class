@@ -498,16 +498,19 @@ uv pip install \
 ### 4. 无卡模式下记录版本
 
 ```bash
-"$VLLM_VENV_PATH/bin/vllm" --version
-
 "$VLLM_VENV_PATH/bin/python" -c \
-  'import torch, vllm; print("vllm=", vllm.__version__); print("torch=", torch.__version__); print("torch_cuda=", torch.version.cuda); print("cuda_available=", torch.cuda.is_available())'
+  'from importlib.metadata import version; import torch; print("vllm=", version("vllm")); print("torch=", torch.__version__); print("torch_cuda=", torch.version.cuda); print("cuda_available=", torch.cuda.is_available())'
 
 mkdir -p evaluation/stage9/artifacts/cloud_runs
 UV_CACHE_DIR="$VLLM_UV_CACHE_DIR" \
 uv pip freeze --python "$VLLM_VENV_PATH/bin/python" \
   > evaluation/stage9/artifacts/cloud_runs/vllm_environment_freeze.txt
 ```
+
+无卡模式不要使用 `vllm --version`作为安装门禁。vLLM 0.25.1 的 CLI（命令行入口）
+在解析参数时会尝试推断 device type（运行设备类型）；没有 GPU 时可能报
+`Failed to infer device type`。这不代表安装失败，应使用上面的 package metadata
+（包元数据）读取版本，并把 CLI 检查留到恢复有卡模式后执行。
 
 无卡模式通过标准：
 
@@ -534,6 +537,8 @@ source deploy/cloud_sft/env.local
 set +a
 
 CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/bootstrap_gpu_server.sh
+
+"$VLLM_VENV_PATH/bin/vllm" --version
 
 "$VLLM_VENV_PATH/bin/python" -c \
   'import torch, vllm; print("vllm=", vllm.__version__); print("cuda_available=", torch.cuda.is_available()); print("gpu=", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "none")'
@@ -847,6 +852,32 @@ http://127.0.0.1:8019/v1/chat/completions
 
 ## 跑 dev eval（开发集评测）
 
+`run_dev_eval.sh`当前使用 `ModelPlanner.from_checkpoint()`直接加载基础模型和 LoRA adapter，
+不会调用已经启动的 vLLM HTTP 服务。因此完成上一节 healthcheck（健康检查）后，先停止
+vLLM 并用 `nvidia-smi`确认显存释放，再运行 dev eval；否则两个运行时会重复加载模型并
+产生 OOM（显存不足）风险。
+
+checkpoint runtime（检查点运行时）必须使用包含 CUDA device placement（显卡设备放置）
+修复的代码版本。本次根因是代码缺少以下两次设备迁移：
+
+- 模型加载后没有执行 `.to("cuda")`；当前实现使用等价的
+  `self._model.to(self._device)`，其中 CUDA 可用时 `self._device=cuda`。
+- tokenizer（分词器）生成的输入 tensor（张量）仍留在 CPU；当前实现逐项执行
+  `value.to(self._device)`，保证模型和输入位于同一设备。
+
+CUDA 可用时，模型同时以 BF16/FP16 加载，避免默认 float32（32 位浮点）带来的额外显存。
+旧代码会让模型和输入都留在 CPU，表现为权重加载完成后长时间没有输出，并非模型下载或
+GPU 性能问题。
+
+评测脚本还必须输出逐 case 日志。当前每条 case 会打印：
+
+```text
+[dev_eval] case=1/7 case_id=<case_id> status=running
+[dev_eval] case=1/7 case_id=<case_id> status=completed duration_ms=<耗时> action_path=<动作路线>
+```
+
+这样可以区分模型加载、单条生成、程序卡死和正常长耗时，不能再只在全部评测结束后打印汇总。
+
 ```bash
 cd /root/autodl-tmp/ai_knowledge_base_after_class
 CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_dev_eval.sh
@@ -871,12 +902,18 @@ DEV_EVAL_MAX_CASES=7
 
 原因：
 
+- 当前 `planner_cases.jsonl`的 dev split（开发集划分）总共就是 7 条，因此这里是完整
+  dev eval，不是从更大 dev 集抽样。
 - 先验证 checkpoint runtime（检查点运行时）和 Planner（规划器）调用链。
 - 等真实 Milvus/Web（向量数据库/网页检索）配置稳定后，再切：
 
 ```dotenv
 DEV_EVAL_PROVIDER=milvus
 ```
+
+如果控制台出现缺少 `flash-linear-attention/causal-conv1d`和安装网址，那只是 Transformers
+提示可选 fast path（加速实现）不可用，并不代表正在下载。当前 PyTorch fallback（回退实现）
+可以继续使用；在 `HF_HUB_OFFLINE=1`时，缺少本地模型缓存会直接报离线错误。
 
 ## 完成后必须下载和备份
 
@@ -924,6 +961,7 @@ du -sh evaluation/stage9/artifacts/cloud_runs
 | `bitsandbytes（量化库）`报错 | CUDA/PyTorch/bitsandbytes 版本 | 5090 优先换更新镜像；仍失败则用 A800 + LoRA |
 | 模型下载慢或失败 | 网络、缓存目录、磁盘空间 | 预下载模型到 `/root/autodl-tmp`，或重试；避免写系统盘 |
 | vLLM 安装超过预期时间 | 是否在 GPU 计费模式、下载进度、`VLLM_UV_CACHE_DIR`、磁盘空间 | 优先在无卡模式安装；保留持久化 cache，不要使用 `--no-cache` |
+| dev eval 权重加载后无进度 | `nvidia-smi`显存/利用率、checkpoint runtime 是否执行模型 `.to("cuda")`和输入 tensor `.to(device)` | 使用已修复运行时；确认 CUDA 推理，并查看逐 case `running/completed`日志 |
 | `vllm: command not found` | `VLLM_VENV_PATH`、启动命令的 `PATH` | 不要装进 `.venv-sft`；用 `PATH="$VLLM_VENV_PATH/bin:$PATH"`启动模型服务 |
 | 无卡安装选错 CUDA wheel | `VLLM_TORCH_BACKEND`、`torch.version.cuda`、目标 GPU 驱动 | 无卡模式固定已验证 backend；切回有卡后必须验证 `torch.cuda.is_available=True` |
 | 系统盘满 | `df -h`、缓存路径 | 把 HF/UV/ModelScope 缓存迁到 `/root/autodl-tmp/cache` |

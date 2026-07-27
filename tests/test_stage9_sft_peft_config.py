@@ -1,6 +1,10 @@
 import pytest
 
 from app.rag.query.model_planner import CheckpointManifest, TuningMethod
+from app.rag.query.model_planner.checkpoint_runtime import (
+    _inference_model_kwargs,
+    _select_inference_device,
+)
 from evaluation.stage9.model_planner.checkpoint_io import (
     Stage9SftTrainingConfig,
     TrainingBackend,
@@ -115,6 +119,48 @@ def test_framework_versions_include_peft_dependencies():
 
     assert "peft" in versions
     assert "bitsandbytes" in versions
+
+
+def test_checkpoint_runtime_selects_cuda_and_bfloat16_for_supported_gpu():
+    torch_module = _FakeTorch(cuda_available=True, bf16_supported=True)
+
+    device = _select_inference_device(torch_module)
+
+    assert device.type == "cuda"
+    assert _inference_model_kwargs(torch_module, device) == {"dtype": "bfloat16"}
+
+
+def test_checkpoint_runtime_keeps_cpu_default_dtype_without_gpu():
+    torch_module = _FakeTorch(cuda_available=False, bf16_supported=False)
+
+    device = _select_inference_device(torch_module)
+
+    assert device.type == "cpu"
+    assert _inference_model_kwargs(torch_module, device) == {}
+
+
+class _FakeCuda:
+    def __init__(self, *, available: bool, bf16_supported: bool) -> None:
+        self._available = available
+        self._bf16_supported = bf16_supported
+
+    def is_available(self) -> bool:
+        return self._available
+
+    def is_bf16_supported(self) -> bool:
+        return self._bf16_supported
+
+
+class _FakeTorch:
+    bfloat16 = "bfloat16"
+    float16 = "float16"
+
+    def __init__(self, *, cuda_available: bool, bf16_supported: bool) -> None:
+        self.cuda = _FakeCuda(available=cuda_available, bf16_supported=bf16_supported)
+
+    @staticmethod
+    def device(device_type: str):
+        return type("FakeDevice", (), {"type": device_type})()
 
 
 def _base_transformers_config(**overrides):
