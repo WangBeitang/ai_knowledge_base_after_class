@@ -15,6 +15,7 @@ cp deploy/cloud_sft/env.example deploy/cloud_sft/env.local
 ```
 
 3. 修改 `deploy/cloud_sft/env.local`，至少确认 `APP_ROOT（项目根目录）`、
+   `SFT_VENV_PATH（监督微调专用虚拟环境）`、
    `SFT_TRAIN_CONFIG（监督微调训练配置）`、`PLANNER_MODEL_PATH（模型路径）`和
    `PLANNER_ADAPTER_PATH（适配器路径）`。
 4. 初始化服务器：
@@ -52,7 +53,12 @@ CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_dev_eval
 
 ## 脚本边界
 
-- `bootstrap_gpu_server.sh`：只安装依赖、检查 CUDA（英伟达 GPU 计算平台）并打印版本，不启动训练。
+- `requirements-training.txt`：固定 SFT（监督微调）专用依赖，不包含 `magic-pdf（PDF 解析框架）`
+  等与训练无关且会限制 Transformers（模型训练框架）版本的业务依赖。
+- `requirements-training.lock`：锁定 Linux 云端训练环境的全部直接和间接依赖版本，
+  `bootstrap（初始化脚本）`实际按该文件安装。
+- `bootstrap_gpu_server.sh`：创建独立 `.venv-sft（监督微调虚拟环境）`、安装训练依赖、
+  检查 CUDA（英伟达 GPU 计算平台）并打印版本，不启动训练。
 - `run_sft_smoke.sh`：从正式训练配置派生临时小样本配置，默认只跑 4 条样本和 1 个 step（训练步）。
 - `run_sft_train.sh`：调用 `evaluation/stage9/model_planner/sft_train.py` 执行正式 SFT（监督微调）。
 - `run_planner_server.sh`：复用 `deploy/planner_model_server/run_vllm_planner_server.sh` 启动 vLLM（大模型推理服务框架）。
@@ -65,3 +71,10 @@ CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_dev_eval
 
 `env.example（环境变量模板）`不包含真实密钥。云端如需 `PLANNER_API_KEY（规划器接口密钥）`，
 只写入本机 `env.local`，不要提交到仓库。
+
+## 为什么使用独立训练环境
+
+主业务环境中的 `magic-pdf（PDF 解析框架）`要求 `Transformers < 5`，而
+`Qwen3.5（通义千问 3.5）`需要能够识别 `qwen3_5（模型架构标识）`的 Transformers 5。
+两者不能在同一个 Python 虚拟环境中同时满足。云端脚本因此只复用项目代码、训练数据和配置，
+不复用主业务依赖环境；默认训练解释器为 `$APP_ROOT/.venv-sft/bin/python`。

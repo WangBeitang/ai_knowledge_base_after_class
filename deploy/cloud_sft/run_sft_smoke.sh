@@ -31,6 +31,8 @@ run_python() {
 load_env
 APP_ROOT="${APP_ROOT:-$PROJECT_ROOT}"
 cd "$APP_ROOT"
+SFT_VENV_PATH="${SFT_VENV_PATH:-$APP_ROOT/.venv-sft}"
+PYTHON_BIN="${PYTHON_BIN:-$SFT_VENV_PATH/bin/python}"
 
 timestamp="$(date -u +"%Y%m%dT%H%M%SZ")"
 CLOUD_RUN_ROOT="${CLOUD_RUN_ROOT:-evaluation/stage9/artifacts/cloud_runs}"
@@ -68,7 +70,7 @@ output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
 print(f"smoke_config（冒烟配置）={output_path}")
 PY
 
-COMMAND_TEXT="${PYTHON_BIN:-uv run python} evaluation/stage9/model_planner/sft_train.py --config $SMOKE_CONFIG_PATH"
+COMMAND_TEXT="$PYTHON_BIN evaluation/stage9/model_planner/sft_train.py --config $SMOKE_CONFIG_PATH"
 printf '%s\n' "$COMMAND_TEXT" > "$RUN_DIR/command.txt"
 run_python evaluation/stage9/model_planner/sft_train.py --config "$SMOKE_CONFIG_PATH" 2>&1 | tee "$RUN_DIR/sft_smoke.log"
 

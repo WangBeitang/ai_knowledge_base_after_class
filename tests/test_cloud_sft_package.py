@@ -11,6 +11,8 @@ REQUIRED_DEPLOY_FILES = [
     Path("deploy/cloud_sft/README.md"),
     Path("deploy/cloud_sft/AUTODL_SFT_GUIDE.md"),
     Path("deploy/cloud_sft/env.example"),
+    Path("deploy/cloud_sft/requirements-training.txt"),
+    Path("deploy/cloud_sft/requirements-training.lock"),
     Path("deploy/cloud_sft/bootstrap_gpu_server.sh"),
     Path("deploy/cloud_sft/run_sft_smoke.sh"),
     Path("deploy/cloud_sft/run_sft_train.sh"),
@@ -59,6 +61,29 @@ def test_cloud_sft_scripts_keep_bootstrap_and_training_separate():
     assert "STAGE9_SFT_SMOKE_MAX_STEPS" in smoke
     assert "evaluation/stage9/model_planner/sft_train.py" in train
     assert "deploy/planner_model_server/run_vllm_planner_server.sh" in planner_server
+
+
+def test_cloud_sft_uses_an_isolated_training_environment():
+    requirements = (PROJECT_ROOT / "deploy/cloud_sft/requirements-training.txt").read_text(encoding="utf-8")
+    requirements_lock = (PROJECT_ROOT / "deploy/cloud_sft/requirements-training.lock").read_text(encoding="utf-8")
+    requirement_lines = {
+        line.strip()
+        for line in requirements.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    bootstrap = (PROJECT_ROOT / "deploy/cloud_sft/bootstrap_gpu_server.sh").read_text(encoding="utf-8")
+    env_example = (PROJECT_ROOT / "deploy/cloud_sft/env.example").read_text(encoding="utf-8")
+
+    assert "transformers==5.9.0" in requirement_lines
+    assert "transformers==5.9.0" in requirements_lock
+    assert all(not line.startswith("magic-pdf") for line in requirement_lines)
+    assert "uv venv" in bootstrap
+    assert "uv pip install" in bootstrap
+    assert "uv sync" not in bootstrap
+    assert "REQUIRE_CUDA=0：当前只做无卡环境准备" in bootstrap
+    assert "SFT_VENV_PATH=" in env_example
+    assert "UV_SYNC_ARGS=" not in env_example
+    assert "TRANSFORMERS_CACHE=" not in env_example
 
 
 def test_collect_cloud_run_report_writes_auditable_json(tmp_path):

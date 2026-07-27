@@ -31,6 +31,8 @@ run_python() {
 load_env
 APP_ROOT="${APP_ROOT:-$PROJECT_ROOT}"
 cd "$APP_ROOT"
+SFT_VENV_PATH="${SFT_VENV_PATH:-$APP_ROOT/.venv-sft}"
+PYTHON_BIN="${PYTHON_BIN:-$SFT_VENV_PATH/bin/python}"
 
 timestamp="$(date -u +"%Y%m%dT%H%M%SZ")"
 CLOUD_RUN_ROOT="${CLOUD_RUN_ROOT:-evaluation/stage9/artifacts/cloud_runs}"
@@ -38,7 +40,7 @@ RUN_DIR="$CLOUD_RUN_ROOT/sft_train_$timestamp"
 mkdir -p "$RUN_DIR"
 
 SFT_TRAIN_CONFIG="${SFT_TRAIN_CONFIG:-evaluation/stage9/configs/planner_sft_qwen3_5_4b_lora.json}"
-COMMAND_TEXT="${PYTHON_BIN:-uv run python} evaluation/stage9/model_planner/sft_train.py --config $SFT_TRAIN_CONFIG"
+COMMAND_TEXT="$PYTHON_BIN evaluation/stage9/model_planner/sft_train.py --config $SFT_TRAIN_CONFIG"
 printf '%s\n' "$COMMAND_TEXT" > "$RUN_DIR/command.txt"
 
 run_python evaluation/stage9/model_planner/sft_train.py --config "$SFT_TRAIN_CONFIG" 2>&1 | tee "$RUN_DIR/sft_train.log"

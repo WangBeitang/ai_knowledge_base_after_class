@@ -31,6 +31,8 @@ run_python() {
 load_env
 APP_ROOT="${APP_ROOT:-$PROJECT_ROOT}"
 cd "$APP_ROOT"
+SFT_VENV_PATH="${SFT_VENV_PATH:-$APP_ROOT/.venv-sft}"
+PYTHON_BIN="${PYTHON_BIN:-$SFT_VENV_PATH/bin/python}"
 
 if [[ -z "${SFT_CHECKPOINT_DIR:-}" ]]; then
   echo "必须设置 SFT_CHECKPOINT_DIR（监督微调检查点目录），例如 evaluation/stage9/artifacts/sft/checkpoints/<run_id>" >&2
@@ -62,7 +64,7 @@ if [[ -n "${DEV_EVAL_MAX_CASES:-}" ]]; then
   eval_args+=(--max-cases "$DEV_EVAL_MAX_CASES")
 fi
 
-COMMAND_TEXT="${PYTHON_BIN:-uv run python} ${eval_args[*]}"
+COMMAND_TEXT="$PYTHON_BIN ${eval_args[*]}"
 printf '%s\n' "$COMMAND_TEXT" > "$RUN_DIR/command.txt"
 run_python "${eval_args[@]}" 2>&1 | tee "$RUN_DIR/dev_eval.log"
 

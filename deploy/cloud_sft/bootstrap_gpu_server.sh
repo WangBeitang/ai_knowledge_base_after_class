@@ -31,8 +31,12 @@ run_python() {
 load_env
 APP_ROOT="${APP_ROOT:-$PROJECT_ROOT}"
 cd "$APP_ROOT"
+SFT_VENV_PATH="${SFT_VENV_PATH:-$APP_ROOT/.venv-sft}"
+PYTHON_BIN="${PYTHON_BIN:-$SFT_VENV_PATH/bin/python}"
 
 echo "APP_ROOT（项目根目录）=$APP_ROOT"
+echo "SFT_VENV_PATH（监督微调专用虚拟环境）=$SFT_VENV_PATH"
+echo "PYTHON_BIN（训练 Python 解释器）=$PYTHON_BIN"
 echo "BOOTSTRAP_INSTALL_DEPS（是否安装依赖）=${BOOTSTRAP_INSTALL_DEPS:-1}"
 echo "REQUIRE_CUDA（是否强制要求 CUDA）=${REQUIRE_CUDA:-1}"
 
@@ -44,17 +48,31 @@ else
 fi
 
 if [[ "${BOOTSTRAP_INSTALL_DEPS:-1}" == "1" ]]; then
-  read -r -a sync_args <<< "${UV_SYNC_ARGS:---group training}"
-  uv sync "${sync_args[@]}"
+  requirements_file="$SCRIPT_DIR/requirements-training.lock"
+  if [[ ! -f "$requirements_file" ]]; then
+    echo "缺少 requirements-training.lock（监督微调依赖锁定文件）：$requirements_file" >&2
+    exit 2
+  fi
+  if [[ ! -x "$PYTHON_BIN" ]]; then
+    mkdir -p "$(dirname "$SFT_VENV_PATH")"
+    uv venv --python "${SFT_PYTHON_VERSION:-3.12}" "$SFT_VENV_PATH"
+  fi
+  uv pip install --python "$PYTHON_BIN" --requirement "$requirements_file"
 fi
 
-if command -v nvidia-smi >/dev/null 2>&1; then
-  nvidia-smi
+if [[ ! -x "$PYTHON_BIN" ]]; then
+  echo "训练 Python 解释器不存在：$PYTHON_BIN；请先运行 bootstrap（初始化脚本）。" >&2
+  exit 2
+fi
+
+if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi; then
+  :
 else
-  echo "未找到 nvidia-smi（英伟达 GPU 管理工具）。" >&2
+  echo "nvidia-smi（英伟达 GPU 管理工具）当前不可用。" >&2
   if [[ "${REQUIRE_CUDA:-1}" == "1" ]]; then
     exit 2
   fi
+  echo "REQUIRE_CUDA=0：当前只做无卡环境准备，跳过 CUDA（英伟达 GPU 计算平台）硬门禁。"
 fi
 
 run_python - <<'PY'

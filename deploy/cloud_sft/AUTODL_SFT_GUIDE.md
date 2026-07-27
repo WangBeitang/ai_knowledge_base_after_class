@@ -187,7 +187,7 @@ cd /root/autodl-tmp
 
 ```bash
 cd /root/autodl-tmp
-git clone <你的仓库地址> ai_knowledge_base_after_class
+git clone https://gitee.com/wangyanning1995/ai_knowledge_base_after_class.git ai_knowledge_base_after_class
 cd ai_knowledge_base_after_class
 ```
 
@@ -229,8 +229,9 @@ uv --version
 
 为什么要做：
 
-- 当前项目用 `uv run python` 和 `uv sync --group training` 作为统一入口。
-- 云端和本地使用同一套命令，可以减少“本地能跑、云端不一致”的问题。
+- 当前云端训练入口用 `uv（Python 包管理器）`创建独立 `.venv-sft（监督微调虚拟环境）`。
+- 主业务的 `magic-pdf（PDF 解析框架）`要求 `Transformers < 5`，Qwen3.5 训练需要
+  `Transformers 5.9.0`；隔离环境可以复用同一套项目代码和数据，同时避免依赖冲突。
 
 ### 2. 配置缓存目录
 
@@ -240,7 +241,6 @@ mkdir -p /root/autodl-tmp/cache/modelscope
 mkdir -p /root/autodl-tmp/cache/uv
 
 export HF_HOME=/root/autodl-tmp/cache/huggingface
-export TRANSFORMERS_CACHE=/root/autodl-tmp/cache/huggingface
 export MODELSCOPE_CACHE=/root/autodl-tmp/cache/modelscope
 export UV_CACHE_DIR=/root/autodl-tmp/cache/uv
 ```
@@ -295,9 +295,10 @@ A800 + LoRA（低秩适配）推荐配置：
 
 ```dotenv
 APP_ROOT=/root/autodl-tmp/ai_knowledge_base_after_class
-PYTHON_BIN="uv run python"
+SFT_VENV_PATH=/root/autodl-tmp/ai_knowledge_base_after_class/.venv-sft
+PYTHON_BIN=/root/autodl-tmp/ai_knowledge_base_after_class/.venv-sft/bin/python
+SFT_PYTHON_VERSION=3.12
 BOOTSTRAP_INSTALL_DEPS=1
-UV_SYNC_ARGS="--group training"
 REQUIRE_CUDA=1
 
 CLOUD_RUN_ROOT=evaluation/stage9/artifacts/cloud_runs
@@ -321,10 +322,25 @@ PLANNER_MODEL_ENDPOINT=http://127.0.0.1:8019/v1/chat/completions
 PLANNER_API_KEY=
 
 HF_HOME=/root/autodl-tmp/cache/huggingface
-TRANSFORMERS_CACHE=/root/autodl-tmp/cache/huggingface
 MODELSCOPE_CACHE=/root/autodl-tmp/cache/modelscope
 UV_CACHE_DIR=/root/autodl-tmp/cache/uv
 ```
+
+如果当前使用 AutoDL 的 no-card mode（无卡模式）只准备依赖，把 `REQUIRE_CUDA`临时改成：
+
+```dotenv
+REQUIRE_CUDA=0
+```
+
+此时 `bootstrap（初始化脚本）`允许 `nvidia-smi（显卡状态工具）`不可用，但仍会完成独立
+训练环境安装和版本检查。切换到 5090 正式实例后，必须恢复为 `REQUIRE_CUDA=1`，
+让 CUDA（英伟达 GPU 计算平台）不可用时立即停止。
+
+这里的 `.venv-sft（监督微调虚拟环境）`只安装
+`deploy/cloud_sft/requirements-training.lock（训练依赖锁定文件）`中的依赖；该锁文件由
+`requirements-training.txt（直接训练依赖清单）`解析生成。不要执行
+`uv add transformers==5.9.0`去修改主业务环境，也不要使用 `--frozen`跳过依赖检查；
+前者会与 `magic-pdf`发生版本冲突，后者会留下无法复现的损坏环境。
 
 5090 + QLoRA（4 位量化低秩适配）只改这两行：
 
