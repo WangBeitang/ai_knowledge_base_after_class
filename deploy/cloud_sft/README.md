@@ -4,6 +4,8 @@
 `evaluation/stage9（阶段实验目录）`产物；训练配置、训练数据和报告仍放在 `evaluation/stage9/`。
 
 AutoDL（云 GPU 平台）执行细节见 `AUTODL_SFT_GUIDE.md（AutoDL 监督微调上云指引）`。
+首次上云的已知问题和当前续接状态见
+`AUTODL_SFT_CLOUD_ISSUES.md（AutoDL SFT 上云问题记录）`。
 
 ## 运行顺序
 
