@@ -149,7 +149,10 @@ def test_freeze_sft_artifacts_writes_verified_archive(tmp_path):
     _write_text(checkpoint_dir / "model/adapter/adapter_model.safetensors", "weights")
     _write_json(train_run_dir / "cloud_run_report.json", cloud_report)
     _write_json(dev_run_dir / "cloud_run_report.json", cloud_report)
-    _write_json(dev_run_dir / "sft_eval_dev.json", {"checkpoint": str(checkpoint_dir)})
+    _write_json(
+        dev_run_dir / "sft_eval_dev.json",
+        {"planner_summaries": [{"config": {"checkpoint": str(checkpoint_dir)}}]},
+    )
     _write_text(dev_run_dir / "dev_eval.log", "completed")
     _write_text(dev_run_dir / "command.txt", "run dev eval")
     _write_text(vllm_freeze, "vllm==0.25.1")

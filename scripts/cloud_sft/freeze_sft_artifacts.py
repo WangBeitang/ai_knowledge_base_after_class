@@ -87,7 +87,7 @@ def freeze_sft_artifacts(
     dev_report = _read_json(dev_run_abs / "cloud_run_report.json")
     _require_report_run_id(dev_report, run_id, "dev eval cloud run report")
     dev_eval = _read_json(dev_run_abs / "sft_eval_dev.json")
-    dev_checkpoint = str(dev_eval.get("checkpoint") or "")
+    dev_checkpoint = _dev_eval_checkpoint(dev_eval)
     if run_id not in dev_checkpoint:
         raise ValueError(
             "dev eval 的 checkpoint 与正式训练 run_id 不一致："
@@ -213,6 +213,24 @@ def _require_report_run_id(report: dict[str, Any], expected_run_id: str, descrip
             f"{description} 的 run_id 不一致："
             f"reported={reported_run_id!r}, expected={expected_run_id!r}"
         )
+
+
+def _dev_eval_checkpoint(dev_eval: dict[str, Any]) -> str:
+    """读取 dev eval 实际 Schema 中的 checkpoint；兼容早期顶层字段。"""
+
+    top_level = str(dev_eval.get("checkpoint") or "").strip()
+    if top_level:
+        return top_level
+    summaries = dev_eval.get("planner_summaries") or []
+    if not isinstance(summaries, list) or not summaries:
+        return ""
+    first_summary = summaries[0]
+    if not isinstance(first_summary, dict):
+        return ""
+    config = first_summary.get("config") or {}
+    if not isinstance(config, dict):
+        return ""
+    return str(config.get("checkpoint") or "").strip()
 
 
 def _verify_archive(archive_path: Path, *, expected_paths: list[str]) -> None:
