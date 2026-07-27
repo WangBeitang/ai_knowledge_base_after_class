@@ -732,22 +732,43 @@ evaluation/stage9/artifacts/sft/checkpoints/<run_id>/tokenizer/
 evaluation/stage9/artifacts/cloud_runs/sft_train_<timestamp>/cloud_run_report.json
 ```
 
-建议打包：
+使用冻结脚本打包。`--checkpoint-dir` 必须传 checkpoint 根目录，不能传 `model` 或
+`model/adapter` 子目录：
 
 ```bash
-tar -czf /root/autodl-tmp/stage9_sft_artifacts_<run_id>.tar.gz \
-  evaluation/stage9/artifacts/sft/checkpoints/<run_id> \
-  evaluation/stage9/artifacts/cloud_runs/sft_train_<timestamp>
+uv run --frozen --no-sync python scripts/cloud_sft/freeze_sft_artifacts.py \
+  --checkpoint-dir evaluation/stage9/artifacts/sft/checkpoints/<run_id> \
+  --train-run-dir evaluation/stage9/artifacts/cloud_runs/sft_train_<timestamp> \
+  --dev-run-dir evaluation/stage9/artifacts/cloud_runs/dev_eval_<timestamp> \
+  --output-dir /root/autodl-tmp/stage9_backups \
+  --label sft-v1
 ```
 
 这步做什么：
 
-- 把训练产物和审计报告打成一个可下载包。
+- 校验 checkpoint、正式训练报告与 dev eval 的 `run_id（运行身份）`是否一致。
+- 把 checkpoint、训练输入、dev eval、环境快照和 vLLM 环境冻结清单打成一个可下载包。
+- 在归档内写入 `_freeze/freeze_manifest.json（冻结清单）`和
+  `_freeze/SHA256SUMS.txt（逐文件哈希）`，并在归档旁生成整体 `.sha256` 文件。
 
 为什么要做：
 
 - AutoDL 本地数据盘不是长期可靠归档。
 - 训练完成后必须把正式 checkpoint（检查点）和报告备份到本地或长期存储。
+- 仅有压缩包但没有 run_id 交叉校验和文件哈希，不能证明下载后的文件仍属于本次正式训练。
+
+预期输出：
+
+```text
+{"ok": true, "run_id": "...", "archive": "...tar.gz", "archive_sha256": "...", ...}
+```
+
+出现以下任意情况立即停止，不要用手工 `tar` 绕过：
+
+- checkpoint 目录名与 manifest 的 `run_id` 不一致。
+- train/dev cloud run report 指向其他 checkpoint。
+- dev eval 不是由本次 checkpoint 生成。
+- adapter、训练配置、dev 日志或 vLLM 环境冻结清单缺失。
 
 ## 启动 SFT PlannerModelServer（规划器模型服务）
 

@@ -68,6 +68,8 @@ CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_dev_eval
 - `scripts/cloud_sft/collect_cloud_run_report.py`：收集 code version（代码版本）、config hash（配置哈希）、
   model profile（模型配置档案）、train manifest（训练清单）、Reward profile（奖励函数配置）、
   snapshot_id（快照身份）和运行命令。
+- `scripts/cloud_sft/freeze_sft_artifacts.py`：校验 checkpoint、正式训练报告和 dev eval 的
+  `run_id（运行身份）`一致性，生成逐文件 SHA256（文件哈希）、冻结 manifest（清单）和可下载归档。
 
 ## 密钥要求
 

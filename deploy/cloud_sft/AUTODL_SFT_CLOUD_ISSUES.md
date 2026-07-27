@@ -16,7 +16,109 @@
   `evaluation/stage9/artifacts/sft/checkpoints/planner-sft-stage9-qwen3-5-4b-lora_20260727T085537Z_94a77563`。
 - 当前实例的 `nvidia-smi`实测为 RTX 4090、49140MiB 显存、driver 580.76.05。
 - vLLM（大模型推理服务框架）0.25.1 已在 no-card mode（无卡模式）完成安装，
-  `torch=2.11.0+cu130`、依赖冻结清单已生成；恢复 GPU 后仍需执行 CUDA 运行门禁。
+  `torch=2.11.0+cu130`、依赖冻结清单已生成；有卡 CUDA 门禁、LoRA 加载和 HTTP
+  healthcheck（健康检查）已经通过。
+- checkpoint runtime（检查点运行时）的 CUDA device placement（显卡设备放置）代码问题
+  已修复；完整 7 条 dev eval 已成功，平均 Reward 为 0.8444。该结果只属于小规模工程验收，
+  不能作为正式泛化结论。
+- 当前已经切回无卡模式，正式 checkpoint 和 dev eval 报告仍保存在数据盘。
+
+## 2026-07-27 首次正式上云复盘
+
+### 总结判断
+
+本次正式 SFT 训练本身成功，主要问题发生在训练前后的 cloud readiness（云端就绪度）：
+我们验证了云端训练 smoke（冒烟链路），但没有在占用付费 GPU 前一次性验证依赖、推理服务、
+checkpoint runtime、评测数据覆盖和产物路径。因此多个本应在本地或无卡模式暴露的问题，
+集中到有卡计费阶段才被发现。
+
+这次成本浪费不能只归因于 AutoDL：
+
+- 平台侧确实观测到有卡模式下载极慢、无卡模式不到 10 分钟完成同一批 vLLM 依赖的显著差异。
+- 项目侧也存在上云前门禁不足、依赖未预装、运行时代码缺陷、日志不足和评测集设计不完整。
+
+### 问题分类
+
+| 类别 | 上云后才发现的问题 | 直接影响 | 根因 |
+|---|---|---|---|
+| 数据与评测 | dev 只有 7 条；35 条 test 全部偏向 `local_search -> answer`，缺少独立的追问、HyDE、Web、拒答路线测试 | 7 条只能做工程验收，35 条即使全跑也不能证明完整 Planner 泛化 | 正式训练前只核对了训练样本数量和 Action 计数，没有把 dev/test 的独立性、数量和路线分布设为硬门禁 |
+| 依赖准备 | 正式训练后才发现没有 vLLM；训练环境与服务环境依赖冲突；大批 CUDA wheel 需要临时下载 | GPU 开机后等待依赖，产生无效计费 | 只准备 `.venv-sft`，没有在无卡阶段同时冻结 `.venv-vllm`和完整 cache |
+| 网络与缓存 | 有卡模式下载极慢；首次命令使用 `--no-cache`，中断后复用能力差 | vLLM 安装等待超过一小时，下载进度和费用不可控 | 没有提前规定“所有大依赖只能无卡下载”，也没有持久化独立 vLLM uv cache |
+| 运行时代码 | checkpoint runtime 缺少模型 `.to("cuda")`等价迁移和输入 tensor `.to(device)` | 4B 模型实际在 CPU 推理，GPU 付费但闲置，十多分钟没有结果 | 训练 smoke 只覆盖 Trainer，没有覆盖正式 checkpoint 的 GPU 推理入口 |
+| 可观测性 | dev eval 只在全部完成后打印汇总，没有逐 case 状态 | 正常慢、CPU 卡住、下载和死锁无法快速区分 | 评测入口缺少 `running/completed`、耗时和 Action 路线日志 |
+| 运行方式边界 | 误以为 vLLM 服务和 direct-checkpoint dev eval 是同一条链路 | vLLM 占约 41GB 时再加载 checkpoint，存在 OOM 风险 | 文档没有明确“HTTP 服务健康检查”和“Transformers 直接 checkpoint 评测”分别加载模型 |
+| 环境变量 | 平台环境遗留 `OMP_NUM_THREADS=0`；无卡运行 `vllm --version`尝试推断 GPU | 出现误导性 warning/error，增加排障时间 | 没有对继承环境变量和无卡 CLI 行为做预检 |
+| 产物与路径 | cloud run report 首次传入 `model`子目录而不是 checkpoint 根目录 | 报告找不到 manifest，审计信息不完整 | 没有在脚本结束后自动校验报告中的 checkpoint root、run_id 和 adapter path |
+| 磁盘规划 | 数据盘仅余约 15GB，系统盘约 25GB；环境、缓存和产物的归属临时决定 | 安装过程中存在写满磁盘和重复下载风险 | 上云前没有按模型、两套虚拟环境、下载 cache、checkpoint 计算空间预算 |
+| 会话管理 | 服务虽然运行，但 `screen -r`找不到对应会话，只能通过 PID 定位和停止 | 长任务管理和停止流程不稳定 | 启动前没有验证任务确实运行在可恢复的 screen/tmux 会话中 |
+
+### 主要成本浪费点
+
+1. 在有卡计费模式首次安装 vLLM 和 CUDA 大依赖。
+2. 下载缓慢时继续等待，直到确认无卡模式速度显著更快。
+3. vLLM、训练环境和服务启动没有在无卡阶段提前准备并冻结。
+4. checkpoint runtime 实际使用 CPU，GPU 处于空闲状态但仍在计费。
+5. 训练、HTTP 服务检查和 direct-checkpoint 评测的模型生命周期没有提前拆开。
+6. 数据覆盖问题在正式训练后才审计，导致已经得到 checkpoint 才发现独立路线评测不足。
+
+本次没有精确记录每段 GPU 占用时长和金额，因此不能给出可靠的浪费费用数字。下一次必须记录
+实例开卡/关卡时间、每个阶段开始/结束时间和异常等待时间，避免事后凭感觉估算。
+
+### 为什么原 smoke 没拦住
+
+原 smoke 证明了以下内容：
+
+- 模型和 tokenizer 能离线加载。
+- 4 条训练样本可以完成 1 个 step。
+- LoRA checkpoint 和 cloud run report 可以生成。
+
+但它没有覆盖：
+
+- vLLM 服务环境是否已经安装并能加载正式 LoRA。
+- checkpoint runtime 是否真的把模型和输入放到 GPU。
+- dev/test 是否具备足够数量和独立路线覆盖。
+- HTTP 服务与 direct-checkpoint eval 的显存生命周期。
+- 逐 case 进度、超时、GPU 空闲和停止条件。
+- 两套环境、模型 cache、依赖 cache 和训练产物的完整磁盘预算。
+
+所以 smoke 成功不等于“已经可以无风险地开始完整云端流程”。
+
+### 下次上云前的硬门禁
+
+#### 无卡或本地阶段
+
+1. 统计并冻结 train/dev/test 数量、leakage group（泄漏组）和 Action 路线分布。
+2. 训练数据只证明可训练；必须另有覆盖 local、HyDE、Web、追问和拒答的独立 dev/test。
+3. 同时建立 `.venv-sft`和 `.venv-vllm`，冻结版本并完成离线 import（导入）检查。
+4. 模型、tokenizer、PyTorch/CUDA wheel 和 uv cache 全部提前下载到持久化磁盘。
+5. 禁止 `--no-cache`；确认断线后可以复用已完成下载。
+6. 执行磁盘预算，环境与 cache 所在盘至少保留安装峰值空间。
+7. 检查 `OMP_NUM_THREADS`等继承环境变量，拒绝空值、0 或非法字符串。
+8. checkpoint runtime 单元测试必须覆盖 CUDA device、BF16/FP16 和输入 tensor 设备一致性。
+9. 评测脚本必须有逐 case 进度、耗时和 Action 路线日志。
+
+#### 有卡阶段
+
+1. 开卡后第一步记录 GPU、驱动、CUDA、显存和开始计费时间。
+2. 只做必须依赖 CUDA 的工作：GPU smoke、正式训练、vLLM healthcheck 和模型评测。
+3. 禁止在有卡阶段首次下载大模型或安装 vLLM；发现缺依赖立即停卡回无卡处理。
+4. vLLM healthcheck 通过后，如果下一步是 direct-checkpoint eval，先停止 vLLM并确认显存释放。
+5. 权重加载完成后若连续无进度且 GPU 利用率为 0，立即检查 device placement，不继续盲等。
+6. 每一步结束都校验 checkpoint、报告、run_id、adapter path 和输出文件，再决定是否释放 GPU。
+7. test 只在模型、配置和评测规则冻结后运行一次；不能把看过结果的 test 继续当最终留出集。
+
+### 已完成整改
+
+- [x] 正式 LoRA SFT、checkpoint 和 cloud run report 已完成并核对。
+- [x] vLLM 改为独立环境，并在无卡模式完成安装与版本冻结。
+- [x] 去掉 `--no-cache`，增加持久化 cache、超时和重试配置。
+- [x] vLLM CUDA 门禁、LoRA 加载、HTTP `/health`和 PlannerClient healthcheck 已通过。
+- [x] 修复 checkpoint runtime 的模型/输入 CUDA 设备迁移和 BF16/FP16 加载。
+- [x] dev eval 增加逐 case 日志，完整 7 条 dev 已成功运行。
+- [x] 区分 vLLM HTTP 服务验证和 direct-checkpoint dev eval。
+- [ ] 补充独立且路线均衡的 dev/test；当前 35 条 test 不能代表完整 Planner 路线。
+- [ ] 冻结新的评测边界后再做正式 test 和 9.4 baseline compare（基线对比）。
+- [ ] 下载或长期备份 checkpoint、cloud run report、dev eval 和环境冻结清单。
 
 ## 已踩问题
 
@@ -124,6 +226,7 @@ HF_HUB_OFFLINE=1
 
 ## 下一步
 
-1. 将 checkpoint runtime 的模型 `.to("cuda")`等价修复、输入 tensor `.to(device)`和逐 case 日志同步到云端。
-2. 确认 vLLM 已停止、GPU 显存已释放后，运行完整 7 条 dev eval。
-3. 打包并下载 checkpoint、cloud run report 和评测结果；暂不进入 GRPO（组相对策略优化）。
+1. 在无卡模式补充并冻结独立、路线均衡的 dev/test 设计，先解决评测证据不足。
+2. 明确本轮 checkpoint 是保留为 v1 baseline（第一版基线），还是补数据后重新训练。
+3. 模型与评测规则冻结后再开 GPU 跑正式 test 和 9.4 baseline compare。
+4. 下载或长期备份 checkpoint、cloud run report、dev eval 和环境冻结清单；暂不进入 GRPO。
