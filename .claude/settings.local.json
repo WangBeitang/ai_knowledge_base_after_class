@@ -10,7 +10,13 @@
       "Bash(python3 -c ' *)",
       "Bash(shasum -a 256 /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage8/cases/planner_cases.jsonl /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage8/cases/split_manifest.json /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/balanced_dev/balanced_dev_case_evidence.jsonl /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/balanced_dev/second_review_queue.jsonl /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/balanced_dev/source_import_manifest.json /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/configs/planner_eval_route_matrix_v1.json /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/configs/balanced_dev_source_manifest_v1.json /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage8_5/artifacts/intermediate/sft_seed/curated_seed_train_cases.jsonl /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/route_seed/route_seed_cases.jsonl /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/route_seed/route_seed_action_paths.jsonl)",
       "Bash(python3 *)",
-      "Bash(shasum *)"
+      "Bash(shasum *)",
+      "WebFetch(domain:qingyun.huawei.com)",
+      "WebFetch(domain:consumer.huawei.com)",
+      "Bash(curl -sSL --max-time 20 -A \"Mozilla/5.0\" \"https://consumer.huawei.com/cn/support/content/zh-cn15914710/\")",
+      "Bash(curl -sSL --max-time 20 -A \"Mozilla/5.0\" \"https://consumer.huawei.com/cn/support/content/zh-cn15843389/\")",
+      "Bash(curl -sSL --max-time 20 -A \"Mozilla/5.0\" \"https://qingyun.huawei.com/printers/qingyun-p5/\")",
+      "Bash(curl -sSL --max-time 20 -A \"Mozilla/5.0\" \"https://qingyun.huawei.com/printers/qingyun-p5/specs/\")"
     ]
   }
 }

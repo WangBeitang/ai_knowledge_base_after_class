@@ -1,0 +1,108 @@
+{
+  "import_version": "stage9-balanced-dev-source-import-v1",
+  "source_manifest_version": "stage9-balanced-dev-source-manifest-v1",
+  "imported_at": "2026-07-28T05:30:57.218417+00:00",
+  "source_manifest_sha256": "5d2a285509a69d285ad894d32cadbcc71a50a9284f310ae851ca64a939f6e647",
+  "documents": [
+    {
+      "source_id": "huawei-pixlab-b5-guide-v06",
+      "publisher": "Huawei",
+      "title": "HUAWEI PixLab B5 用户指南",
+      "source_version": "CV81Z,06,zh-cn",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15930433/",
+      "source_sha256": "3ead983b773f9180c86e50e164be79a49177db04fac406940787f7d018d3f080",
+      "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_f8a53e9a7b255e96",
+      "standard_subject_name": "华为 PixLab B5",
+      "source_chunk_count": 154,
+      "included_chunk_count": 3,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611696,
+          "index_version": 1,
+          "chunk_index": 81,
+          "title": "## 3 设置好扫描参数后，点击开始扫描。_1",
+          "parent_title": "## 3 设置好扫描参数后，点击开始扫描。",
+          "content_chars": 955,
+          "content_sha256": "51e76fd4e25800a049bec7fdeb0516d8a18bbccce0b9395e7871c89193cde2ac"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611705,
+          "index_version": 1,
+          "chunk_index": 90,
+          "title": "## 身份证复印_1",
+          "parent_title": "## 身份证复印",
+          "content_chars": 825,
+          "content_sha256": "4e03173df22db09fc482b78b886b9a76b1be5f26fcc634342801bebe3dc727c1"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611729,
+          "index_version": 1,
+          "chunk_index": 114,
+          "title": "## 重置网络_1",
+          "parent_title": "## 重置网络",
+          "content_chars": 502,
+          "content_sha256": "e745aa34e2eeb78f63ab8460d9ef9a740ce9c3fc35a60413eb6dced52f846fba"
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-qingyun-p5-guide-v06",
+      "publisher": "Huawei",
+      "title": "华为擎云 P5 激光多功能一体机 CV81Z-LDM 用户指南",
+      "source_version": "CV81Z-LDM,06,zh-cn",
+      "source_url": "https://qingyun.huawei.com/printers/qingyun-p5/specs/",
+      "source_sha256": "9461e82fac7d4b35e27d11e1b78f5c60bdf9346a9974f89636eff02d885d509f",
+      "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_b98d9b712473166f",
+      "standard_subject_name": "华为擎云 P5 激光多功能一体机 CV81Z-LDM",
+      "source_chunk_count": 85,
+      "included_chunk_count": 3,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611821,
+          "index_version": 1,
+          "chunk_index": 43,
+          "title": "## 查看打印机 S/N 号_1",
+          "parent_title": "## 查看打印机 S/N 号",
+          "content_chars": 146,
+          "content_sha256": "c623f3bc15a1db023f9d546eac9644a334a14210785e5da68228d2d296efc9a0"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611823,
+          "index_version": 1,
+          "chunk_index": 45,
+          "title": "## 方式二：通过打印机信息页获取_1",
+          "parent_title": "## 方式二：通过打印机信息页获取",
+          "content_chars": 305,
+          "content_sha256": "72ab185f9b1ef68f4a641b64bb57b02e85d9699617467bd3d5383df50ec2b970"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611833,
+          "index_version": 1,
+          "chunk_index": 55,
+          "title": "## 纸卡在出纸区域_1",
+          "parent_title": "## 纸卡在出纸区域",
+          "content_chars": 893,
+          "content_sha256": "88f14676f741fabd7580d0c5fa2e95df731f1384289c5426df4634289c2895ce"
+        }
+      ]
+    }
+  ]
+}

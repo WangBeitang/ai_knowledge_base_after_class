@@ -78,7 +78,8 @@ Reward v1.1 的权重和版本号未变，只扩展证据身份：
 - 7 条题义或证据发生实质变化的 rejected 旧 case 使用新 ID；原始行保存在
   `superseded_round3_rejected_cases.jsonl`，没有静默覆盖历史。
 - 3 条沿用 ID 的修订项同样因 fingerprint 变化失去旧审核资格。
-- `second_review_queue.jsonl` 当前只包含这 10 条修订项，供新的独立 reviewer 盲审。
+- `second_review_queue.jsonl` 当前只包含这 10 条修订项，但 reviewer 不再直接读取该文件
+  以外的原始 case 台账；盲审统一使用隔离导出的 clean bundle。
 
 ## 5. 当前审核分布
 
@@ -104,6 +105,13 @@ Reward v1.1 的权重和版本号未变，只扩展证据身份：
 
 ## 7. 下一门禁
 
-由未参与本次整改的独立 reviewer 只读取当前 `second_review_queue.jsonl` 和冻结来源，
-逐条检查 evidence、route、leakage 与表达质量。10 条全部形成新的显式决定并重新构建后，
-五路线每桶达到 5 条 reviewed，9.3.13 才算完成。
+首次重审发现原白名单包含历史审核字段，因此该轮不计入 clean blind review。当前新增：
+
+- `evaluation/stage9/balanced_dev/export_blind_review_bundle.py`
+- `evaluation/stage9/artifacts/balanced_dev/blind_review_bundle_v1/`
+
+bundle 只保留 10 条待审 case、可复算 fingerprint、冻结证据、脱敏 leakage reference
+和路线定义；不含 reviewer、decision、审核状态或 notes。由未参与本次整改的独立 reviewer
+只读取该 bundle、本地来源 PDF 和 bundle 冻结的官方 URL，逐条检查 evidence、route、
+leakage 与表达质量。10 条全部形成新的显式决定并重新构建后，五路线每桶达到 5 条
+reviewed，9.3.13 才算完成。

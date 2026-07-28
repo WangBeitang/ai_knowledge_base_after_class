@@ -1,0 +1,136 @@
+{
+  "manifest_version": "stage9-balanced-dev-web-source-manifest-v1",
+  "purpose": "为 balanced dev 的 web_required 回答型 case 冻结官方网页身份和可核验事实。URL 只负责运行时匹配；响应 hash、事实 hash 与抓取时间负责审计页面版本。",
+  "sources": [
+    {
+      "source_id": "huawei-pixlab-b5-connect-other-devices-20260728",
+      "publisher": "Huawei",
+      "source_title": "打印机配网后，其他设备如何连接华为激光打印机",
+      "url": "https://consumer.huawei.com/cn/support/content/zh-cn15914710/",
+      "facts": [
+        {
+          "fact_id": "pixlab_b5_supported_desktop_systems",
+          "statement": "HUAWEI PixLab B5 的华为打印客户端支持 Windows、macOS、Linux、UOS、KOS 和中科方德系统电脑。",
+          "required_phrases": [
+            "HUAWEI PixLab B5：支持 Windows/macOS/Linux/UOS/KOS/中科方德系统电脑"
+          ]
+        },
+        {
+          "fact_id": "pixlab_b5_shared_lan_precondition",
+          "statement": "电脑与打印机需要连接同一路由器，使二者位于同一局域网。",
+          "required_phrases": [
+            "使电脑和打印机处于同一局域网中"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-printer-firmware-upgrade-20260728",
+      "publisher": "Huawei",
+      "source_title": "华为打印机如何升级固件",
+      "url": "https://consumer.huawei.com/cn/support/content/zh-cn15851632/",
+      "facts": [
+        {
+          "fact_id": "firmware_upgrade_power_requirement",
+          "statement": "升级固件时应保持打印机通电并联网，不能断电或关机。",
+          "required_phrases": [
+            "保持打印机处于通电、联网状态",
+            "切勿断电和关机"
+          ]
+        },
+        {
+          "fact_id": "firmware_upgrade_completion_state",
+          "statement": "升级完成后打印机会自动重启，数字键显示“01”时可正常使用。",
+          "required_phrases": [
+            "升级完成后，打印机会自动重启",
+            "数字键显示“01”即可正常使用"
+          ]
+        },
+        {
+          "fact_id": "firmware_upgrade_applies_to_pixlab_b5",
+          "statement": "该官方支持页的适用产品包含 HUAWEI PixLab B5。",
+          "required_phrases": [
+            "适用产品： HUAWEI PixLab B5"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-printer-replace-drum-20260728",
+      "publisher": "Huawei",
+      "source_title": "华为激光打印机如何更换硒鼓",
+      "url": "https://consumer.huawei.com/cn/support/content/zh-cn15843389/",
+      "facts": [
+        {
+          "fact_id": "printer_drum_replacement_signal",
+          "statement": "面板数字键显示 CC 且开始键红色闪烁时，需要更换硒鼓。",
+          "required_phrases": [
+            "数字键显示代码 CC",
+            "开始键红色闪烁时",
+            "需要更换打印机硒鼓"
+          ]
+        },
+        {
+          "fact_id": "printer_drum_and_toner_replaced_together",
+          "statement": "更换新硒鼓时必须同时更换新粉盒，不能保留旧粉盒。",
+          "required_phrases": [
+            "需同时更换新的粉盒",
+            "无法保留旧粉盒"
+          ]
+        },
+        {
+          "fact_id": "printer_drum_cooldown_requirement",
+          "statement": "为避免烫伤，应先关机并静置半小时再更换硒鼓。",
+          "required_phrases": [
+            "建议先将打印机关机",
+            "静置半小时",
+            "再更换硒鼓"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-qingyun-p5-product-os-20260728",
+      "publisher": "Huawei",
+      "source_title": "华为擎云 P5 激光多功能一体机",
+      "url": "https://qingyun.huawei.com/printers/qingyun-p5/",
+      "facts": [
+        {
+          "fact_id": "qingyun_p5_current_product_page_os",
+          "statement": "产品页列出的系统包括 KOS、UOS、中科方德、Windows 10 32/64 位和 Windows 11 64 位及以上国际通用操作系统。",
+          "required_phrases": [
+            "支持麒麟系统（KOS）",
+            "统信系统（UOS）",
+            "中科方德",
+            "Win 10（32 位 & 64 位）",
+            "Win 11（64 位）"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-qingyun-p5-specs-20260728",
+      "publisher": "Huawei",
+      "source_title": "华为擎云 P5 激光多功能一体机规格参数",
+      "url": "https://qingyun.huawei.com/printers/qingyun-p5/specs/",
+      "facts": [
+        {
+          "fact_id": "qingyun_p5_print_speed",
+          "statement": "规格页标注单面打印 30 页/分钟，自动双面打印 14 面/分钟。",
+          "required_phrases": [
+            "单面：30 页/分钟",
+            "双面：14 面/分钟（自动双面打印）"
+          ]
+        },
+        {
+          "fact_id": "qingyun_p5_preinstalled_yields",
+          "statement": "规格页标注预装硒鼓印量 15000 页、预装粉盒印量 1500 页。",
+          "required_phrases": [
+            "预装硒鼓印量 15000 页",
+            "预装粉盒印量 1500 页"
+          ]
+        }
+      ]
+    }
+  ]
+}
