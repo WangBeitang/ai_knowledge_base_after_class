@@ -1,0 +1,43 @@
+{
+  "manifest_version": "stage9-balanced-dev-source-manifest-v1",
+  "purpose": "任务 9.3.13 的独立来源文档清单。所有候选问题必须在这些文档经过生产解析、切分和索引后，基于真实 chunk 身份构建。",
+  "dataset_id": "dataset_default_equipment_ops",
+  "owner_user_id": "eval_demo_user",
+  "tenant_id": "tenant_default",
+  "visibility": "public",
+  "sources": [
+    {
+      "source_id": "huawei-pixlab-b5-guide-v06",
+      "publisher": "Huawei",
+      "title": "HUAWEI PixLab B5 用户指南",
+      "source_version": "CV81Z,06,zh-cn",
+      "source_role": "balanced_dev",
+      "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+      "local_path": "doc/HUAWEI PixLab B5 用户指南-(CV81Z,06,zh-cn).pdf",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15930433/",
+      "sha256": "3ead983b773f9180c86e50e164be79a49177db04fac406940787f7d018d3f080"
+    },
+    {
+      "source_id": "huawei-qingyun-p5-guide-v06",
+      "publisher": "Huawei",
+      "title": "华为擎云 P5 激光多功能一体机 CV81Z-LDM 用户指南",
+      "source_version": "CV81Z-LDM,06,zh-cn",
+      "source_role": "balanced_dev",
+      "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+      "local_path": "doc/华为擎云 P5 激光多功能一体机 CV81Z-LDM 用户指南-(CV81Z-LDM,06,zh-cn).pdf",
+      "source_url": "https://qingyun.huawei.com/printers/qingyun-p5/specs/",
+      "sha256": "9461e82fac7d4b35e27d11e1b78f5c60bdf9346a9974f89636eff02d885d509f"
+    },
+    {
+      "source_id": "rs-12-multimeter-manual-v001",
+      "publisher": "RS Components",
+      "title": "RS-12 数字万用表说明书",
+      "source_version": "123-1939, 2017-09",
+      "source_role": "balanced_dev",
+      "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+      "local_path": "doc/万用表RS-12的使用.pdf",
+      "source_url": "https://docs.rs-online.com/aabd/0900766b816bc1c6.pdf",
+      "sha256": "dc69d9431a6a6e747f3275bcc5ea51c74fc414d97cd7018711e4ce803d93357f"
+    }
+  ]
+}

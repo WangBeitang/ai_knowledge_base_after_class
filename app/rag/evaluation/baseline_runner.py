@@ -138,10 +138,11 @@ class BaselineEvalOutput(BaselineRunnerModel):
 # 第二部分：离线候选 provider。它让 runner 在没有 Milvus 的环境中仍能验证完整评测管线。
 class SnapshotExpectedChunkActionProvider(OfflineActionProvider):
     """
-    使用 case.expected_chunks 构造确定性本地候选的离线 provider。
+    使用 case 中冻结的 expected evidence 构造确定性候选的离线 provider。
 
     这个 provider 的边界很重要：它不是线上检索质量评测，也不声称模拟 Milvus 召回。
-    它只用于阶段 8 baseline runner 第一版，把 Planner 状态机、Reward、结果落盘串通。
+    本地证据来自 ``expected_chunks``，Web 证据来自 ``expected_web_evidence``；两者都
+    只证明 Planner 状态机、Reward 和引用契约可执行，不证明真实 Milvus/Web 召回质量。
     输出里会记录 action_provider=snapshot_expected_chunks，后续接真实 Milvus provider 时
     可以直接替换，不改变 runner 主流程。
     """
@@ -163,14 +164,36 @@ class SnapshotExpectedChunkActionProvider(OfflineActionProvider):
 
     def web_search(self, state: OfflineState, decision: PlannerDecision) -> list[RetrievalCandidate]:
         """
-        Web 检索 Action：当前不联网，只返回低分网页候选或空列表。
+        Web 检索 Action：不联网，只把 case 中已冻结的网页证据投影成高分候选。
 
-        对 should_call_web=true 的实时样本，低分 Web 候选能让规则 Planner 走到
-        web_search -> refuse，表示“需要联网但没有可靠网页证据”；它不会被伪装成本地 chunk。
+        没有 ``expected_web_evidence`` 的历史实时 case 仍返回低分占位候选，保持旧的
+        web_search -> refuse 行为。新的 Web 回答型 Gold 则能离线验证
+        web_search -> answer、URL Citation 和 Reward 契约。
         """
         case = self.case_by_id[state.case_id]
         if not case.expected_behavior.should_call_web:
             return []
+        if case.expected_web_evidence:
+            content = "；".join(case.expected_answer_points) or case.query
+            return [
+                RetrievalCandidate(
+                    title=evidence.source_title,
+                    source_title=evidence.source_title,
+                    content=content,
+                    equipment_model=_first_identifier(case, "equipment_model"),
+                    alarm_code=_first_identifier(case, "alarm_code"),
+                    source_type=EvidenceSourceType.WEB,
+                    retrieval_channels=[RetrievalChannel.WEB],
+                    retrieval_rank=rank,
+                    retrieval_score=max(0.0, 0.95 - (rank - 1) * 0.03),
+                    rerank_score=max(0.0, 0.95 - (rank - 1) * 0.03),
+                    url=evidence.url,
+                )
+                for rank, evidence in enumerate(
+                    case.expected_web_evidence,
+                    start=1,
+                )
+            ]
         return [
             RetrievalCandidate(
                 title=f"{case.query} 的离线 Web 占位候选",

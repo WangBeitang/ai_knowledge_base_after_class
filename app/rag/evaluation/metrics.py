@@ -12,13 +12,18 @@ import math
 import re
 from collections.abc import Iterable, Sequence
 from typing import Any
+from urllib.parse import urlsplit
 
-from app.rag.evaluation.case_schema import ExpectedChunk
-from app.rag.query.contracts import QueryAction, RetrievalCandidate
+from app.rag.evaluation.case_schema import ExpectedChunk, ExpectedWebEvidence
+from app.rag.query.contracts import EvidenceSourceType, QueryAction, RetrievalCandidate
+from app.rag.query.rrf_service import canonicalize_web_url
 
 # 第一部分：统一证据身份。Reward 先把不同来源里的 chunk 表达统一成同一个 key。
 # ChunkKey = (document_id, chunk_id, index_version)：三者合起来才能证明“命中的是哪一版证据”。
 ChunkKey = tuple[str, str, int]
+# EvidenceKey（证据身份）统一承载本地 chunk 和 Web URL。首项显式写来源类型，
+# 避免网页 URL 与本地字段字符串碰巧相同时发生身份冲突。
+EvidenceKey = tuple[str, ...]
 
 def expected_chunk_keys(expected_chunks: Sequence[ExpectedChunk]) -> list[ChunkKey]:
     """从人工标注的 expected_chunks 中提取期望证据身份。"""
@@ -35,8 +40,73 @@ def candidate_chunk_keys(candidates: Sequence[RetrievalCandidate]) -> list[Chunk
         for candidate in candidates  # candidates 通常来自 OfflineTrajectoryResult.retrieved_candidates。
     )
 
+
+def expected_web_evidence_keys(
+    expected_evidence: Sequence[ExpectedWebEvidence],
+) -> list[EvidenceKey]:
+    """从人工冻结的 Web Gold 中提取规范化 URL 身份。"""
+    return _compact_evidence_keys(
+        ("web", evidence.canonical_url) for evidence in expected_evidence
+    )
+
+
+def candidate_web_evidence_keys(
+    candidates: Sequence[RetrievalCandidate],
+) -> list[EvidenceKey]:
+    """从实际候选中提取 Web URL 身份，本地候选自动忽略。"""
+    keys: list[EvidenceKey | None] = []
+    for candidate in candidates:
+        if candidate.source_type != EvidenceSourceType.WEB:
+            continue
+        canonical_url = _canonical_http_url(candidate.url)
+        keys.append(None if canonical_url is None else ("web", canonical_url))
+    return _compact_evidence_keys(keys)
+
+
+def expected_evidence_keys(
+    expected_chunks: Sequence[ExpectedChunk],
+    expected_web_evidence: Sequence[ExpectedWebEvidence],
+) -> list[EvidenceKey]:
+    """合并本地 chunk 与 Web URL，作为回答型 case 的统一期望证据身份。"""
+    local_keys: list[EvidenceKey] = [
+        ("local", document_id, chunk_id, str(index_version))
+        for document_id, chunk_id, index_version in expected_chunk_keys(expected_chunks)
+    ]
+    return _compact_evidence_keys(
+        [*local_keys, *expected_web_evidence_keys(expected_web_evidence)]
+    )
+
+
+def candidate_evidence_keys(
+    candidates: Sequence[RetrievalCandidate],
+) -> list[EvidenceKey]:
+    """按实际候选排名合并本地 chunk 与 Web URL 身份。"""
+    keys: list[EvidenceKey | None] = []
+    for candidate in candidates:
+        if candidate.source_type == EvidenceSourceType.WEB:
+            canonical_url = _canonical_http_url(candidate.url)
+            keys.append(None if canonical_url is None else ("web", canonical_url))
+            continue
+        local_key = _to_chunk_key(
+            candidate.document_id,
+            candidate.chunk_id,
+            candidate.index_version,
+        )
+        keys.append(
+            None
+            if local_key is None
+            else ("local", local_key[0], local_key[1], str(local_key[2]))
+        )
+    return _compact_evidence_keys(keys)
+
+
 # 第二部分：检索质量指标。score_retrieval 会按这个顺序计算 recall、MRR、nDCG 和标识命中。
-def recall_at_k(retrieved_keys: Sequence[ChunkKey], expected_keys: Sequence[ChunkKey], *, k: int) -> float:
+def recall_at_k(
+    retrieved_keys: Sequence[EvidenceKey | ChunkKey],
+    expected_keys: Sequence[EvidenceKey | ChunkKey],
+    *,
+    k: int,
+) -> float:
     """计算 recall@k：前 k 个候选覆盖了多少期望 chunk。"""
     if not expected_keys:  # 没有 expected chunk 的场景在上层通常是非回答型样本，这里按满分兜底。
         return 1.0
@@ -44,7 +114,10 @@ def recall_at_k(retrieved_keys: Sequence[ChunkKey], expected_keys: Sequence[Chun
     hit_count = sum(1 for key in expected_keys if key in top_keys)  # 逐个 expected chunk 统计是否命中。
     return hit_count / len(expected_keys)  # recall 的分母是期望证据数量，不是检索返回数量。
 
-def reciprocal_rank(retrieved_keys: Sequence[ChunkKey], expected_keys: Sequence[ChunkKey]) -> float:
+def reciprocal_rank(
+    retrieved_keys: Sequence[EvidenceKey | ChunkKey],
+    expected_keys: Sequence[EvidenceKey | ChunkKey],
+) -> float:
     """计算 MRR 的单样本 reciprocal rank：第一个期望 chunk 越靠前越高。"""
     expected_set = set(expected_keys)  # set 查询是 O(1)，避免每个候选都线性扫描 expected_keys。
     if not expected_set:  # 没有 expected chunk 时不惩罚检索层。
@@ -54,7 +127,12 @@ def reciprocal_rank(retrieved_keys: Sequence[ChunkKey], expected_keys: Sequence[
             return 1.0 / rank
     return 0.0  # 完全没有命中期望证据时 MRR 为 0。
 
-def ndcg_at_k(retrieved_keys: Sequence[ChunkKey], expected_keys: Sequence[ChunkKey], *, k: int) -> float:
+def ndcg_at_k(
+    retrieved_keys: Sequence[EvidenceKey | ChunkKey],
+    expected_keys: Sequence[EvidenceKey | ChunkKey],
+    *,
+    k: int,
+) -> float:
     """计算二值相关性的 nDCG@k：同样命中数量下，越靠前分越高。"""
     if not expected_keys:  # 非回答型或无期望证据样本不在指标层扣分。
         return 1.0
@@ -154,6 +232,29 @@ def _compact_keys(keys: Iterable[ChunkKey | None]) -> list[ChunkKey]:
         compacted.append(key)  # 第一次出现的位置就是后续排名指标使用的位置。
         seen.add(key)  # 记录已出现，保证去重。
     return compacted
+
+
+def _compact_evidence_keys(
+    keys: Iterable[EvidenceKey | None],
+) -> list[EvidenceKey]:
+    """去掉空值和重复的统一证据身份，并保留首次出现的排名。"""
+    compacted: list[EvidenceKey] = []
+    seen: set[EvidenceKey] = set()
+    for key in keys:
+        if key is None or key in seen:
+            continue
+        compacted.append(key)
+        seen.add(key)
+    return compacted
+
+
+def _canonical_http_url(url: str | None) -> str | None:
+    """只把 HTTP(S) URL 作为可评分的 Web 证据身份。"""
+    normalized = str(url or "").strip()
+    parsed = urlsplit(normalized)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
+        return None
+    return canonicalize_web_url(normalized)
 
 
 def _identifier_pairs(expected_identifiers: dict[str, list[str]]) -> list[tuple[str, str]]:

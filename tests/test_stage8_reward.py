@@ -5,6 +5,7 @@ from app.rag.evaluation.case_schema import EnvironmentSnapshot, PlannerEvalCase
 from app.rag.evaluation.offline_environment import OfflineRagEnvironment, OfflineState
 from app.rag.query.config import RETRIEVAL_CONFIG_VERSION
 from app.rag.query.contracts import (
+    Citation,
     EvidenceSourceType,
     PlannerDecision,
     QueryAction,
@@ -173,6 +174,48 @@ def _clarification_case() -> PlannerEvalCase:
     )
 
 
+def _web_answer_case() -> PlannerEvalCase:
+    return PlannerEvalCase(
+        case_id="reward-dev-web-hak180",
+        case_group="realtime",
+        split="dev",
+        leakage_group_id="reward-web-hak180",
+        query="请根据外部网页说明 HAK180 的最新信息。",
+        dataset_ids=["dataset_default_equipment_ops"],
+        owner_user_id="eval_demo_user",
+        tenant_id="tenant_default",
+        privacy_scope="public_demo",
+        expected_chunks=[],
+        expected_web_evidence=[
+            {
+                "source_id": "example-hak180",
+                "publisher": "Example",
+                "source_title": "HAK180 外部网页候选",
+                "url": "https://example.com/hak180",
+                "captured_at": "2026-07-28T07:33:24+00:00",
+                "response_sha256": "a" * 64,
+                "evidence_content_sha256": "b" * 64,
+                "fact_ids": ["hak180_web_fact"],
+                "answer_point_ids": ["hak180_web_point"],
+            }
+        ],
+        expected_answer_points=["HAK180 外部网页候选"],
+        expected_behavior={
+            "should_answer": True,
+            "should_refuse": False,
+            "should_ask_clarification": False,
+            "should_call_web": True,
+            "web_required_reason": "需要外部网页证据",
+            "forbidden_actions": [],
+        },
+        acceptable_action_paths=[["web_search", "answer"]],
+        expected_identifiers={},
+        label_source="manual",
+        gold_origin="heldout_gold",
+        human_review_status="reviewed",
+    )
+
+
 def _candidate(chunk_id: int, *, retrieval_channel: RetrievalChannel) -> RetrievalCandidate:
     return RetrievalCandidate(
         document_id="doc_hak180_manual",
@@ -243,6 +286,51 @@ def test_stage8_reward_scores_valid_answer_path_and_serializes_json():
         assert component.details
 
     json.dumps(reward.to_json_dict(), ensure_ascii=False)
+
+
+def test_stage9_reward_scores_frozen_web_url_as_retrieval_and_citation_evidence():
+    case = _web_answer_case()
+    trajectory = _env().run_action_path(
+        case,
+        [QueryAction.WEB_SEARCH, QueryAction.ANSWER],
+        run_id="reward_valid_web_answer",
+    )
+
+    reward = score_trajectory(case, trajectory)
+
+    assert trajectory.status.value == "completed"
+    assert reward.capped_by is None
+    assert reward.components["retrieval"].details["recall_at_k"] == 1.0
+    assert reward.components["retrieval"].details["expected_web_evidence_count"] == 1
+    assert reward.components["citation"].details["citation_hit_rate"] == 1.0
+    assert reward.components["citation"].details["invalid_citation_count"] == 0
+    assert reward.components["answer"].details["answer_point_coverage"] == 1.0
+
+
+def test_stage9_reward_rejects_non_http_web_citation_identity():
+    case = _web_answer_case()
+    trajectory = _env().run_action_path(
+        case,
+        [QueryAction.WEB_SEARCH, QueryAction.ANSWER],
+        run_id="reward_invalid_web_citation",
+    ).model_copy(
+        update={
+            "citations": [
+                Citation(
+                    title="无效 Web 引用",
+                    source="not-a-web-url",
+                    score=0.9,
+                    source_type=EvidenceSourceType.WEB,
+                )
+            ]
+        }
+    )
+
+    reward = score_trajectory(case, trajectory)
+
+    assert reward.components["citation"].details["citation_hit_rate"] == 0.0
+    assert reward.components["citation"].details["invalid_citation_count"] == 1
+    assert reward.components["citation"].score == 0.0
 
 
 def test_stage8_reward_caps_invalid_action_path_total_score():

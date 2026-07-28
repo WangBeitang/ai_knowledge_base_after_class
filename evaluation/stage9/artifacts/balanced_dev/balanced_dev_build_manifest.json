@@ -1,0 +1,72 @@
+{
+  "build_version": "stage9-balanced-dev-build-v2",
+  "built_at": "2026-07-28T07:40:00+00:00",
+  "status": "candidate_complete_second_review_pending",
+  "source_import_manifest": "evaluation/stage9/artifacts/balanced_dev/source_import_manifest.json",
+  "source_import_manifest_sha256": "9674ee1580f8960d47d3d9ac0459f5486e8324fe1e51e3397e2c5e3089ceec33",
+  "web_evidence_manifest": "evaluation/stage9/artifacts/balanced_dev/web_evidence_manifest.json",
+  "web_evidence_manifest_sha256": "6f823cd870e73690f1a23f325b8480d718911ca6229e218a18303f690609bc72",
+  "route_matrix": "evaluation/stage9/configs/planner_eval_route_matrix_v1.json",
+  "route_matrix_sha256": "6906c3d6781eb0cf5b9523edfbc18b9eebed4e6b8ae8a1834f12215c16607db4",
+  "second_review_decisions": "evaluation/stage9/artifacts/balanced_dev/second_review_decisions.jsonl",
+  "retired_pending_dev_count": 3,
+  "superseded_round3_rejected_count": 7,
+  "new_candidate_count": 21,
+  "pending_second_review_count": 10,
+  "inventory": {
+    "dev_case_count": 25,
+    "route_counts": {
+      "local_answer": 5,
+      "hyde_fallback": 5,
+      "web_required": 5,
+      "ask_clarification": 5,
+      "safe_refuse": 5
+    },
+    "reviewed_counts": {
+      "local_answer": 5,
+      "hyde_fallback": 2,
+      "web_required": 0,
+      "ask_clarification": 3,
+      "safe_refuse": 5
+    },
+    "unique_leakage_group_counts": {
+      "local_answer": 5,
+      "hyde_fallback": 5,
+      "web_required": 5,
+      "ask_clarification": 5,
+      "safe_refuse": 5
+    },
+    "review_gate_passed": false
+  },
+  "train_dev_leakage_finding_count": 0,
+  "outputs": {
+    "evaluation/stage8/cases/planner_cases.jsonl": {
+      "sha256": "c816bb46bec6bab3992816e97f29f967d9157036c7f005c36953792936b79d9a",
+      "bytes": 121546
+    },
+    "evaluation/stage8/cases/split_manifest.json": {
+      "sha256": "8326dcef38a286f97355ec02953f8b5a7be9422200f66fb70db1e7a6e233cab7",
+      "bytes": 7556
+    },
+    "evaluation/stage9/artifacts/balanced_dev/balanced_dev_case_evidence.jsonl": {
+      "sha256": "fa87012e5f5747098605397fbebd1b69580aa205bb83c494edfab57e1650a22f",
+      "bytes": 43763
+    },
+    "evaluation/stage9/artifacts/balanced_dev/second_review_queue.jsonl": {
+      "sha256": "9a23b4617a985b165f28b9d1d2c2fd6984bcceb298f6d2b0383215190186b9bb",
+      "bytes": 26416
+    },
+    "evaluation/stage9/artifacts/balanced_dev/retired_pending_dev_cases.jsonl": {
+      "sha256": "9257e592b4c1fedece91ad8246046536c2143d91b351e8276f144e182e5ec938",
+      "bytes": 3915
+    },
+    "evaluation/stage9/artifacts/balanced_dev/superseded_round3_rejected_cases.jsonl": {
+      "sha256": "2d77208e380829350f6ab9bd785c9a4ce4bc220f3bb920fa269e0675a3dabbf2",
+      "bytes": 13005
+    },
+    "evaluation/stage9/artifacts/reports/阶段9-balanced-dev审核报告.md": {
+      "sha256": "78ab6446850bd4be91f7257cdb0c52e7e62e54901757b9dff0254b0095ba8079",
+      "bytes": 3455
+    }
+  }
+}

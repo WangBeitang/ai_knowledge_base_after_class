@@ -87,6 +87,101 @@ def test_stage8_planner_case_rejects_answer_sample_without_expected_chunks():
         PlannerEvalCase(**payload)
 
 
+def test_stage9_planner_case_accepts_frozen_web_answer_evidence():
+    payload = _valid_case_payload(
+        case_id="dev-web-p5-specs-001",
+        leakage_group_id="p5-web-specs",
+        query="擎云 P5 官方页面标注的打印速度是多少？",
+        source_document_ids=[],
+        source_index_versions={},
+        expected_subject_ids=[],
+        expected_subject_names=[],
+        expected_chunks=[],
+        expected_web_evidence=[
+            {
+                "source_id": "huawei-p5-specs",
+                "publisher": "Huawei",
+                "source_title": "华为擎云 P5 规格参数",
+                "url": "https://qingyun.huawei.com/printers/qingyun-p5/specs/",
+                "captured_at": "2026-07-28T07:33:24+00:00",
+                "response_sha256": "a" * 64,
+                "evidence_content_sha256": "b" * 64,
+                "fact_ids": ["print_speed"],
+                "answer_point_ids": ["print_speed"],
+            }
+        ],
+        expected_answer_points=["打印速度为 33 ppm"],
+        expected_behavior={
+            "should_answer": True,
+            "should_refuse": False,
+            "should_ask_clarification": False,
+            "should_call_web": True,
+            "web_required_reason": "以冻结的官方产品页为准",
+            "forbidden_actions": [],
+        },
+        acceptable_action_paths=[["web_search", "answer"]],
+        expected_identifiers={"equipment_model": ["P5"]},
+        gold_origin="heldout_gold",
+    )
+
+    case = PlannerEvalCase(**payload)
+
+    assert case.expected_chunks == []
+    assert case.expected_web_evidence[0].canonical_url == (
+        "https://qingyun.huawei.com/printers/qingyun-p5/specs"
+    )
+    assert case.acceptable_action_paths == [
+        [QueryAction.WEB_SEARCH, QueryAction.ANSWER]
+    ]
+
+
+def test_stage9_planner_case_rejects_web_answer_without_frozen_web_evidence():
+    payload = _valid_case_payload(
+        expected_chunks=[],
+        expected_behavior={
+            "should_answer": True,
+            "should_refuse": False,
+            "should_ask_clarification": False,
+            "should_call_web": True,
+            "web_required_reason": "需要官方网页",
+            "forbidden_actions": [],
+        },
+        acceptable_action_paths=[["web_search", "answer"]],
+    )
+
+    with pytest.raises(ValidationError, match="expected_web_evidence"):
+        PlannerEvalCase(**payload)
+
+
+def test_stage9_planner_case_rejects_web_evidence_without_utc_capture_time():
+    payload = _valid_case_payload(
+        expected_web_evidence=[
+            {
+                "source_id": "invalid-time",
+                "publisher": "Example",
+                "source_title": "Invalid time",
+                "url": "https://example.com/evidence",
+                "captured_at": "2026-07-28T07:33:24",
+                "response_sha256": "a" * 64,
+                "evidence_content_sha256": "b" * 64,
+                "fact_ids": ["fact"],
+            }
+        ],
+        expected_behavior={
+            "should_answer": True,
+            "should_refuse": False,
+            "should_ask_clarification": False,
+            "should_call_web": True,
+            "web_required_reason": "测试时间边界",
+            "forbidden_actions": [],
+        },
+        acceptable_action_paths=[["web_search", "answer"]],
+    )
+
+    with pytest.raises(ValidationError, match="必须包含 UTC 时区"):
+        PlannerEvalCase(**payload)
+
+
 def test_stage8_case_collection_rejects_duplicate_case_id():
     first = PlannerEvalCase(**_valid_case_payload())
     second_payload = _valid_case_payload(leakage_group_id="hak180-e021")

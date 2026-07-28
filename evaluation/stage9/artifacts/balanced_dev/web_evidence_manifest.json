@@ -1,0 +1,180 @@
+{
+  "freeze_version": "stage9-balanced-dev-web-evidence-freeze-v1",
+  "source_manifest_version": "stage9-balanced-dev-web-source-manifest-v1",
+  "source_manifest_path": "evaluation/stage9/configs/balanced_dev_web_source_manifest_v1.json",
+  "source_manifest_sha256": "93759fa691922afaa953d08cacd1c61edda447d2d4d85a12ad5d5e056e5fb41d",
+  "captured_at": "2026-07-28T07:33:24+00:00",
+  "source_count": 5,
+  "sources": [
+    {
+      "source_id": "huawei-printer-firmware-upgrade-20260728",
+      "publisher": "Huawei",
+      "source_title": "华为打印机如何升级固件",
+      "url": "https://consumer.huawei.com/cn/support/content/zh-cn15851632/",
+      "canonical_url": "https://consumer.huawei.com/cn/support/content/zh-cn15851632",
+      "resolved_url": "https://consumer.huawei.com/cn/support/content/zh-cn15851632/",
+      "captured_at": "2026-07-28T07:33:24+00:00",
+      "http_status": 200,
+      "response_bytes": 157534,
+      "response_sha256": "b6fc6743c87c539eca45a5679f6699f3ba7d8b8d34f520da5ca56264cae10b57",
+      "extracted_text_sha256": "c407423d263e78097ec77c317d00995e483bf21c2f21b1d5978f0cabb1684c01",
+      "evidence_content_sha256": "b3b916264b2922b36e5b23af256b2236d791ef57e6f6b6d4f886e52c519a00e5",
+      "facts": [
+        {
+          "fact_id": "firmware_upgrade_power_requirement",
+          "statement": "升级固件时应保持打印机通电并联网，不能断电或关机。",
+          "verified_phrases": [
+            "保持打印机处于通电、联网状态",
+            "切勿断电和关机"
+          ]
+        },
+        {
+          "fact_id": "firmware_upgrade_completion_state",
+          "statement": "升级完成后打印机会自动重启，数字键显示“01”时可正常使用。",
+          "verified_phrases": [
+            "升级完成后，打印机会自动重启",
+            "数字键显示“01”即可正常使用"
+          ]
+        },
+        {
+          "fact_id": "firmware_upgrade_applies_to_pixlab_b5",
+          "statement": "该官方支持页的适用产品包含 HUAWEI PixLab B5。",
+          "verified_phrases": [
+            "适用产品： HUAWEI PixLab B5"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-pixlab-b5-connect-other-devices-20260728",
+      "publisher": "Huawei",
+      "source_title": "打印机配网后，其他设备如何连接华为激光打印机",
+      "url": "https://consumer.huawei.com/cn/support/content/zh-cn15914710/",
+      "canonical_url": "https://consumer.huawei.com/cn/support/content/zh-cn15914710",
+      "resolved_url": "https://consumer.huawei.com/cn/support/content/zh-cn15914710/",
+      "captured_at": "2026-07-28T07:33:24+00:00",
+      "http_status": 200,
+      "response_bytes": 200809,
+      "response_sha256": "40c12992c6e42c997e132fe9e7223307fdec4f0e000a7fe8ad256056f3b199d1",
+      "extracted_text_sha256": "aeca5bebd672f4b1788774776deac7e78b3328f264b2840045357c3c88143ec8",
+      "evidence_content_sha256": "874a82d0461403bc6240bea5f166479211881638a4678a13cab99d380047ca03",
+      "facts": [
+        {
+          "fact_id": "pixlab_b5_supported_desktop_systems",
+          "statement": "HUAWEI PixLab B5 的华为打印客户端支持 Windows、macOS、Linux、UOS、KOS 和中科方德系统电脑。",
+          "verified_phrases": [
+            "HUAWEI PixLab B5：支持 Windows/macOS/Linux/UOS/KOS/中科方德系统电脑"
+          ]
+        },
+        {
+          "fact_id": "pixlab_b5_shared_lan_precondition",
+          "statement": "电脑与打印机需要连接同一路由器，使二者位于同一局域网。",
+          "verified_phrases": [
+            "使电脑和打印机处于同一局域网中"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-printer-replace-drum-20260728",
+      "publisher": "Huawei",
+      "source_title": "华为激光打印机如何更换硒鼓",
+      "url": "https://consumer.huawei.com/cn/support/content/zh-cn15843389/",
+      "canonical_url": "https://consumer.huawei.com/cn/support/content/zh-cn15843389",
+      "resolved_url": "https://consumer.huawei.com/cn/support/content/zh-cn15843389/",
+      "captured_at": "2026-07-28T07:33:24+00:00",
+      "http_status": 200,
+      "response_bytes": 180591,
+      "response_sha256": "6e078c784a2630ea61abd75b54a2742c64b26733c33490933213120cb943550e",
+      "extracted_text_sha256": "ddcdd48aa8469c5dfd8a467c5855d48323eaa4a1dfafeff1317ef1d2e263f4b0",
+      "evidence_content_sha256": "0a2b40a359c5bc4b66bfa6ad597d1c101eb3080db9d9abb52d56e88a54a4483d",
+      "facts": [
+        {
+          "fact_id": "printer_drum_replacement_signal",
+          "statement": "面板数字键显示 CC 且开始键红色闪烁时，需要更换硒鼓。",
+          "verified_phrases": [
+            "数字键显示代码 CC",
+            "开始键红色闪烁时",
+            "需要更换打印机硒鼓"
+          ]
+        },
+        {
+          "fact_id": "printer_drum_and_toner_replaced_together",
+          "statement": "更换新硒鼓时必须同时更换新粉盒，不能保留旧粉盒。",
+          "verified_phrases": [
+            "需同时更换新的粉盒",
+            "无法保留旧粉盒"
+          ]
+        },
+        {
+          "fact_id": "printer_drum_cooldown_requirement",
+          "statement": "为避免烫伤，应先关机并静置半小时再更换硒鼓。",
+          "verified_phrases": [
+            "建议先将打印机关机",
+            "静置半小时",
+            "再更换硒鼓"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-qingyun-p5-product-os-20260728",
+      "publisher": "Huawei",
+      "source_title": "华为擎云 P5 激光多功能一体机",
+      "url": "https://qingyun.huawei.com/printers/qingyun-p5/",
+      "canonical_url": "https://qingyun.huawei.com/printers/qingyun-p5",
+      "resolved_url": "https://qingyun.huawei.com/printers/qingyun-p5/",
+      "captured_at": "2026-07-28T07:33:24+00:00",
+      "http_status": 200,
+      "response_bytes": 100054,
+      "response_sha256": "823da5aa7d03c539704f3c99e74e7f3ceb222247dd2734084387fb3514248a66",
+      "extracted_text_sha256": "8a0d91856450f49fdd64f480d5a33f9b76d91aa47526847105f420d5c2f24a7b",
+      "evidence_content_sha256": "59d07e762b967f0f976c7b7db6b1e889e6885aa16be864271f3c6b123685d9d3",
+      "facts": [
+        {
+          "fact_id": "qingyun_p5_current_product_page_os",
+          "statement": "产品页列出的系统包括 KOS、UOS、中科方德、Windows 10 32/64 位和 Windows 11 64 位及以上国际通用操作系统。",
+          "verified_phrases": [
+            "支持麒麟系统（KOS）",
+            "统信系统（UOS）",
+            "中科方德",
+            "Win 10（32 位 & 64 位）",
+            "Win 11（64 位）"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-qingyun-p5-specs-20260728",
+      "publisher": "Huawei",
+      "source_title": "华为擎云 P5 激光多功能一体机规格参数",
+      "url": "https://qingyun.huawei.com/printers/qingyun-p5/specs/",
+      "canonical_url": "https://qingyun.huawei.com/printers/qingyun-p5/specs",
+      "resolved_url": "https://qingyun.huawei.com/printers/qingyun-p5/specs/",
+      "captured_at": "2026-07-28T07:33:24+00:00",
+      "http_status": 200,
+      "response_bytes": 96285,
+      "response_sha256": "6b40bd2740e3a9ccab29c15d738228ec9480dbeaf8fd3bc906d6b38cdef7d90f",
+      "extracted_text_sha256": "58740b78a40ee2a8d31b047a79b073ae9cbf38904ecb62fde31c066b01e5c991",
+      "evidence_content_sha256": "0cf5b0237167ad10ad6aeb5537295eb9f1bad1b59b21305c2acdbbf7a38dc50f",
+      "facts": [
+        {
+          "fact_id": "qingyun_p5_print_speed",
+          "statement": "规格页标注单面打印 30 页/分钟，自动双面打印 14 面/分钟。",
+          "verified_phrases": [
+            "单面：30 页/分钟",
+            "双面：14 面/分钟（自动双面打印）"
+          ]
+        },
+        {
+          "fact_id": "qingyun_p5_preinstalled_yields",
+          "statement": "规格页标注预装硒鼓印量 15000 页、预装粉盒印量 1500 页。",
+          "verified_phrases": [
+            "预装硒鼓印量 15000 页",
+            "预装粉盒印量 1500 页"
+          ]
+        }
+      ]
+    }
+  ]
+}

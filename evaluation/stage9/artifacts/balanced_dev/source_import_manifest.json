@@ -1,0 +1,2672 @@
+{
+  "import_version": "stage9-balanced-dev-source-import-v1",
+  "source_manifest_version": "stage9-balanced-dev-source-manifest-v1",
+  "imported_at": "2026-07-28T05:30:57.218417+00:00",
+  "source_manifest_path": "evaluation/stage9/configs/balanced_dev_source_manifest_v1.json",
+  "source_manifest_sha256": "5d2a285509a69d285ad894d32cadbcc71a50a9284f310ae851ca64a939f6e647",
+  "documents": [
+    {
+      "source_id": "huawei-pixlab-b5-guide-v06",
+      "publisher": "Huawei",
+      "title": "HUAWEI PixLab B5 用户指南",
+      "source_version": "CV81Z,06,zh-cn",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15930433/",
+      "source_sha256": "3ead983b773f9180c86e50e164be79a49177db04fac406940787f7d018d3f080",
+      "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+      "task_id": "stage9-balanced-dev-5ff32506f8f447b896bf89f594b6da21",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_f8a53e9a7b255e96",
+      "standard_subject_name": "华为 PixLab B5",
+      "chunk_count": 154,
+      "import_action": "reused",
+      "chunks": [
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611615,
+          "index_version": 1,
+          "chunk_index": 0,
+          "title": "## 目 录_1",
+          "parent_title": "## 目 录",
+          "content_chars": 363,
+          "content_sha256": "c648ea8514f965fa264e828c2316a4cdcd6a88395ec8a457dbf66493398f9ad4"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611616,
+          "index_version": 1,
+          "chunk_index": 1,
+          "title": "# 产品介绍_1",
+          "parent_title": "# 产品介绍",
+          "content_chars": 456,
+          "content_sha256": "dbb6f75453e5978797c42c1cb585ecc32d4afeefdd8617155c16fd78ad169502"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611617,
+          "index_version": 1,
+          "chunk_index": 2,
+          "title": "# 产品介绍_2",
+          "parent_title": "# 产品介绍",
+          "content_chars": 863,
+          "content_sha256": "363d18d6107b3a372ffae89d42a7bf79019b6f48598597b4cc0a49f1687e0dc8"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611618,
+          "index_version": 1,
+          "chunk_index": 3,
+          "title": "## 操作面板_1",
+          "parent_title": "## 操作面板",
+          "content_chars": 235,
+          "content_sha256": "a918531a64974ae03f784cff2f4b32133a000a63a50899fab207642e9157a1e5"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611619,
+          "index_version": 1,
+          "chunk_index": 4,
+          "title": "## 操作面板_2",
+          "parent_title": "## 操作面板",
+          "content_chars": 896,
+          "content_sha256": "55a5973ba887c44473ee8f8595020e2ebc480163aa6a50a1436c539a808f666e"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611620,
+          "index_version": 1,
+          "chunk_index": 5,
+          "title": "## 首次安装打印机_1",
+          "parent_title": "## 首次安装打印机",
+          "content_chars": 935,
+          "content_sha256": "ca10f39f9e078e46c694f54d2eba90f58ac203bc7677eadbb323ea144cc48239"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611621,
+          "index_version": 1,
+          "chunk_index": 6,
+          "title": "## 首次安装打印机_2",
+          "parent_title": "## 首次安装打印机",
+          "content_chars": 963,
+          "content_sha256": "4c3f652227cb7405e5e88647de991aa8be0d959e030bbe19dcca42e0e758dac7"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611622,
+          "index_version": 1,
+          "chunk_index": 7,
+          "title": "## 给打印机配置网络_1",
+          "parent_title": "## 给打印机配置网络",
+          "content_chars": 192,
+          "content_sha256": "24a0a02cbcd22f61aa7da87d9512a7810670f3d1191a72369d80c87e263c6afa"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611623,
+          "index_version": 1,
+          "chunk_index": 8,
+          "title": "## 操作前，请注意：_1",
+          "parent_title": "## 操作前，请注意：",
+          "content_chars": 656,
+          "content_sha256": "78b66a97482eab300280b42a711629005a72790760682bdc6dab1af2dea1202c"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611624,
+          "index_version": 1,
+          "chunk_index": 9,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 923,
+          "content_sha256": "0baf2df11765804d3a94a88c68a581fc7e76389ae1391e1753d0934003ce5cdc"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611625,
+          "index_version": 1,
+          "chunk_index": 10,
+          "title": "## 具体操作：_2",
+          "parent_title": "## 具体操作：",
+          "content_chars": 998,
+          "content_sha256": "7697bc3e39fb0ff42aa18d9f7ced4186ab72dd22b6f33b96213720ebf00d4ed2"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611626,
+          "index_version": 1,
+          "chunk_index": 11,
+          "title": "## 具体操作：_3",
+          "parent_title": "## 具体操作：",
+          "content_chars": 972,
+          "content_sha256": "2d7df6040132a12be9aa9a92473f3299e56021b60edb4786a2098ad3c0326506"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611627,
+          "index_version": 1,
+          "chunk_index": 12,
+          "title": "## 具体操作：_4",
+          "parent_title": "## 具体操作：",
+          "content_chars": 910,
+          "content_sha256": "0283908b7cecc4a533638c05a8282917b3191461a29c90613ece0395b3d262e2"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611628,
+          "index_version": 1,
+          "chunk_index": 13,
+          "title": "## 具体操作：_5",
+          "parent_title": "## 具体操作：",
+          "content_chars": 929,
+          "content_sha256": "c0dc11f36ab6190c4f6133d63d89b8317454683a40bac0c06d133cbd36f7e7f1"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611629,
+          "index_version": 1,
+          "chunk_index": 14,
+          "title": "## 具体操作：_6",
+          "parent_title": "## 具体操作：",
+          "content_chars": 968,
+          "content_sha256": "4116fab3a0ad0215a6a2fd41f69d17b874307210a5e2900b5404f073e12f32e6"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611630,
+          "index_version": 1,
+          "chunk_index": 15,
+          "title": "## 具体操作：_7",
+          "parent_title": "## 具体操作：",
+          "content_chars": 126,
+          "content_sha256": "313c6de1c18947424f8d04ff496a3bb96b42b45b9ced8243d01f2220b1354482"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611631,
+          "index_version": 1,
+          "chunk_index": 16,
+          "title": "## 方式二：通过华为电脑管家靠近发现打印机，配网（仅支持部分华为 Windows 系统电脑）_1",
+          "parent_title": "## 方式二：通过华为电脑管家靠近发现打印机，配网（仅支持部分华为 Windows 系统电脑）",
+          "content_chars": 832,
+          "content_sha256": "99940189b5905c9e03ff098b32c73299ad6dc8d4fff605f5260801b06e0eddce"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611632,
+          "index_version": 1,
+          "chunk_index": 17,
+          "title": "## 方式二：通过华为电脑管家靠近发现打印机，配网（仅支持部分华为 Windows 系统电脑）_2",
+          "parent_title": "## 方式二：通过华为电脑管家靠近发现打印机，配网（仅支持部分华为 Windows 系统电脑）",
+          "content_chars": 765,
+          "content_sha256": "0075ea612000e69fe38c8fcba216ea33726534b19c4472d8166c82405c32efc3"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611633,
+          "index_version": 1,
+          "chunk_index": 18,
+          "title": "## 4 根据电脑系统，按如下步骤操作：_1",
+          "parent_title": "## 4 根据电脑系统，按如下步骤操作：",
+          "content_chars": 49,
+          "content_sha256": "6d78ec9c707982fa08eab8e2b296f621947ef438a33bb5b4307e04a7a05d0db2"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611634,
+          "index_version": 1,
+          "chunk_index": 19,
+          "title": "## • Windows/Linux 系统电脑_1",
+          "parent_title": "## • Windows/Linux 系统电脑",
+          "content_chars": 846,
+          "content_sha256": "65c1c72e91d55788560e934660f9e72f294f454dde96f101cbdd53af4d18f815"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611635,
+          "index_version": 1,
+          "chunk_index": 20,
+          "title": "## • Windows/Linux 系统电脑_2",
+          "parent_title": "## • Windows/Linux 系统电脑",
+          "content_chars": 568,
+          "content_sha256": "535726509754035fa96f1ef96c2c734e842c203917c755bde038551b4950b6a7"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611636,
+          "index_version": 1,
+          "chunk_index": 21,
+          "title": "## • macOS 系统电脑_1",
+          "parent_title": "## • macOS 系统电脑",
+          "content_chars": 376,
+          "content_sha256": "a63ba72bbb689c3bb13fb6e6be49fe7a0a35b459b767fe98c52fb3a2124229a1"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611637,
+          "index_version": 1,
+          "chunk_index": 22,
+          "title": "## • UOS 系统电脑_1",
+          "parent_title": "## • UOS 系统电脑",
+          "content_chars": 612,
+          "content_sha256": "e0fce237d77274d86bf00d973c0bcfe3b5d5cc0646e4e1335036ce4c6cdbe9cc"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611638,
+          "index_version": 1,
+          "chunk_index": 23,
+          "title": "## KOS 系统电脑_1",
+          "parent_title": "## KOS 系统电脑",
+          "content_chars": 608,
+          "content_sha256": "7c6b75670ed933a5d9efbe97cf16023cff075393a137736e22721ab86b954b3a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611639,
+          "index_version": 1,
+          "chunk_index": 24,
+          "title": "## • 中科方德系统电脑_1",
+          "parent_title": "## • 中科方德系统电脑",
+          "content_chars": 915,
+          "content_sha256": "3f6649a197ea46ac24c4eac985e5c6d961b77687ea050469262d32d08747ce57"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611640,
+          "index_version": 1,
+          "chunk_index": 25,
+          "title": "## • 中科方德系统电脑_2",
+          "parent_title": "## • 中科方德系统电脑",
+          "content_chars": 838,
+          "content_sha256": "df297bf7be4ea22604b0795bb7f27cd0faf75b9312ca2c47c5c4da9440bb2cbf"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611641,
+          "index_version": 1,
+          "chunk_index": 26,
+          "title": "## • 中科方德系统电脑_3",
+          "parent_title": "## • 中科方德系统电脑",
+          "content_chars": 860,
+          "content_sha256": "c675b45bce25a86bce01cbd15ad40434cd2cf6cc9f2069efc3de1d3193d8dbcf"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611642,
+          "index_version": 1,
+          "chunk_index": 27,
+          "title": "## • 中科方德系统电脑_4",
+          "parent_title": "## • 中科方德系统电脑",
+          "content_chars": 904,
+          "content_sha256": "e37ccf7f0e88b76bb04e5eda14af32abb4db5af646422fc690bb05204696898a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611643,
+          "index_version": 1,
+          "chunk_index": 28,
+          "title": "## • 中科方德系统电脑_5",
+          "parent_title": "## • 中科方德系统电脑",
+          "content_chars": 786,
+          "content_sha256": "a3ddd2c32c3915565b802d34c3433118ffe292fa876fe1f795507eb263191851"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611644,
+          "index_version": 1,
+          "chunk_index": 29,
+          "title": "## 配网后，更多手机/平板/电脑共享连接打印机_1",
+          "parent_title": "## 配网后，更多手机/平板/电脑共享连接打印机",
+          "content_chars": 73,
+          "content_sha256": "1c8204f7791d97960fc5d232481162f7f244a615357dc9f43f8e933e4022281f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611645,
+          "index_version": 1,
+          "chunk_index": 30,
+          "title": "## 操作前，请注意：_1",
+          "parent_title": "## 操作前，请注意：",
+          "content_chars": 48,
+          "content_sha256": "50d6800500e82d0335928f42a610a9f337e8376f7e881617b7e5a0e90909fe73"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611646,
+          "index_version": 1,
+          "chunk_index": 31,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 453,
+          "content_sha256": "879b10356af92c852aa148a187e08d50e0b17001e084c849af6a55cfe26744a8"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611647,
+          "index_version": 1,
+          "chunk_index": 32,
+          "title": "## 更多手机/平板共享连接打印机_1",
+          "parent_title": "## 更多手机/平板共享连接打印机",
+          "content_chars": 868,
+          "content_sha256": "a62cc09dee8eb7e77a886a5aa857aece24780cc7a3aca6c4fa7478ab50845a12"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611648,
+          "index_version": 1,
+          "chunk_index": 33,
+          "title": "## 更多电脑共享连接打印机_1",
+          "parent_title": "## 更多电脑共享连接打印机",
+          "content_chars": 293,
+          "content_sha256": "5924f560eb30baca50882226f4cab7ffba9228c314b0c6863d6319788e60b3a3"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611649,
+          "index_version": 1,
+          "chunk_index": 34,
+          "title": "## 方式二：通过华为打印客户端共享连接打印机（支持 Windows/macOS/Linux/UOS/KOS/中科方德系统电脑）_1",
+          "parent_title": "## 方式二：通过华为打印客户端共享连接打印机（支持 Windows/macOS/Linux/UOS/KOS/中科方德系统电脑）",
+          "content_chars": 370,
+          "content_sha256": "1b10184140011af066765114f4a34e0fca4c528d45215d4bc1ae6ea1820d926a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611650,
+          "index_version": 1,
+          "chunk_index": 35,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 480,
+          "content_sha256": "a33026fc84ddc58a4321fdb8ce34fe6f42c25f6c522a5ff80242796b2ae188b9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611651,
+          "index_version": 1,
+          "chunk_index": 36,
+          "title": "## 2 根据电脑系统，按如下步骤操作：_1",
+          "parent_title": "## 2 根据电脑系统，按如下步骤操作：",
+          "content_chars": 49,
+          "content_sha256": "c329f5267c255b8a29983c81374128e60cbd316abe954ce04b5f307e8622f8a9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611652,
+          "index_version": 1,
+          "chunk_index": 37,
+          "title": "## • Windows/Linux 系统电脑_1",
+          "parent_title": "## • Windows/Linux 系统电脑",
+          "content_chars": 985,
+          "content_sha256": "432ee60e23b88aba99e671cbc97dba7be6f681f40bae181dd0c9d9e74ef7d58b"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611653,
+          "index_version": 1,
+          "chunk_index": 38,
+          "title": "## • Windows/Linux 系统电脑_2",
+          "parent_title": "## • Windows/Linux 系统电脑",
+          "content_chars": 463,
+          "content_sha256": "31ca0fe28304b050a077ce2b6a66a469d496a80c45656fbb47d5d641adc97f21"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611654,
+          "index_version": 1,
+          "chunk_index": 39,
+          "title": "## • macOS 系统电脑_1",
+          "parent_title": "## • macOS 系统电脑",
+          "content_chars": 317,
+          "content_sha256": "cc548f311b9d4e0c33390a2d6170c46a8c4615ee4438e645ac9f07fe3c0579d9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611655,
+          "index_version": 1,
+          "chunk_index": 40,
+          "title": "## • UOS 系统电脑_1",
+          "parent_title": "## • UOS 系统电脑",
+          "content_chars": 431,
+          "content_sha256": "58b61a6327a0e3b981ea9d8dcfffebae8bd1fed990492888cab80a501d0f4e7b"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611656,
+          "index_version": 1,
+          "chunk_index": 41,
+          "title": "## • KOS 系统电脑_1",
+          "parent_title": "## • KOS 系统电脑",
+          "content_chars": 428,
+          "content_sha256": "ceda38e241a38a7117f4f80485f488079af13bf0ec5d69b191903cab8499a93e"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611657,
+          "index_version": 1,
+          "chunk_index": 42,
+          "title": "## • 中科方德系统电脑_1",
+          "parent_title": "## • 中科方德系统电脑",
+          "content_chars": 226,
+          "content_sha256": "ebc36ed1a81cbc6a7428c5225ed91d3f186f03996c67120066d61c9ea6405a8c"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611658,
+          "index_version": 1,
+          "chunk_index": 43,
+          "title": "## 操作前，请注意：_1",
+          "parent_title": "## 操作前，请注意：",
+          "content_chars": 414,
+          "content_sha256": "3afa9307182f874c8fe4ca2375d0ea9c1ad42a2fce3ba47bca110f62f3028010"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611659,
+          "index_version": 1,
+          "chunk_index": 44,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 290,
+          "content_sha256": "bfd76afd679cf4a76353f20a65454cf4ed578fa2078e88f748dc95cfec362fd2"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611660,
+          "index_version": 1,
+          "chunk_index": 45,
+          "title": "## 无可用 WLAN 时，手机/平板/电脑连接打印机_1",
+          "parent_title": "## 无可用 WLAN 时，手机/平板/电脑连接打印机",
+          "content_chars": 955,
+          "content_sha256": "922048d27c51d747c5a7c04ebc5501205dabf3d2aaf9a74016f957fe2b6cf257"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611661,
+          "index_version": 1,
+          "chunk_index": 46,
+          "title": "## 无可用 WLAN 时，手机/平板/电脑连接打印机_2",
+          "parent_title": "## 无可用 WLAN 时，手机/平板/电脑连接打印机",
+          "content_chars": 883,
+          "content_sha256": "ac30a0dfbc16bc46b5aedf41b224053f2ec169dd9814bc32893f8997b53025ee"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611662,
+          "index_version": 1,
+          "chunk_index": 47,
+          "title": "## 电脑连接打印机_1",
+          "parent_title": "## 电脑连接打印机",
+          "content_chars": 71,
+          "content_sha256": "923736cff25637a2d6eb9859b9287e0e4782972c1813bc9cd99ec4eae4ab229f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611663,
+          "index_version": 1,
+          "chunk_index": 48,
+          "title": "## 通过 USB 线缆连接打印机_1",
+          "parent_title": "## 通过 USB 线缆连接打印机",
+          "content_chars": 570,
+          "content_sha256": "f6f54e5d11de7b19faa4e7dbc65f2290a7543cdd5391f95d6941549d5678d72f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611664,
+          "index_version": 1,
+          "chunk_index": 49,
+          "title": "## 2 使用随附的 USB 线缆连接电脑和打印机。_1",
+          "parent_title": "## 2 使用随附的 USB 线缆连接电脑和打印机。",
+          "content_chars": 236,
+          "content_sha256": "af619e2a79c523875b06ea650dba0575d4c5cebf8d20575794e73ffe11e6aed7"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611665,
+          "index_version": 1,
+          "chunk_index": 50,
+          "title": "## 3 根据电脑系统，按如下步骤操作：_1",
+          "parent_title": "## 3 根据电脑系统，按如下步骤操作：",
+          "content_chars": 49,
+          "content_sha256": "732768e94ea10ff1527e3bee92f2a347d32fd561e9705030f14c960e3818854a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611666,
+          "index_version": 1,
+          "chunk_index": 51,
+          "title": "## • Windows/Linux 系统电脑_1",
+          "parent_title": "## • Windows/Linux 系统电脑",
+          "content_chars": 828,
+          "content_sha256": "700f12a8e73c3afa713f4c5925ce5ec0795d325d400b6e268336497da187e111"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611667,
+          "index_version": 1,
+          "chunk_index": 52,
+          "title": "## • Windows/Linux 系统电脑_2",
+          "parent_title": "## • Windows/Linux 系统电脑",
+          "content_chars": 537,
+          "content_sha256": "72153fa9b5014eb4afd09da53eb91d574e365410a7f9fbee2398b91ec92fbf8d"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611668,
+          "index_version": 1,
+          "chunk_index": 53,
+          "title": "## • macOS 系统电脑_1",
+          "parent_title": "## • macOS 系统电脑",
+          "content_chars": 301,
+          "content_sha256": "6ffb65332796d370111d5fbf7421d004a2cfedecfe0a42317b06987d8adbd65f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611669,
+          "index_version": 1,
+          "chunk_index": 54,
+          "title": "## • UOS 系统电脑_1",
+          "parent_title": "## • UOS 系统电脑",
+          "content_chars": 475,
+          "content_sha256": "49803bbba598f8d925afa41be0372939f2fb245eb131e47bae975705a48b03a1"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611670,
+          "index_version": 1,
+          "chunk_index": 55,
+          "title": "## KOS 系统电脑_1",
+          "parent_title": "## KOS 系统电脑",
+          "content_chars": 477,
+          "content_sha256": "5124c8439b193440c6e81aab5ac616e57e074c8b04d701ad2301088c7778339f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611671,
+          "index_version": 1,
+          "chunk_index": 56,
+          "title": "## • 中科方德系统电脑_1",
+          "parent_title": "## • 中科方德系统电脑",
+          "content_chars": 895,
+          "content_sha256": "c46375ad19d77100e6c74e8d154c239133e8f186bc77a83b616d1069dc848143"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611672,
+          "index_version": 1,
+          "chunk_index": 57,
+          "title": "## • 鸿蒙电脑_1",
+          "parent_title": "## • 鸿蒙电脑",
+          "content_chars": 994,
+          "content_sha256": "a9a740eafa4d37ffe52400b5d900446dd2b1bd460b46fefccf70b4756afb4974"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611673,
+          "index_version": 1,
+          "chunk_index": 58,
+          "title": "## • 鸿蒙电脑_2",
+          "parent_title": "## • 鸿蒙电脑",
+          "content_chars": 995,
+          "content_sha256": "952545578e762dc039c62c0aa6cb90c8944ce09f19f8357036af6f51de7b2181"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611674,
+          "index_version": 1,
+          "chunk_index": 59,
+          "title": "## • 鸿蒙电脑_3",
+          "parent_title": "## • 鸿蒙电脑",
+          "content_chars": 319,
+          "content_sha256": "96d812380bc79c2a2fd3cb285f57d822e7770f3f2fcd23c934c668754fb801c7"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611675,
+          "index_version": 1,
+          "chunk_index": 60,
+          "title": "## d 待界面提示安装成功后，点击完成。此时电脑桌面上将出现华为打印客户端。_1",
+          "parent_title": "## d 待界面提示安装成功后，点击完成。此时电脑桌面上将出现华为打印客户端。",
+          "content_chars": 514,
+          "content_sha256": "ea656f864535efab5d9468bb3ce314cdd51cfc9453674ab0541d485f98e231f7"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611676,
+          "index_version": 1,
+          "chunk_index": 61,
+          "title": "## • macOS 系统电脑_1",
+          "parent_title": "## • macOS 系统电脑",
+          "content_chars": 316,
+          "content_sha256": "74603150c280ef83a3c16d2e7c4a99af7bae02b385432b2adcd5895cf1ccf283"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611677,
+          "index_version": 1,
+          "chunk_index": 62,
+          "title": "## 装纸_1",
+          "parent_title": "## 装纸",
+          "content_chars": 948,
+          "content_sha256": "555fb8223e917eea2f62f97c11c011e5ec972f04e7d316f110795c0f94cf5912"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611678,
+          "index_version": 1,
+          "chunk_index": 63,
+          "title": "## 装纸_2",
+          "parent_title": "## 装纸",
+          "content_chars": 815,
+          "content_sha256": "1130ee1922635756f51c2fc7bc10a26ade4999d3e215120a0d04fb8918db9f25"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611679,
+          "index_version": 1,
+          "chunk_index": 64,
+          "title": "## 装纸_3",
+          "parent_title": "## 装纸",
+          "content_chars": 261,
+          "content_sha256": "c2f2a802cc97dab6bf75b044c8a0711f9463bf45aff9247b4c3d0a8b5c5ba28a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611680,
+          "index_version": 1,
+          "chunk_index": 65,
+          "title": "## 打印手机/平板中的文件_1",
+          "parent_title": "## 打印手机/平板中的文件",
+          "content_chars": 983,
+          "content_sha256": "4178cecee0f1e35166cc9457a1f524b664e521d03040b4994304e65f3d1f4625"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611681,
+          "index_version": 1,
+          "chunk_index": 66,
+          "title": "## 打印手机/平板中的文件_2",
+          "parent_title": "## 打印手机/平板中的文件",
+          "content_chars": 282,
+          "content_sha256": "358bc7f051d1ebffe4d90d22e3d0510ca85c1e131f780c9006b66a69dfb7573a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611682,
+          "index_version": 1,
+          "chunk_index": 67,
+          "title": "## 1 手机开启 NFC。_1",
+          "parent_title": "## 1 手机开启 NFC。",
+          "content_chars": 738,
+          "content_sha256": "9de035660bb20f475ea855c7fd3283159318e457004ebef6589ef5f07ae027d9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611683,
+          "index_version": 1,
+          "chunk_index": 68,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 944,
+          "content_sha256": "5d2e46bc05565cb388b96ea9889693ff97bc16788ba60646bc0377e3e1ab372c"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611684,
+          "index_version": 1,
+          "chunk_index": 69,
+          "title": "## 具体操作：_2",
+          "parent_title": "## 具体操作：",
+          "content_chars": 933,
+          "content_sha256": "c07b21fd10817f8cf0b17685de9110273b877f02f5fb1247ccdb5b331d07b284"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611685,
+          "index_version": 1,
+          "chunk_index": 70,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 124,
+          "content_sha256": "adf475e0cab59ca5c4c14aa06dfc2479a6ef702ae58b0bd60dc8429d0cf3d6ad"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611686,
+          "index_version": 1,
+          "chunk_index": 71,
+          "title": "## 打印电脑中的文件_1",
+          "parent_title": "## 打印电脑中的文件",
+          "content_chars": 402,
+          "content_sha256": "d67e408196edd7deabf305e06ec33bcefbe8f9db401be86ae09d04a6a4f30914"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611687,
+          "index_version": 1,
+          "chunk_index": 72,
+          "title": "## 打开文件，直接打印_1",
+          "parent_title": "## 打开文件，直接打印",
+          "content_chars": 816,
+          "content_sha256": "b8842c8dcd92f9cae1227c9435fd409d43bd4a3e8305f71f176023df879dd901"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611688,
+          "index_version": 1,
+          "chunk_index": 73,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 692,
+          "content_sha256": "fee19a624b4edb2c65b89a5038b8269fc4a966beeb3b3d92c86701d36fc60e73"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611689,
+          "index_version": 1,
+          "chunk_index": 74,
+          "title": "## • 打印文档_1",
+          "parent_title": "## • 打印文档",
+          "content_chars": 421,
+          "content_sha256": "4e9a95803a1b3136da908025d714053a85360062becce44b2f406bb047219458"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611690,
+          "index_version": 1,
+          "chunk_index": 75,
+          "title": "## • 打印图片_1",
+          "parent_title": "## • 打印图片",
+          "content_chars": 226,
+          "content_sha256": "f93f3eed611e1ed3fdaf26fe59a70e5e0438454199c17184637eddb9c1db5d2e"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611691,
+          "index_version": 1,
+          "chunk_index": 76,
+          "title": "## 将原稿扫描至手机/平板中_1",
+          "parent_title": "## 将原稿扫描至手机/平板中",
+          "content_chars": 92,
+          "content_sha256": "9858651a51fceefc1d7c4aaca108989c8dea66b696dfef4c197c08b2a9e5d74b"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611692,
+          "index_version": 1,
+          "chunk_index": 77,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 987,
+          "content_sha256": "892ed466b122e611cf286d04a7e37dee599eec88c688c1bae883b784304ccc51"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611693,
+          "index_version": 1,
+          "chunk_index": 78,
+          "title": "## 具体操作：_2",
+          "parent_title": "## 具体操作：",
+          "content_chars": 278,
+          "content_sha256": "5dcfef6ad23f9babd2ba0f43a704406c0ff4aa5b348bb611e06108bef99ed3a9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611694,
+          "index_version": 1,
+          "chunk_index": 79,
+          "title": "## 将原稿扫描至鸿蒙电脑中_1",
+          "parent_title": "## 将原稿扫描至鸿蒙电脑中",
+          "content_chars": 64,
+          "content_sha256": "5eb09306c76193aa79e820ff914c92add59460fd9ca7a3e3d349ab95d23b6c9b"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611695,
+          "index_version": 1,
+          "chunk_index": 80,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 516,
+          "content_sha256": "d6d83a45a2bdf3678fa07e7d4df1d5ba4ea81808bd1a4e6eb1c312b66da4419f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611696,
+          "index_version": 1,
+          "chunk_index": 81,
+          "title": "## 3 设置好扫描参数后，点击开始扫描。_1",
+          "parent_title": "## 3 设置好扫描参数后，点击开始扫描。",
+          "content_chars": 955,
+          "content_sha256": "51e76fd4e25800a049bec7fdeb0516d8a18bbccce0b9395e7871c89193cde2ac"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611697,
+          "index_version": 1,
+          "chunk_index": 82,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 994,
+          "content_sha256": "790f85a539a5d17836a0f617db3bb546ad68c500cc08343f6af51822ee3b7ba7"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611698,
+          "index_version": 1,
+          "chunk_index": 83,
+          "title": "## 具体操作：_2",
+          "parent_title": "## 具体操作：",
+          "content_chars": 171,
+          "content_sha256": "fba2cb566f17e9f3c80ba23caeeb71f3cd0ca0e8aad726bccc59153858e45a38"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611699,
+          "index_version": 1,
+          "chunk_index": 84,
+          "title": "## 具体操作：_3",
+          "parent_title": "## 具体操作：",
+          "content_chars": 857,
+          "content_sha256": "dc2d8b8083fb65aae7a7c6c66807dc587fb312b8e8234d2c461e0cc6a3167b4e"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611700,
+          "index_version": 1,
+          "chunk_index": 85,
+          "title": "## 具体操作：_4",
+          "parent_title": "## 具体操作：",
+          "content_chars": 229,
+          "content_sha256": "9a98ae4cb0fed05b6bed17493f043c67b9b37a71c33357b16ac5f1798483a9f3"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611701,
+          "index_version": 1,
+          "chunk_index": 86,
+          "title": "## 单面复印_1",
+          "parent_title": "## 单面复印",
+          "content_chars": 996,
+          "content_sha256": "8fcb8057129b5027c02f77be610c68a5ae96dc44d404eebb39065372b43494ee"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611702,
+          "index_version": 1,
+          "chunk_index": 87,
+          "title": "## 双面复印_1",
+          "parent_title": "## 双面复印",
+          "content_chars": 924,
+          "content_sha256": "f2118cf80660b5efa8c29a3daff2d90994829bfa5e2dd957a79a9a1292a6aa74"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611703,
+          "index_version": 1,
+          "chunk_index": 88,
+          "title": "## 双面复印_2",
+          "parent_title": "## 双面复印",
+          "content_chars": 961,
+          "content_sha256": "d5dc6f52505a0887fdfe407cb796fc4a4fdde8b6ead6535524aa7e2ad37b6609"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611704,
+          "index_version": 1,
+          "chunk_index": 89,
+          "title": "## 双面复印_3",
+          "parent_title": "## 双面复印",
+          "content_chars": 737,
+          "content_sha256": "32983718d064df7101623d029bf05060c014358f1a434094f10ea2114a29b1ea"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611705,
+          "index_version": 1,
+          "chunk_index": 90,
+          "title": "## 身份证复印_1",
+          "parent_title": "## 身份证复印",
+          "content_chars": 825,
+          "content_sha256": "4e03173df22db09fc482b78b886b9a76b1be5f26fcc634342801bebe3dc727c1"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611706,
+          "index_version": 1,
+          "chunk_index": 91,
+          "title": "## 身份证复印_2",
+          "parent_title": "## 身份证复印",
+          "content_chars": 768,
+          "content_sha256": "f0d9d10c35ec29e86607cd60b4aefc6c4ea2caf4c184ecc4308fbdb3a914cf5e"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611707,
+          "index_version": 1,
+          "chunk_index": 92,
+          "title": "## 从手机/平板端进行单面复印、双面复印、N 合一复印_1",
+          "parent_title": "## 从手机/平板端进行单面复印、双面复印、N 合一复印",
+          "content_chars": 955,
+          "content_sha256": "f43a35cf22283ac010a8dbd7a565fc485354104bd02bcb9e5b1de3f536f9052e"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611708,
+          "index_version": 1,
+          "chunk_index": 93,
+          "title": "## 从手机/平板端进行单面复印、双面复印、N 合一复印_2",
+          "parent_title": "## 从手机/平板端进行单面复印、双面复印、N 合一复印",
+          "content_chars": 692,
+          "content_sha256": "81f4add987331e01500cfe83cff2b68e3a63f89f84c46c23e962d0fa4576c724"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611709,
+          "index_version": 1,
+          "chunk_index": 94,
+          "title": "## 鸿蒙电脑端复印_1",
+          "parent_title": "## 鸿蒙电脑端复印",
+          "content_chars": 69,
+          "content_sha256": "3423f5552ee71d722455707826a4505e8f39d11842e9d06369f7cd1884ab70ea"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611710,
+          "index_version": 1,
+          "chunk_index": 95,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 901,
+          "content_sha256": "22fcdaf89ae0e26e572b8d7aa8dc7130aba9f73be795825270c6d34c437f1cf9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611711,
+          "index_version": 1,
+          "chunk_index": 96,
+          "title": "## 4 根据智慧生活界面提示，完成复印。_1",
+          "parent_title": "## 4 根据智慧生活界面提示，完成复印。",
+          "content_chars": 597,
+          "content_sha256": "96d846febb6590f06e57d1dc59278c151901915abfa35ce7ca5ae351d680e407"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611712,
+          "index_version": 1,
+          "chunk_index": 97,
+          "title": "## Windows/macOS/Linux/UOS/KOS/中科方德系统电脑端复印_1",
+          "parent_title": "## Windows/macOS/Linux/UOS/KOS/中科方德系统电脑端复印",
+          "content_chars": 123,
+          "content_sha256": "5994f8c6f42a767018cb8f9bf3dca83f7ea6752c6e6b11ff0d793f7cc5ec3a03"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611713,
+          "index_version": 1,
+          "chunk_index": 98,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 996,
+          "content_sha256": "02029a7e7bdff72b618aac2d17db24aed68e05c1a45f4cdc4ee08376a7a741ab"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611714,
+          "index_version": 1,
+          "chunk_index": 99,
+          "title": "## 具体操作：_2",
+          "parent_title": "## 具体操作：",
+          "content_chars": 552,
+          "content_sha256": "39ee422ec5b09bbd39f5d50238cc3a5bdb1adc1da9dffe8ec77784c1baf11de1"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611715,
+          "index_version": 1,
+          "chunk_index": 100,
+          "title": "## 开关机_1",
+          "parent_title": "## 开关机",
+          "content_chars": 382,
+          "content_sha256": "9e8672eca5ffb198ed7fc9a381c901a0aa39a786199bcbe8bf3107674e892c67"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611716,
+          "index_version": 1,
+          "chunk_index": 101,
+          "title": "## 退出休眠和设置休眠时间_1",
+          "parent_title": "## 退出休眠和设置休眠时间",
+          "content_chars": 74,
+          "content_sha256": "476b8c7e9a172062832e5919117d5bf0d76fb9d7de9faa0c61efa4e3d884edf6"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611717,
+          "index_version": 1,
+          "chunk_index": 102,
+          "title": "## 设置休眠时间：_1",
+          "parent_title": "## 设置休眠时间：",
+          "content_chars": 708,
+          "content_sha256": "3bf5e082515854554bc3fac2d03b714ff44af29d085de4e62c4efb5c111ebd5b"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611718,
+          "index_version": 1,
+          "chunk_index": 103,
+          "title": "## 深度休眠_1",
+          "parent_title": "## 深度休眠",
+          "content_chars": 316,
+          "content_sha256": "ab310a622d5ffee44e4977a5049c87a782b73fa72e19e2fc31f92ecfc415e5d9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611719,
+          "index_version": 1,
+          "chunk_index": 104,
+          "title": "## 更换粉盒_1",
+          "parent_title": "## 更换粉盒",
+          "content_chars": 972,
+          "content_sha256": "5ad7c157a19f66a2bcc10aca294842c9519c21a47f53a0995f47a058e0c8cec8"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611720,
+          "index_version": 1,
+          "chunk_index": 105,
+          "title": "## 更换粉盒_2",
+          "parent_title": "## 更换粉盒",
+          "content_chars": 932,
+          "content_sha256": "76eb7db0d471cf60008258a9fa52a7d31cf2f0c87af24c66975c90efc7e5a12d"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611721,
+          "index_version": 1,
+          "chunk_index": 106,
+          "title": "## 更换粉盒_3",
+          "parent_title": "## 更换粉盒",
+          "content_chars": 311,
+          "content_sha256": "700b6cdc9a069d2162bfca50744b5e5fe57f989ae0f14bc57b08ab983365113f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611722,
+          "index_version": 1,
+          "chunk_index": 107,
+          "title": "## 更换硒鼓_1",
+          "parent_title": "## 更换硒鼓",
+          "content_chars": 246,
+          "content_sha256": "86a21b8a90bc7e290a168df8981bbff92bbe93b13d069c7e37f1d6318417989a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611723,
+          "index_version": 1,
+          "chunk_index": 108,
+          "title": "## 具体操作：_1",
+          "parent_title": "## 具体操作：",
+          "content_chars": 848,
+          "content_sha256": "d25927e1398bd207800a6c3732c6b3252b354811596c0b5cbd8fd367a20a79d6"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611724,
+          "index_version": 1,
+          "chunk_index": 109,
+          "title": "## 具体操作：_2",
+          "parent_title": "## 具体操作：",
+          "content_chars": 823,
+          "content_sha256": "9a929db04a9e3a422ae1b19c465c123692012333a4cdda1c897a3300bc8d44f4"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611725,
+          "index_version": 1,
+          "chunk_index": 110,
+          "title": "## 具体操作：_3",
+          "parent_title": "## 具体操作：",
+          "content_chars": 821,
+          "content_sha256": "e71d2c6a722e53a9c093752c05f5db3a21cc06b885b7fed99b3c598d701d675a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611726,
+          "index_version": 1,
+          "chunk_index": 111,
+          "title": "## 恢复出厂设置_1",
+          "parent_title": "## 恢复出厂设置",
+          "content_chars": 201,
+          "content_sha256": "ff93f39eb59381f58942b3bd6dde1c1464327834e59a16970cb259d18b00408a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611727,
+          "index_version": 1,
+          "chunk_index": 112,
+          "title": "## 方式一：直接在打印机上操作_1",
+          "parent_title": "## 方式一：直接在打印机上操作",
+          "content_chars": 834,
+          "content_sha256": "4549abb6047e4276d62a28259ba39ce13864e81a7ac7cab169ba818028ac8706"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611728,
+          "index_version": 1,
+          "chunk_index": 113,
+          "title": "## 方法三：通过华为打印客户端将打印机恢复出厂设置_1",
+          "parent_title": "## 方法三：通过华为打印客户端将打印机恢复出厂设置",
+          "content_chars": 234,
+          "content_sha256": "a480facda77a74d4aa62614b5a06304db0a0cfaf274f999f2c645bea8e50b92d"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611729,
+          "index_version": 1,
+          "chunk_index": 114,
+          "title": "## 重置网络_1",
+          "parent_title": "## 重置网络",
+          "content_chars": 502,
+          "content_sha256": "e745aa34e2eeb78f63ab8460d9ef9a740ce9c3fc35a60413eb6dced52f846fba"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611730,
+          "index_version": 1,
+          "chunk_index": 115,
+          "title": "## 取消当前正在打印任务_1",
+          "parent_title": "## 取消当前正在打印任务",
+          "content_chars": 96,
+          "content_sha256": "aab3f2ed6d7a5ad575d0873e22acb03bea80f76cbb0e49680e029849e852ea4f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611731,
+          "index_version": 1,
+          "chunk_index": 116,
+          "title": "## 取消正在排队、待打印的任务_1",
+          "parent_title": "## 取消正在排队、待打印的任务",
+          "content_chars": 109,
+          "content_sha256": "8bed4b8a572baaeef8cca64a20cb975a75a940ddd4de6cde176c2485e3f8a0e9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611732,
+          "index_version": 1,
+          "chunk_index": 117,
+          "title": "## • 鸿蒙电脑：_1",
+          "parent_title": "## • 鸿蒙电脑：",
+          "content_chars": 297,
+          "content_sha256": "817649cd639b235ee092bd7cda0f7a6930152b59b13b41c95e5b69e2fe22a77d"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611733,
+          "index_version": 1,
+          "chunk_index": 118,
+          "title": "## • Windows 系统电脑：_1",
+          "parent_title": "## • Windows 系统电脑：",
+          "content_chars": 138,
+          "content_sha256": "cafd02937089ad8a91e8d433db55f09a69d2942aa9b53b0cf31f57b77e7cdcbc"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611734,
+          "index_version": 1,
+          "chunk_index": 119,
+          "title": "## • macOS 系统电脑：_1",
+          "parent_title": "## • macOS 系统电脑：",
+          "content_chars": 481,
+          "content_sha256": "efab968663ef4d3e38e53d8d6a41f811ea5a7b56e72a16e025df499532611b6f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611735,
+          "index_version": 1,
+          "chunk_index": 120,
+          "title": "## 升级打印机固件_1",
+          "parent_title": "## 升级打印机固件",
+          "content_chars": 190,
+          "content_sha256": "99617149926153626ac5675d6e5e8e7b412b32f7548d64faaf8ca9bc540aa4eb"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611736,
+          "index_version": 1,
+          "chunk_index": 121,
+          "title": "## 手机/平板端：通过华为智慧生活 App 升级打印机固件_1",
+          "parent_title": "## 手机/平板端：通过华为智慧生活 App 升级打印机固件",
+          "content_chars": 76,
+          "content_sha256": "c32625a7737a6cc19a63cc58d520cb99d7baac1bb8601acc88753808c35d0b74"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611737,
+          "index_version": 1,
+          "chunk_index": 122,
+          "title": "## • 手动升级固件：_1",
+          "parent_title": "## • 手动升级固件：",
+          "content_chars": 173,
+          "content_sha256": "89bf9d22786b2db549d73126c5f868f483fdb36e068ada1730d3e84b9874f4d1"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611738,
+          "index_version": 1,
+          "chunk_index": 123,
+          "title": "## • 自动升级固件：_1",
+          "parent_title": "## • 自动升级固件：",
+          "content_chars": 118,
+          "content_sha256": "cc4d4d128f5c7b8bec6594c54e95da052ee2096769d2aefa6d83cec12ff0b6fa"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611739,
+          "index_version": 1,
+          "chunk_index": 124,
+          "title": "## • iOS 系统_1",
+          "parent_title": "## • iOS 系统",
+          "content_chars": 102,
+          "content_sha256": "fc8bdecfe762c488134cb408f4ca306f493fe99cbf3b27ac438c36ed2ce49cd3"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611740,
+          "index_version": 1,
+          "chunk_index": 125,
+          "title": "## 鸿蒙电脑：通过智慧生活升级打印机固件_1",
+          "parent_title": "## 鸿蒙电脑：通过智慧生活升级打印机固件",
+          "content_chars": 67,
+          "content_sha256": "64fd658d4c6bbd1a3afbbfa4bfe64835097b207dc95f9f687995f18946c74ffe"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611741,
+          "index_version": 1,
+          "chunk_index": 126,
+          "title": "## • 手动升级_1",
+          "parent_title": "## • 手动升级",
+          "content_chars": 130,
+          "content_sha256": "fb4296431dee9d0fb436cd7c3a725332a26a9e805f31d3e1634175473e0eb25d"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611742,
+          "index_version": 1,
+          "chunk_index": 127,
+          "title": "## • 自动升级_1",
+          "parent_title": "## • 自动升级",
+          "content_chars": 62,
+          "content_sha256": "4bcd19a08bad32afba12b51b9869395f0bb4395fd121d4b57b191f0438d1d230"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611743,
+          "index_version": 1,
+          "chunk_index": 128,
+          "title": "## 华为 Windows 系统电脑：通过华为电脑管家升级打印机固件_1",
+          "parent_title": "## 华为 Windows 系统电脑：通过华为电脑管家升级打印机固件",
+          "content_chars": 81,
+          "content_sha256": "e9a4bb34f648278af614f0d7d59e8065a8db262a52b42feecd42030f48127e45"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611744,
+          "index_version": 1,
+          "chunk_index": 129,
+          "title": "## 家，点击_1",
+          "parent_title": "## 家，点击",
+          "content_chars": 192,
+          "content_sha256": "3b82cf4116a2a3c145e7b0d8c444f9cf91324a100e024698d624a154cf49c538"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611745,
+          "index_version": 1,
+          "chunk_index": 130,
+          "title": "## 查看打印机 S/N 号_1",
+          "parent_title": "## 查看打印机 S/N 号",
+          "content_chars": 401,
+          "content_sha256": "d1eaa93b919bfffe664cd24c16e68beb710de9b4c1260dd600578a5c1d2a7886"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611746,
+          "index_version": 1,
+          "chunk_index": 131,
+          "title": "## 方式二：通过打印机信息页获取_1",
+          "parent_title": "## 方式二：通过打印机信息页获取",
+          "content_chars": 496,
+          "content_sha256": "42f0798fc159bae118069489a64b39217a5ddf7bb45e6c586cf37ad7b07b4a4f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611747,
+          "index_version": 1,
+          "chunk_index": 132,
+          "title": "## 方式三：通过手机/平板/电脑配置打印机的应用获取_1",
+          "parent_title": "## 方式三：通过手机/平板/电脑配置打印机的应用获取",
+          "content_chars": 105,
+          "content_sha256": "522abc206ae56d6f1a89428bc0bf3d7ed50da89574f6dfc86a143f6a7161cf96"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611748,
+          "index_version": 1,
+          "chunk_index": 133,
+          "title": "## • 电脑：_1",
+          "parent_title": "## • 电脑：",
+          "content_chars": 157,
+          "content_sha256": "a648cd2eef84ef55852dc6c4c74ed5167dd13d4975f95ae66094500659640f3c"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611749,
+          "index_version": 1,
+          "chunk_index": 134,
+          "title": "## 方式四：通过打印机包装盒获取_1",
+          "parent_title": "## 方式四：通过打印机包装盒获取",
+          "content_chars": 50,
+          "content_sha256": "d5a9ce44820348fc644eecf310fc791c10a1952a99a90928e76ba32e0d9aca64"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611750,
+          "index_version": 1,
+          "chunk_index": 135,
+          "title": "## 常见故障代码处理_1",
+          "parent_title": "## 常见故障代码处理",
+          "content_chars": 522,
+          "content_sha256": "7c5389b6d991c5cdcf3dff7f99a75bcf054b5a17bcce89e3eae603bcade34260"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611751,
+          "index_version": 1,
+          "chunk_index": 136,
+          "title": "## 安全信息_1",
+          "parent_title": "## 安全信息",
+          "content_chars": 59,
+          "content_sha256": "eef1d05ca17bb4ecffbd6101883f60ae034ea5c56004d96873c6636f61acbfcb"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611752,
+          "index_version": 1,
+          "chunk_index": 137,
+          "title": "## 操作安全与保养_1",
+          "parent_title": "## 操作安全与保养",
+          "content_chars": 977,
+          "content_sha256": "7d42d289f117e29740aff90b03505b10e8f117c97eb195a3608fad2b0b5d3868"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611753,
+          "index_version": 1,
+          "chunk_index": 138,
+          "title": "## 操作安全与保养_2",
+          "parent_title": "## 操作安全与保养",
+          "content_chars": 429,
+          "content_sha256": "3c661068f2ab1edd24ceff052a51d25d374997cc6efcfe2e6d6329fa5c29b98b"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611754,
+          "index_version": 1,
+          "chunk_index": 139,
+          "title": "## 认证信息_1",
+          "parent_title": "## 认证信息",
+          "content_chars": 43,
+          "content_sha256": "194136d2c8a61a3a633dafa3610eb692b3c261216dd463422a894cf52b2f6bcc"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611755,
+          "index_version": 1,
+          "chunk_index": 140,
+          "title": "## 支持微功率短距离无线电发射能力说明（NFC）_1",
+          "parent_title": "## 支持微功率短距离无线电发射能力说明（NFC）",
+          "content_chars": 862,
+          "content_sha256": "b018f607ea39d87534912437787c565b83048b3af20680ae36004231d95a5541"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611756,
+          "index_version": 1,
+          "chunk_index": 141,
+          "title": "## 支持微功率短距离无线电发射能力说明（NFC）_2",
+          "parent_title": "## 支持微功率短距离无线电发射能力说明（NFC）",
+          "content_chars": 574,
+          "content_sha256": "597b4a7cba9df4ac76558cf742138c01dcdaf2fe9e21e3894e2830a1d8010384"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611757,
+          "index_version": 1,
+          "chunk_index": 142,
+          "title": "## ֶ̗˗దࠏྭ᠏ᄊՐሦԣե᧚_1",
+          "parent_title": "## ֶ̗˗దࠏྭ᠏ᄊՐሦԣե᧚",
+          "content_chars": 988,
+          "content_sha256": "aeebadcfee2b5cca83c26cd0cd19b00bc12b07c0e796f940e58efe1dd70b45bc"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611758,
+          "index_version": 1,
+          "chunk_index": 143,
+          "title": "## ֶ̗˗దࠏྭ᠏ᄊՐሦԣե᧚_2",
+          "parent_title": "## ֶ̗˗దࠏྭ᠏ᄊՐሦԣե᧚",
+          "content_chars": 488,
+          "content_sha256": "e824a1a2fe8321f44b717c10bc361f5fc639a39b01c24cfe5719767dd295d5d8"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611759,
+          "index_version": 1,
+          "chunk_index": 144,
+          "title": "## 硒鼓和粉盒的储存_1",
+          "parent_title": "## 硒鼓和粉盒的储存",
+          "content_chars": 102,
+          "content_sha256": "8fb4f952d2787f2116c7bc2ce74aad95243322a1434023b8c656b0498dc646d8"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611760,
+          "index_version": 1,
+          "chunk_index": 145,
+          "title": "## 硒鼓和粉盒打印量_1",
+          "parent_title": "## 硒鼓和粉盒打印量",
+          "content_chars": 193,
+          "content_sha256": "497c538a4943b4aea39ecb44bace98c99728f897b5a5c3fadf00e91d0a516924"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611761,
+          "index_version": 1,
+          "chunk_index": 146,
+          "title": "## 硒鼓和粉盒的回收_1",
+          "parent_title": "## 硒鼓和粉盒的回收",
+          "content_chars": 161,
+          "content_sha256": "b1fe8cb1d7a70bd2f3c4bac283709c8f2d0e481a87c3431ea38f765bc1315316"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611762,
+          "index_version": 1,
+          "chunk_index": 147,
+          "title": "## 硒鼓和粉盒的更换_1",
+          "parent_title": "## 硒鼓和粉盒的更换",
+          "content_chars": 157,
+          "content_sha256": "6c2d926e79ef459999819afc6f191c84078f82745db3ff85604b4b56928d0ddb"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611763,
+          "index_version": 1,
+          "chunk_index": 148,
+          "title": "## 移动和搬运打印机_1",
+          "parent_title": "## 移动和搬运打印机",
+          "content_chars": 149,
+          "content_sha256": "29190e6e88f3e8369bb242b393d2cfdc6e9cbee330d1932d667840534792d96c"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611764,
+          "index_version": 1,
+          "chunk_index": 149,
+          "title": "## 清洁打印机_1",
+          "parent_title": "## 清洁打印机",
+          "content_chars": 951,
+          "content_sha256": "6c08e5dd582ed42486e54d867c8cb504fd9b086f043ea06d84e4435257e1b662"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611765,
+          "index_version": 1,
+          "chunk_index": 150,
+          "title": "## 法律声明_1",
+          "parent_title": "## 法律声明",
+          "content_chars": 36,
+          "content_sha256": "00db03b16491432c3f32ae0a09fb4d1ecb6edcc893da898e0b4c9b25932ee3c1"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611766,
+          "index_version": 1,
+          "chunk_index": 151,
+          "title": "## 商标声明_1",
+          "parent_title": "## 商标声明",
+          "content_chars": 138,
+          "content_sha256": "93b73a4eeb3b6bd99ebf1c53a4c8f18403259e2a9baccc45aed7235a86f3d5a9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611767,
+          "index_version": 1,
+          "chunk_index": 152,
+          "title": "## 其他声明_1",
+          "parent_title": "## 其他声明",
+          "content_chars": 120,
+          "content_sha256": "77250e421744e399e4b2b36e336ec540afe6e04ad21c6e4d341aec8bc0d2ed44"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611768,
+          "index_version": 1,
+          "chunk_index": 153,
+          "title": "## 隐私保护_1",
+          "parent_title": "## 隐私保护",
+          "content_chars": 247,
+          "content_sha256": "1c14451618c8bf2e4e9444581ca1150dbfcd7d72abd9679b92128556891728ef"
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-qingyun-p5-guide-v06",
+      "publisher": "Huawei",
+      "title": "华为擎云 P5 激光多功能一体机 CV81Z-LDM 用户指南",
+      "source_version": "CV81Z-LDM,06,zh-cn",
+      "source_url": "https://qingyun.huawei.com/printers/qingyun-p5/specs/",
+      "source_sha256": "9461e82fac7d4b35e27d11e1b78f5c60bdf9346a9974f89636eff02d885d509f",
+      "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+      "task_id": "stage9-balanced-dev-db33383f4ae74b038be817583454c33d",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_b98d9b712473166f",
+      "standard_subject_name": "华为擎云 P5 激光多功能一体机 CV81Z-LDM",
+      "chunk_count": 85,
+      "import_action": "reused",
+      "chunks": [
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611778,
+          "index_version": 1,
+          "chunk_index": 0,
+          "title": "## 目录_1",
+          "parent_title": "## 目录",
+          "content_chars": 252,
+          "content_sha256": "73f018aadcb9a5b89f323823475de0eb46c4e92bd02cfe798b15571896dd394e"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611779,
+          "index_version": 1,
+          "chunk_index": 1,
+          "title": "## 外观介绍_1",
+          "parent_title": "## 外观介绍",
+          "content_chars": 974,
+          "content_sha256": "1bec2c4c399b332c697bcfa90a9fe2e446449321c6b6c7fdaa918ede3f3f046b"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611780,
+          "index_version": 1,
+          "chunk_index": 2,
+          "title": "## 外观介绍_2",
+          "parent_title": "## 外观介绍",
+          "content_chars": 73,
+          "content_sha256": "e969c0be35f7cd00f5f2f9a1bd2684426c80b060725cccf80a0b7c11376838e9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611781,
+          "index_version": 1,
+          "chunk_index": 3,
+          "title": "## 操作面板_1",
+          "parent_title": "## 操作面板",
+          "content_chars": 906,
+          "content_sha256": "7f843ec1243719360675813624539e4bfc4a8e78de83867044dcadbb2b641f5a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611782,
+          "index_version": 1,
+          "chunk_index": 4,
+          "title": "## 首次安装打印机_1",
+          "parent_title": "## 首次安装打印机",
+          "content_chars": 925,
+          "content_sha256": "247ade305c6faa6108fc39349e3fa6b6fc5ba673ac43603dfdd9f8420f5fcc98"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611783,
+          "index_version": 1,
+          "chunk_index": 5,
+          "title": "## 首次安装打印机_2",
+          "parent_title": "## 首次安装打印机",
+          "content_chars": 948,
+          "content_sha256": "d37f5215f652711d920153b876839b330396fb630c13002c31212200f079d7c9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611784,
+          "index_version": 1,
+          "chunk_index": 6,
+          "title": "## 首次配置打印机_1",
+          "parent_title": "## 首次配置打印机",
+          "content_chars": 996,
+          "content_sha256": "d7259df193f2d5c857ba9b8be3eed945e8d4631561e16fa3660979284313e021"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611785,
+          "index_version": 1,
+          "chunk_index": 7,
+          "title": "## 首次配置打印机_2",
+          "parent_title": "## 首次配置打印机",
+          "content_chars": 283,
+          "content_sha256": "e1a0b68139f66eb5a8a6bf20d0e58f8ef598f3af0d148224832ae05c312baf8d"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611786,
+          "index_version": 1,
+          "chunk_index": 8,
+          "title": "## Windows 系统电脑_1",
+          "parent_title": "## Windows 系统电脑",
+          "content_chars": 192,
+          "content_sha256": "b00cb6f4db2c315f74513286e2495ea42de887b1fa08d744d5766f983079d516"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611787,
+          "index_version": 1,
+          "chunk_index": 9,
+          "title": "## macOS 系统电脑_1",
+          "parent_title": "## macOS 系统电脑",
+          "content_chars": 297,
+          "content_sha256": "0db14f04502a8239a737f3afcfe710968db5e5436f47774e872d0e1b5611bb0d"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611788,
+          "index_version": 1,
+          "chunk_index": 10,
+          "title": "## UOS 系统电脑_1",
+          "parent_title": "## UOS 系统电脑",
+          "content_chars": 699,
+          "content_sha256": "33d1a47739120fc1b3568b6acd57d39b8fd34a949176fdc7093262495386dda2"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611789,
+          "index_version": 1,
+          "chunk_index": 11,
+          "title": "## 5 驱动安装后，点击打印测试页，能正常打印表示安装成功。_1",
+          "parent_title": "## 5 驱动安装后，点击打印测试页，能正常打印表示安装成功。",
+          "content_chars": 285,
+          "content_sha256": "d0a7527aafb5f0cb225d42f0764e715a241b0e45c52f71cf7efdc88291ab1a6d"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611790,
+          "index_version": 1,
+          "chunk_index": 12,
+          "title": "## KOS 系统电脑_1",
+          "parent_title": "## KOS 系统电脑",
+          "content_chars": 992,
+          "content_sha256": "a3441610e62e94303d7fe68aec973bcd2ef2c88f57eea9c712ff9e55632fd765"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611791,
+          "index_version": 1,
+          "chunk_index": 13,
+          "title": "## KOS 系统电脑_2",
+          "parent_title": "## KOS 系统电脑",
+          "content_chars": 298,
+          "content_sha256": "18518d9cc8c3f29266ca578d9077d558012d6cefd377a93fa4529f15dc269172"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611792,
+          "index_version": 1,
+          "chunk_index": 14,
+          "title": "## 中科方德系统电脑_1",
+          "parent_title": "## 中科方德系统电脑",
+          "content_chars": 959,
+          "content_sha256": "60426af74ce3eadd4e8852d2314f8ce3eb46d0ba4756c847f872723ecd2b6cca"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611793,
+          "index_version": 1,
+          "chunk_index": 15,
+          "title": "## 中科方德系统电脑_2",
+          "parent_title": "## 中科方德系统电脑",
+          "content_chars": 285,
+          "content_sha256": "33b81c53e80eadfc978383ca3616677cfa08e1f392d21a6edf68013c0fd5f75e"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611794,
+          "index_version": 1,
+          "chunk_index": 16,
+          "title": "## 装纸_1",
+          "parent_title": "## 装纸",
+          "content_chars": 935,
+          "content_sha256": "f5fa77e7f2628615dd6a35285ef6476dd6cb3bb95f8f0d47cce5750fd94b487d"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611795,
+          "index_version": 1,
+          "chunk_index": 17,
+          "title": "## 装纸_2",
+          "parent_title": "## 装纸",
+          "content_chars": 820,
+          "content_sha256": "c813383e85d61429cbe2306a39be71b64f67268a2950b671bf8b0dd4a984427b"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611796,
+          "index_version": 1,
+          "chunk_index": 18,
+          "title": "## 装纸_3",
+          "parent_title": "## 装纸",
+          "content_chars": 271,
+          "content_sha256": "aa23c827917caae9122ae62693c5e99b2707b29e513548b627e95c05a14173ee"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611797,
+          "index_version": 1,
+          "chunk_index": 19,
+          "title": "## 打印_1",
+          "parent_title": "## 打印",
+          "content_chars": 892,
+          "content_sha256": "0e153ab9efd6fc7b6072437bba992cc3e460544eae78cf65804eb6cd2c087651"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611798,
+          "index_version": 1,
+          "chunk_index": 20,
+          "title": "## 复印注意事项_1",
+          "parent_title": "## 复印注意事项",
+          "content_chars": 458,
+          "content_sha256": "598c0bfc56316a9e63cc806e52eb238e8ebb07f880bcfa2dfbec842a236c7dec"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611799,
+          "index_version": 1,
+          "chunk_index": 21,
+          "title": "## 单面复印_1",
+          "parent_title": "## 单面复印",
+          "content_chars": 569,
+          "content_sha256": "c0014792d431c686cb07eaabf207dc1dacd35fe28cb67711ba5c87444976881e"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611800,
+          "index_version": 1,
+          "chunk_index": 22,
+          "title": "## 双面复印_1",
+          "parent_title": "## 双面复印",
+          "content_chars": 861,
+          "content_sha256": "41811e0272e98451819526fbb48c32d954dc96e9b6131661de10b788dfb43755"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611801,
+          "index_version": 1,
+          "chunk_index": 23,
+          "title": "## 双面复印_2",
+          "parent_title": "## 双面复印",
+          "content_chars": 514,
+          "content_sha256": "1bf352209bd2097edfd473f6a621f3a28cabbf4d44c08ab13d4a9a234536391c"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611802,
+          "index_version": 1,
+          "chunk_index": 24,
+          "title": "## 身份证复印_1",
+          "parent_title": "## 身份证复印",
+          "content_chars": 871,
+          "content_sha256": "0ac921980ee5c22c2bee49869e4572d2a94513ca23e29de5c2bc82f16fdeba66"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611803,
+          "index_version": 1,
+          "chunk_index": 25,
+          "title": "## 身份证复印_2",
+          "parent_title": "## 身份证复印",
+          "content_chars": 560,
+          "content_sha256": "0a7726e551ab594446c866879bc24df31a0f215aa7337400b439a7b9c7b876c8"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611804,
+          "index_version": 1,
+          "chunk_index": 26,
+          "title": "## 从电脑端进行单面复印、双面复印、N合一复印_1",
+          "parent_title": "## 从电脑端进行单面复印、双面复印、N合一复印",
+          "content_chars": 630,
+          "content_sha256": "0ffb9bb2648193b1a8ca8bb14f287e7e4382a5733e344fc648b1c124d9a13a30"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611805,
+          "index_version": 1,
+          "chunk_index": 27,
+          "title": "## 3 设置好复印参数后，点击开始复印。_1",
+          "parent_title": "## 3 设置好复印参数后，点击开始复印。",
+          "content_chars": 669,
+          "content_sha256": "9744586ccce913106ddd8ac66d09b91724421de0b07b3e85661f36851df3dbd5"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611806,
+          "index_version": 1,
+          "chunk_index": 28,
+          "title": "## 单面复印：_1",
+          "parent_title": "## 单面复印：",
+          "content_chars": 362,
+          "content_sha256": "d9b853d238b58372b40ec478e88c87d92bce4d0712e40e550eadab5afb6c3f45"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611807,
+          "index_version": 1,
+          "chunk_index": 29,
+          "title": "## 扫描_1",
+          "parent_title": "## 扫描",
+          "content_chars": 841,
+          "content_sha256": "f086d06b040563b20fd8f2fea6732647a82fdc931ea3a5b1b1736b062730a079"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611808,
+          "index_version": 1,
+          "chunk_index": 30,
+          "title": "## 扫描_2",
+          "parent_title": "## 扫描",
+          "content_chars": 310,
+          "content_sha256": "b0549bd12b62389eb71f2e36454a66736048c9f73c460c7399db3fdb5a568e5e"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611809,
+          "index_version": 1,
+          "chunk_index": 31,
+          "title": "## 将原稿扫描至鸿蒙电脑中_1",
+          "parent_title": "## 将原稿扫描至鸿蒙电脑中",
+          "content_chars": 910,
+          "content_sha256": "793413d03cc80bb49551b84b8c5cd03c4a2b3291c65409c2dd71ecf0ad15a9f9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611810,
+          "index_version": 1,
+          "chunk_index": 32,
+          "title": "## 开关机_1",
+          "parent_title": "## 开关机",
+          "content_chars": 373,
+          "content_sha256": "5fcc30ad46ce7f930ade985f7f047fffa81b7c9d67d593f1d6e357592d25293c"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611811,
+          "index_version": 1,
+          "chunk_index": 33,
+          "title": "## 退出休眠和设置休眠时间_1",
+          "parent_title": "## 退出休眠和设置休眠时间",
+          "content_chars": 407,
+          "content_sha256": "fc43c7b7031b0e00a23b150653ed1cdeadeefd0c2d4884c43b8c5910fe9126ff"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611812,
+          "index_version": 1,
+          "chunk_index": 34,
+          "title": "## 深度休眠_1",
+          "parent_title": "## 深度休眠",
+          "content_chars": 93,
+          "content_sha256": "cf88b8031e2061e867ad10ae2c06b713138994e6c4a8cdd332fdac07d97f6b06"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611813,
+          "index_version": 1,
+          "chunk_index": 35,
+          "title": "## 更换粉盒_1",
+          "parent_title": "## 更换粉盒",
+          "content_chars": 994,
+          "content_sha256": "9be95f288f32e684d5584ecfb7ce167412f60a820344f95056aa159525a1011f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611814,
+          "index_version": 1,
+          "chunk_index": 36,
+          "title": "## 更换粉盒_2",
+          "parent_title": "## 更换粉盒",
+          "content_chars": 589,
+          "content_sha256": "69d4588cb0f05522ed2ca0131665d7a7777a831b7efd31c3529b40231945356c"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611815,
+          "index_version": 1,
+          "chunk_index": 37,
+          "title": "## 更换硒鼓_1",
+          "parent_title": "## 更换硒鼓",
+          "content_chars": 867,
+          "content_sha256": "8c87e3e691290224c807ec55d5a22fd9e93ecbb1765d6648a93484aa60fde394"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611816,
+          "index_version": 1,
+          "chunk_index": 38,
+          "title": "## 更换硒鼓_2",
+          "parent_title": "## 更换硒鼓",
+          "content_chars": 997,
+          "content_sha256": "b98133c4b52f10b901dd59bead8fe719d1f10158dd11b4f68d544934bb9bf725"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611817,
+          "index_version": 1,
+          "chunk_index": 39,
+          "title": "## 更换硒鼓_3",
+          "parent_title": "## 更换硒鼓",
+          "content_chars": 905,
+          "content_sha256": "ad925d6c10d0481cb0e307ed974794be488fdf1aa0c6b9b749d0014952021421"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611818,
+          "index_version": 1,
+          "chunk_index": 40,
+          "title": "## 恢复出厂设置_1",
+          "parent_title": "## 恢复出厂设置",
+          "content_chars": 90,
+          "content_sha256": "8188cf189f109968c3743aea7989f448997266dd9c1fe91722f2982405365c3b"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611819,
+          "index_version": 1,
+          "chunk_index": 41,
+          "title": "## 方法一：直接在打印机上操作_1",
+          "parent_title": "## 方法一：直接在打印机上操作",
+          "content_chars": 409,
+          "content_sha256": "7db3847d229d485a9c0d81b670ae4c90936910092e6fb4ab2e926fc30a1fd417"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611820,
+          "index_version": 1,
+          "chunk_index": 42,
+          "title": "## 方法二：华为打印客户端中将打印机恢复出厂设置_1",
+          "parent_title": "## 方法二：华为打印客户端中将打印机恢复出厂设置",
+          "content_chars": 438,
+          "content_sha256": "dcb1e9607f8637b95729913fa21c1894dd98c6d55e524b9271129b93ef89b7b6"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611821,
+          "index_version": 1,
+          "chunk_index": 43,
+          "title": "## 查看打印机 S/N 号_1",
+          "parent_title": "## 查看打印机 S/N 号",
+          "content_chars": 146,
+          "content_sha256": "c623f3bc15a1db023f9d546eac9644a334a14210785e5da68228d2d296efc9a0"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611822,
+          "index_version": 1,
+          "chunk_index": 44,
+          "title": "## 方式一：通过打印机铭牌获取_1",
+          "parent_title": "## 方式一：通过打印机铭牌获取",
+          "content_chars": 257,
+          "content_sha256": "55849d5ef6cd48d380266a81a697ec15e16b459eb162f02ba9f618d6b0a0f3f7"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611823,
+          "index_version": 1,
+          "chunk_index": 45,
+          "title": "## 方式二：通过打印机信息页获取_1",
+          "parent_title": "## 方式二：通过打印机信息页获取",
+          "content_chars": 305,
+          "content_sha256": "72ab185f9b1ef68f4a641b64bb57b02e85d9699617467bd3d5383df50ec2b970"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611824,
+          "index_version": 1,
+          "chunk_index": 46,
+          "title": "## 方式三：通过电脑端华为打印客户端获取_1",
+          "parent_title": "## 方式三：通过电脑端华为打印客户端获取",
+          "content_chars": 94,
+          "content_sha256": "22bf2708107d0c6870257d6de5ccdee09396d1eb16e475b1c333f700e5f30dea"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611825,
+          "index_version": 1,
+          "chunk_index": 47,
+          "title": "## 方式四：通过打印机包装盒获取_1",
+          "parent_title": "## 方式四：通过打印机包装盒获取",
+          "content_chars": 50,
+          "content_sha256": "d5a9ce44820348fc644eecf310fc791c10a1952a99a90928e76ba32e0d9aca64"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611826,
+          "index_version": 1,
+          "chunk_index": 48,
+          "title": "## 打印机驱动无需单独下载_1",
+          "parent_title": "## 打印机驱动无需单独下载",
+          "content_chars": 109,
+          "content_sha256": "e7d2b770c331992d2189d6c5b4e7a94a304c64de998276af5d167917b825ab0a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611827,
+          "index_version": 1,
+          "chunk_index": 49,
+          "title": "## 打印机驱动的更新_1",
+          "parent_title": "## 打印机驱动的更新",
+          "content_chars": 47,
+          "content_sha256": "e41fd88bf07bc5551b82006056b0156d57988619c6030ce44593406f3009c116"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611828,
+          "index_version": 1,
+          "chunk_index": 50,
+          "title": "## 其他系统电脑：_1",
+          "parent_title": "## 其他系统电脑：",
+          "content_chars": 447,
+          "content_sha256": "841dec9910369b59be73a2353e69990fde9f1f4956d53ee7ebb7ef65bbdd6bd1"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611829,
+          "index_version": 1,
+          "chunk_index": 51,
+          "title": "## 无法开机_1",
+          "parent_title": "## 无法开机",
+          "content_chars": 61,
+          "content_sha256": "276443c6692f4ed922ccd31ab106cdc3da36b66c3df8fa4bf9aeb75673ecc462"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611830,
+          "index_version": 1,
+          "chunk_index": 52,
+          "title": "## 送纸问题_1",
+          "parent_title": "## 送纸问题",
+          "content_chars": 766,
+          "content_sha256": "dff725174e00e1d67d1af314042b8cd22c7860881ea974244dc7f89b4bab8e37"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611831,
+          "index_version": 1,
+          "chunk_index": 53,
+          "title": "## 卡纸问题_1",
+          "parent_title": "## 卡纸问题",
+          "content_chars": 81,
+          "content_sha256": "5ad05b137714d8218d7693be52ec3c07649fc20a3d54a32352d26871d3c980bc"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611832,
+          "index_version": 1,
+          "chunk_index": 54,
+          "title": "## 卡纸的原因：_1",
+          "parent_title": "## 卡纸的原因：",
+          "content_chars": 240,
+          "content_sha256": "21e1116b161cd497fa7645b28ef8b7502bddc3fefde0451f487a3fe3bc923d2a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611833,
+          "index_version": 1,
+          "chunk_index": 55,
+          "title": "## 纸卡在出纸区域_1",
+          "parent_title": "## 纸卡在出纸区域",
+          "content_chars": 893,
+          "content_sha256": "88f14676f741fabd7580d0c5fa2e95df731f1384289c5426df4634289c2895ce"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611834,
+          "index_version": 1,
+          "chunk_index": 56,
+          "title": "## 纸卡在出纸区域_2",
+          "parent_title": "## 纸卡在出纸区域",
+          "content_chars": 235,
+          "content_sha256": "6f9d5f959672a741e01a0e657576270439d0bfdd5a9a5a5b3116a97c57e35812"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611835,
+          "index_version": 1,
+          "chunk_index": 57,
+          "title": "## 纸卡在进纸区域_1",
+          "parent_title": "## 纸卡在进纸区域",
+          "content_chars": 893,
+          "content_sha256": "cf0ba04c51411d6d0c421dc0856f417fcd563053f8c1ef087f4eaaa87ca5938d"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611836,
+          "index_version": 1,
+          "chunk_index": 58,
+          "title": "## 纸卡在进纸区域_2",
+          "parent_title": "## 纸卡在进纸区域",
+          "content_chars": 851,
+          "content_sha256": "fcc6161bc700bca11297eed5652bc3f1b18cb70f37286e0b596b0d28e669bd15"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611837,
+          "index_version": 1,
+          "chunk_index": 59,
+          "title": "## 打印质量问题_1",
+          "parent_title": "## 打印质量问题",
+          "content_chars": 418,
+          "content_sha256": "6b86c7f5413ab3da80fdcaf34c9e9b7a9ac27d7a6155342ba7c2e3513266e765"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611838,
+          "index_version": 1,
+          "chunk_index": 60,
+          "title": "## 打印问题_1",
+          "parent_title": "## 打印问题",
+          "content_chars": 427,
+          "content_sha256": "78090b3b0ebef0f1240893bfdaeb42656a97e05fd9e1202646f015f4527f8ef3"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611839,
+          "index_version": 1,
+          "chunk_index": 61,
+          "title": "## 复印问题_1",
+          "parent_title": "## 复印问题",
+          "content_chars": 682,
+          "content_sha256": "4578880397f60b6183ba1c1ced4876cc9db6f8dfea67608929b158569df7ce9c"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611840,
+          "index_version": 1,
+          "chunk_index": 62,
+          "title": "## 扫描问题_1",
+          "parent_title": "## 扫描问题",
+          "content_chars": 431,
+          "content_sha256": "27c0cc0c69fa8ee518f4b3eacda958dc4d3d3f0adaddb590124d4e8a0344e098"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611841,
+          "index_version": 1,
+          "chunk_index": 63,
+          "title": "## 常见故障代码处理_1",
+          "parent_title": "## 常见故障代码处理",
+          "content_chars": 55,
+          "content_sha256": "287174026be00ab80c577bfccd2c726e311db5a17b6d6d6c4fe52620d3718758"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611842,
+          "index_version": 1,
+          "chunk_index": 64,
+          "title": "## 常见故障代码处理_2",
+          "parent_title": "## 常见故障代码处理",
+          "content_chars": 998,
+          "content_sha256": "46d25016da9713ae0e9662c3cc6dacf2542702b15b55fec789191dbbcaa3428a"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611843,
+          "index_version": 1,
+          "chunk_index": 65,
+          "title": "## 常见故障代码处理_3",
+          "parent_title": "## 常见故障代码处理",
+          "content_chars": 612,
+          "content_sha256": "364e41af37a7c7d33c9139705bded5945b75cc02f2638b2a9ff95c5a818b5ade"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611844,
+          "index_version": 1,
+          "chunk_index": 66,
+          "title": "## 安全信息_1",
+          "parent_title": "## 安全信息",
+          "content_chars": 61,
+          "content_sha256": "5e6baa5c5e91384aa98906ebdd134670d3e2acdc12d528520c0853119437c2f1"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611845,
+          "index_version": 1,
+          "chunk_index": 67,
+          "title": "## 操作安全与保养_1",
+          "parent_title": "## 操作安全与保养",
+          "content_chars": 978,
+          "content_sha256": "29e1830aa8b1766a5ce366d285550944a161c744ab386b4a2e5788eb612e448c"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611846,
+          "index_version": 1,
+          "chunk_index": 68,
+          "title": "## 操作安全与保养_2",
+          "parent_title": "## 操作安全与保养",
+          "content_chars": 997,
+          "content_sha256": "82f25d718fb94b564d1bfb6d6b6962d9ccc4f49d2329b3c99f194d390256d41f"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611847,
+          "index_version": 1,
+          "chunk_index": 69,
+          "title": "## 操作安全与保养_3",
+          "parent_title": "## 操作安全与保养",
+          "content_chars": 578,
+          "content_sha256": "d5dc2d52664903309d30657297bd2ff7241b5c75a4c500abe6b0ddb70159c072"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611848,
+          "index_version": 1,
+          "chunk_index": 70,
+          "title": "## 操作安全与保养_4",
+          "parent_title": "## 操作安全与保养",
+          "content_chars": 982,
+          "content_sha256": "009685f9bdf9bf3c225186d4d7aa31acd0943e09857e313b5cf45ba90e3c5295"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611849,
+          "index_version": 1,
+          "chunk_index": 71,
+          "title": "## 操作安全与保养_5",
+          "parent_title": "## 操作安全与保养",
+          "content_chars": 503,
+          "content_sha256": "97d82e1a7e09b339189b38bb4362e49fc8851ba9e7718ee1a02cbd73ceae9779"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611850,
+          "index_version": 1,
+          "chunk_index": 72,
+          "title": "## 硒鼓和粉盒的储存_1",
+          "parent_title": "## 硒鼓和粉盒的储存",
+          "content_chars": 105,
+          "content_sha256": "21b3222adf8d01e246a9ca297f61f69b473f049b4bec6a6a924fb9777de14ac9"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611851,
+          "index_version": 1,
+          "chunk_index": 73,
+          "title": "## 硒鼓和粉盒打印量_1",
+          "parent_title": "## 硒鼓和粉盒打印量",
+          "content_chars": 196,
+          "content_sha256": "2f7972527b52392b151a4dae3dd7e7b9677042af2a64b70962cee8d5dc5f091c"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611852,
+          "index_version": 1,
+          "chunk_index": 74,
+          "title": "## 硒鼓和粉盒的回收_1",
+          "parent_title": "## 硒鼓和粉盒的回收",
+          "content_chars": 164,
+          "content_sha256": "b3f20de770b9e2024017be73f648e2e838b6f9a82a227c557b56c3e46d64c818"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611853,
+          "index_version": 1,
+          "chunk_index": 75,
+          "title": "## 硒鼓和粉盒的更换_1",
+          "parent_title": "## 硒鼓和粉盒的更换",
+          "content_chars": 160,
+          "content_sha256": "b3f8f04b0d4bcc4e024e23b7d0e1b796ee93aa2469aafcd38ee45ee548b9c447"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611854,
+          "index_version": 1,
+          "chunk_index": 76,
+          "title": "## 移动和搬运打印机_1",
+          "parent_title": "## 移动和搬运打印机",
+          "content_chars": 153,
+          "content_sha256": "e08c65cf0cf556e9487a6f50a3bd3f1e92dc4c201682218c5353cc822952d107"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611855,
+          "index_version": 1,
+          "chunk_index": 77,
+          "title": "## 清洁打印机_1",
+          "parent_title": "## 清洁打印机",
+          "content_chars": 968,
+          "content_sha256": "d60f5992fcd379753f19d276a9baeece2974c2e0a064e226ca961fd263530862"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611856,
+          "index_version": 1,
+          "chunk_index": 78,
+          "title": "## 法律声明_1",
+          "parent_title": "## 法律声明",
+          "content_chars": 167,
+          "content_sha256": "2c354d70e9935f68f4885eb5b944ab79c75686b2ec2d560f779d348e6cb1aa90"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611857,
+          "index_version": 1,
+          "chunk_index": 79,
+          "title": "## 商标声明_1",
+          "parent_title": "## 商标声明",
+          "content_chars": 59,
+          "content_sha256": "baa0a886c67f07fcd9df93e5d76935bfa59fd075d7a6fac194ba5bbe0c88d840"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611858,
+          "index_version": 1,
+          "chunk_index": 80,
+          "title": "## 其他声明_1",
+          "parent_title": "## 其他声明",
+          "content_chars": 120,
+          "content_sha256": "77250e421744e399e4b2b36e336ec540afe6e04ad21c6e4d341aec8bc0d2ed44"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611859,
+          "index_version": 1,
+          "chunk_index": 81,
+          "title": "## 注意_1",
+          "parent_title": "## 注意",
+          "content_chars": 177,
+          "content_sha256": "6b98b7804fc6f6f0eeaa29055a5143e196a986b4f87b60bf5b6257110c8f9749"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611860,
+          "index_version": 1,
+          "chunk_index": 82,
+          "title": "## 责任限制_1",
+          "parent_title": "## 责任限制",
+          "content_chars": 275,
+          "content_sha256": "e87738b3e4c16b029a68169f4203876fc6fe8fa21e903b8384ee9859644f3647"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611861,
+          "index_version": 1,
+          "chunk_index": 83,
+          "title": "## 进出口管制_1",
+          "parent_title": "## 进出口管制",
+          "content_chars": 68,
+          "content_sha256": "5319e5972f17eddfed3b1f058453b5a187632a3095001176c2ab0bfc2bfe2d10"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611862,
+          "index_version": 1,
+          "chunk_index": 84,
+          "title": "## 隐私保护_1",
+          "parent_title": "## 隐私保护",
+          "content_chars": 245,
+          "content_sha256": "181f5c46d9eac04f3b76fab8b2dba34a6458da363e19e84388d7e69ded5c4924"
+        }
+      ]
+    },
+    {
+      "source_id": "rs-12-multimeter-manual-v001",
+      "publisher": "RS Components",
+      "title": "RS-12 数字万用表说明书",
+      "source_version": "123-1939, 2017-09",
+      "source_url": "https://docs.rs-online.com/aabd/0900766b816bc1c6.pdf",
+      "source_sha256": "dc69d9431a6a6e747f3275bcc5ea51c74fc414d97cd7018711e4ce803d93357f",
+      "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+      "task_id": "stage9-balanced-dev-210d0eb97fba47ebac7103548eb3d6a4",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_216bbf296a793d6e",
+      "standard_subject_name": "万用表RS-12",
+      "chunk_count": 21,
+      "import_action": "reused",
+      "chunks": [
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611585,
+          "index_version": 1,
+          "chunk_index": 0,
+          "title": "## 安全手册_1",
+          "parent_title": "## 安全手册",
+          "content_chars": 607,
+          "content_sha256": "f8d2fbe5b491fdf7fc5e881bb83a04c60a66395daa2521431797814015c5c70c"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611586,
+          "index_version": 1,
+          "chunk_index": 1,
+          "title": "## 安全标识_1",
+          "parent_title": "## 安全标识",
+          "content_chars": 800,
+          "content_sha256": "88b14f08d68be836b1f078326fbca45fa68d723fdc2a9462bb34a6a4f9e0c86d"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611587,
+          "index_version": 1,
+          "chunk_index": 2,
+          "title": "## 安全标识_2",
+          "parent_title": "## 安全标识",
+          "content_chars": 250,
+          "content_sha256": "8d38487172d1832696176ddca2ac807184421f80649ae21f60c76e8263d3d944"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611588,
+          "index_version": 1,
+          "chunk_index": 3,
+          "title": "## 控制与端口_1",
+          "parent_title": "## 控制与端口",
+          "content_chars": 287,
+          "content_sha256": "12fce4fe5cdf43eefd032c6a211de13a7ca09e665d301ab918287e1f0b80ba27"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611589,
+          "index_version": 1,
+          "chunk_index": 4,
+          "title": "## 功能符号指示_1",
+          "parent_title": "## 功能符号指示",
+          "content_chars": 340,
+          "content_sha256": "f27e7a9066374fa4e15b80e3044621538ce83d49a6f4ffc40ae70ea9027b170b"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611590,
+          "index_version": 1,
+          "chunk_index": 5,
+          "title": "## 规格_1",
+          "parent_title": "## 规格",
+          "content_chars": 1226,
+          "content_sha256": "03ea6b9180432c5eecb096c1fe0180296386957c11915c30bde448d14aa8e589"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611591,
+          "index_version": 1,
+          "chunk_index": 6,
+          "title": "## 规格_2",
+          "parent_title": "## 规格",
+          "content_chars": 123,
+          "content_sha256": "f6d02e4c83c071efa36480feb8b2dbf30796a82f1e274ec0bd32da7b4625ac99"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611592,
+          "index_version": 1,
+          "chunk_index": 7,
+          "title": "## 技术指标说明_1",
+          "parent_title": "## 技术指标说明",
+          "content_chars": 467,
+          "content_sha256": "8482d35640c37bda9b6ccca0b92a042000eac24cfddb7bf4c5afdccb2247d2bd"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611593,
+          "index_version": 1,
+          "chunk_index": 8,
+          "title": "## 电池安装_1",
+          "parent_title": "## 电池安装",
+          "content_chars": 181,
+          "content_sha256": "b75831b046126b941893fef525392229a7859c5a5c7284ca51a39412fd74e8e2"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611594,
+          "index_version": 1,
+          "chunk_index": 9,
+          "title": "## 数值保持按键HOLD_1",
+          "parent_title": "## 数值保持按键HOLD",
+          "content_chars": 90,
+          "content_sha256": "a20025b5248020fe888df979271b14003397e5a64382bfd42dfeefa5cf0d060f"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611595,
+          "index_version": 1,
+          "chunk_index": 10,
+          "title": "## 背光灯键（BACKLIGHT）_1",
+          "parent_title": "## 背光灯键（BACKLIGHT）",
+          "content_chars": 214,
+          "content_sha256": "dcaf9e5c7767efb967d61e747569f0a5cded5e801689cce81a54dc58a5138cc1"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611596,
+          "index_version": 1,
+          "chunk_index": 11,
+          "title": "## 测量非接触交流电压_1",
+          "parent_title": "## 测量非接触交流电压",
+          "content_chars": 206,
+          "content_sha256": "1aaba438e08c9f93ce64c57c2d8eb5d7dc804e89e64e10937c9237aeafa41cba"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611597,
+          "index_version": 1,
+          "chunk_index": 12,
+          "title": "## 直流电压测量_1",
+          "parent_title": "## 直流电压测量",
+          "content_chars": 174,
+          "content_sha256": "920f14a7817d25ed93bce07b20a545fbe367e976c4dbc05861dd0d1ea067f668"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611598,
+          "index_version": 1,
+          "chunk_index": 13,
+          "title": "## 交流电压测量_1",
+          "parent_title": "## 交流电压测量",
+          "content_chars": 524,
+          "content_sha256": "566f30a0434ed5f55720dc02437068bc2dabbffb542502586b4ca25c2fb77fd2"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611599,
+          "index_version": 1,
+          "chunk_index": 14,
+          "title": "## 直流电流测量_1",
+          "parent_title": "## 直流电流测量",
+          "content_chars": 735,
+          "content_sha256": "c3db4e7e8911eb342d85eb6c88fcaa0ee9838958b822076d4b925e23d3d4d2ed"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611600,
+          "index_version": 1,
+          "chunk_index": 15,
+          "title": "## 电阻测量_1",
+          "parent_title": "## 电阻测量",
+          "content_chars": 414,
+          "content_sha256": "a9e2429ad59917497e593b7e8510acaf1f1fb93cdbe436958147fe5cad4ca5f5"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611601,
+          "index_version": 1,
+          "chunk_index": 16,
+          "title": "## 短路蜂鸣测试_1",
+          "parent_title": "## 短路蜂鸣测试",
+          "content_chars": 143,
+          "content_sha256": "487460574a939fe70e6dced399917539a3cb02f8214895e9486032469402f831"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611602,
+          "index_version": 1,
+          "chunk_index": 17,
+          "title": "## 二极管测试_1",
+          "parent_title": "## 二极管测试",
+          "content_chars": 132,
+          "content_sha256": "c610f0c4ed9fde91be3f24518784de421080c82fb5df3b9c90565431ba28c238"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611603,
+          "index_version": 1,
+          "chunk_index": 18,
+          "title": "## 电池测试_1",
+          "parent_title": "## 电池测试",
+          "content_chars": 337,
+          "content_sha256": "5403f9a9b00e95bc6aca3c612cb372ce9f452f67aa02d7cff29336bc34d6e035"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611604,
+          "index_version": 1,
+          "chunk_index": 19,
+          "title": "## 更换电池_1",
+          "parent_title": "## 更换电池",
+          "content_chars": 134,
+          "content_sha256": "3b8b1d083768ee04d1e3945919b91e98062f87347a8906af810c0d2e344bc1bb"
+        },
+        {
+          "document_id": "doc_stage9_dev_rs12_multimeter_manual_v001",
+          "chunk_id": 467551067585611605,
+          "index_version": 1,
+          "chunk_index": 20,
+          "title": "## 更换保险丝_1",
+          "parent_title": "## 更换保险丝",
+          "content_chars": 212,
+          "content_sha256": "4ccdc2ed37d11bd0a3ac6cdea439966210b49256c1093871f437830c2a01c91c"
+        }
+      ]
+    }
+  ]
+}

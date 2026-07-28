@@ -10,6 +10,7 @@ Planner 可控性重标定六路权重：行为分和成本分承担主要检索
 from __future__ import annotations
 
 from typing import Any, Callable
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -17,8 +18,8 @@ from app.rag.evaluation.case_schema import PlannerEvalCase
 from app.rag.evaluation.metrics import (
     action_values,
     answer_point_coverage,
-    candidate_chunk_keys,
-    expected_chunk_keys,
+    candidate_evidence_keys,
+    expected_evidence_keys,
     identifier_hit_rate,
     matches_any_action_path,
     ndcg_at_k,
@@ -28,6 +29,7 @@ from app.rag.evaluation.metrics import (
 )
 from app.rag.evaluation.offline_environment import OfflineTrajectoryResult, OfflineTrajectoryStatus
 from app.rag.query.contracts import EvidenceSourceType, QueryAction
+from app.rag.query.rrf_service import canonicalize_web_url
 
 
 # 第一部分：版本和硬边界常量。score_trajectory 会先用这些常量判断轨迹是否可训练。
@@ -197,17 +199,26 @@ def score_format(case: PlannerEvalCase, trajectory: OfflineTrajectoryResult, con
     )
 
 
-# 第五部分：分项 2，检索分。回答型 case 才要求命中 expected_chunks。
+# 第五部分：分项 2，检索分。回答型 case 才要求命中冻结的本地或 Web 证据。
 def score_retrieval(case: PlannerEvalCase, trajectory: OfflineTrajectoryResult, config: RewardConfig) -> RewardComponent:
-    """评分 expected chunk 召回、排序质量和结构化标识命中。"""
+    """评分 expected evidence（期望证据）召回、排序质量和结构化标识命中。"""
     if not case.expected_behavior.should_answer:  # 拒答/追问样本没有证据命中要求。
-        return _component("retrieval", 1.0, config.weights.retrieval, {"not_applicable": True}, ["非回答型样本不要求命中 expected_chunks"])
+        return _component(
+            "retrieval",
+            1.0,
+            config.weights.retrieval,
+            {"not_applicable": True},
+            ["非回答型样本不要求命中 expected evidence"],
+        )
 
-    expected_keys = expected_chunk_keys(case.expected_chunks)  # 人工期望证据身份。
-    retrieved_keys = candidate_chunk_keys(trajectory.retrieved_candidates)  # 实际本地候选身份。
-    recall = recall_at_k(retrieved_keys, expected_keys, k=config.retrieval_top_k)  # 是否找全 expected chunk。
-    mrr = reciprocal_rank(retrieved_keys, expected_keys)  # 第一个 expected chunk 是否靠前。
-    ndcg = ndcg_at_k(retrieved_keys, expected_keys, k=config.retrieval_top_k)  # 多个 expected chunk 的整体排序。
+    expected_keys = expected_evidence_keys(
+        case.expected_chunks,
+        case.expected_web_evidence,
+    )
+    retrieved_keys = candidate_evidence_keys(trajectory.retrieved_candidates)
+    recall = recall_at_k(retrieved_keys, expected_keys, k=config.retrieval_top_k)
+    mrr = reciprocal_rank(retrieved_keys, expected_keys)
+    ndcg = ndcg_at_k(retrieved_keys, expected_keys, k=config.retrieval_top_k)
     identifier_rate, identifier_hits, identifier_misses = identifier_hit_rate(  # 设备型号/报警码命中情况。
         trajectory.retrieved_candidates,
         case.expected_identifiers,
@@ -216,7 +227,7 @@ def score_retrieval(case: PlannerEvalCase, trajectory: OfflineTrajectoryResult, 
     reasons: list[str] = []  # 检索扣分原因。
 
     if recall < 1:  # 有 required/supporting chunk 没被找出来。
-        reasons.append("未完全召回 expected_chunks")
+        reasons.append("未完全召回 expected_chunks/expected_web_evidence")
     if identifier_misses:  # 标识没命中通常意味着设备型号或报警码风险。
         reasons.append("部分设备型号、报警码或部件标识未命中")
     if trajectory.corpus_match_status != "match":  # 语料快照不一致时，检索结果不可完全信任。
@@ -235,6 +246,10 @@ def score_retrieval(case: PlannerEvalCase, trajectory: OfflineTrajectoryResult, 
             "identifier_hits": identifier_hits,
             "identifier_misses": identifier_misses,
             "expected_chunk_count": len(expected_keys),
+            "expected_local_chunk_count": len(case.expected_chunks),
+            "expected_web_evidence_count": len(case.expected_web_evidence),
+            "retrieved_evidence_count": len(retrieved_keys),
+            # 保留旧字段，兼容历史报告读取；Web case 中它表示统一证据数量。
             "retrieved_chunk_count": len(retrieved_keys),
             "top_k": config.retrieval_top_k,
         },
@@ -244,7 +259,7 @@ def score_retrieval(case: PlannerEvalCase, trajectory: OfflineTrajectoryResult, 
 
 # 第六部分：分项 3，引用分。答案不仅要检索对，还要引用对。
 def score_citation(case: PlannerEvalCase, trajectory: OfflineTrajectoryResult, config: RewardConfig) -> RewardComponent:
-    """评分最终 Citation 是否指向 expected chunk。"""
+    """评分最终 Citation 是否指向 expected chunk 或冻结的 Web URL。"""
     if not case.expected_behavior.should_answer:  # 非回答型样本通常不应产生引用。
         score = 1.0 if not trajectory.citations else 0.40
         reasons = [] if not trajectory.citations else ["非回答型样本不应生成最终引用"]
@@ -260,9 +275,9 @@ def score_citation(case: PlannerEvalCase, trajectory: OfflineTrajectoryResult, c
     score = min(hit_rate, 0.60) if invalid_count else hit_rate  # 出现无法映射版本的引用时设置上限。
     reasons: list[str] = []  # 引用扣分原因。
     if hit_rate < 1:
-        reasons.append("最终 Citation 没有完全覆盖 expected_chunks")
+        reasons.append("最终 Citation 没有完全覆盖 expected evidence")
     if invalid_count:
-        reasons.append("存在无法映射到本地 chunk/index_version 的引用")
+        reasons.append("存在无法映射到本地 chunk/index_version 或冻结 Web URL 的引用")
 
     return _component(
         name="citation",
@@ -271,6 +286,8 @@ def score_citation(case: PlannerEvalCase, trajectory: OfflineTrajectoryResult, c
         details={
             "citation_hit_rate": hit_rate,
             "expected_chunk_count": expected_count,
+            "expected_local_chunk_count": len(case.expected_chunks),
+            "expected_web_evidence_count": len(case.expected_web_evidence),
             "citation_chunk_count": citation_count,
             "invalid_citation_count": invalid_count,
         },
@@ -441,19 +458,38 @@ def _error_codes(trajectory: OfflineTrajectoryResult, selected_codes: set[str]) 
 
 def _citation_stats(case: PlannerEvalCase, trajectory: OfflineTrajectoryResult) -> tuple[float, int, int, int]:
     """统计 Citation 命中率、期望数量、有效引用数量和无效引用数量。"""
-    expected_keys = set(expected_chunk_keys(case.expected_chunks))  # 期望引用命中的本地 chunk 集合。
-    citation_keys: set[tuple[str, str, int]] = set()  # 实际可映射到版本化本地 chunk 的引用集合。
-    invalid_count = 0  # Web 引用、缺 document/chunk、缺 index_version 都算无效引用。
+    expected_keys = set(
+        expected_evidence_keys(case.expected_chunks, case.expected_web_evidence)
+    )
+    citation_keys: set[tuple[str, ...]] = set()
+    invalid_count = 0
 
     for citation in trajectory.citations:
-        if citation.source_type != EvidenceSourceType.LOCAL or citation.document_id is None or citation.chunk_id is None:
+        if citation.source_type == EvidenceSourceType.WEB:
+            parsed = urlsplit(citation.source)
+            if (
+                parsed.scheme.lower() not in {"http", "https"}
+                or not parsed.netloc
+            ):
+                invalid_count += 1
+            else:
+                citation_keys.add(("web", canonicalize_web_url(citation.source)))
+            continue
+        if citation.document_id is None or citation.chunk_id is None:
             invalid_count += 1
             continue
         index_version = case.source_index_versions.get(citation.document_id)  # Citation 无 index_version，需要从 case 文档版本补齐。
         if index_version is None:
             invalid_count += 1
             continue
-        citation_keys.add((citation.document_id, str(citation.chunk_id), int(index_version)))
+        citation_keys.add(
+            (
+                "local",
+                citation.document_id,
+                str(citation.chunk_id),
+                str(int(index_version)),
+            )
+        )
 
     hit_count = sum(1 for key in expected_keys if key in citation_keys)  # expected chunk 被引用覆盖的数量。
     hit_rate = 1.0 if not expected_keys else hit_count / len(expected_keys)  # 没有 expected chunk 时不在这里扣分。

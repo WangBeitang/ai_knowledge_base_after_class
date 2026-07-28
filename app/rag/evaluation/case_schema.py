@@ -13,13 +13,16 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Self
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.rag.query.contracts import QueryAction
+from app.rag.query.rrf_service import canonicalize_web_url
 from app.shared.config.knowledge_base_config import DEFAULT_DATASET_ID, DEFAULT_TENANT_ID
 
 
@@ -197,6 +200,69 @@ class ExpectedChunk(Stage8SchemaModel):
         return self
 
 
+class ExpectedWebEvidence(Stage8SchemaModel):
+    """
+    一条 Web Gold（网页标准证据）的冻结身份。
+
+    Web 页面没有 ``document_id + chunk_id + index_version``。因此用规范化 URL 作为运行
+    时检索/引用身份，并用抓取响应和人工摘取事实的 SHA256 固定审核时看到的页面版本。
+    Reward 只按规范化 URL 评价运行时命中；两个 hash 用于数据构建、复核和漂移审计，
+    不能伪装成运行时已经重新下载并验证了同一页面内容。
+    """
+
+    # 同一网页快照在 manifest、case 和审核报告之间使用的稳定 ID。
+    source_id: str = Field(min_length=1)
+    # 官方发布者，例如 Huawei；用于报告展示，不参与 URL 身份匹配。
+    publisher: str = Field(min_length=1)
+    # 冻结页面标题。
+    source_title: str = Field(min_length=1)
+    # 抓取时的原始 URL；运行时会先规范化再与 Citation.source 比较。
+    url: str = Field(min_length=1)
+    # UTC ISO 时间，说明网页事实在哪个时点被冻结。
+    captured_at: str = Field(min_length=1)
+    # 抓取到的原始 HTTP 响应正文 hash；证明审核时看到的页面版本。
+    response_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    # 事实列表规范化 JSON 的 hash；页面排版变化时仍可独立核对审核事实。
+    evidence_content_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    # 该页面中被当前 case 使用的事实 ID。
+    fact_ids: list[str] = Field(min_length=1)
+    # 该网页证据支撑的答案要点 ID。
+    answer_point_ids: list[str] = Field(default_factory=list)
+
+    @field_validator("fact_ids", "answer_point_ids")
+    @classmethod
+    def normalize_fact_ids(cls, values: list[str]) -> list[str]:
+        return _normalize_text_list(values, field_name="web_evidence_ids")
+
+    @field_validator("url")
+    @classmethod
+    def validate_web_url(cls, url: str) -> str:
+        parsed = urlsplit(url)
+        if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("expected_web_evidence.url 必须是可追溯的 HTTP(S) URL")
+        return url
+
+    @field_validator("captured_at")
+    @classmethod
+    def validate_captured_at(cls, captured_at: str) -> str:
+        try:
+            parsed = datetime.fromisoformat(captured_at.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ValueError(
+                "expected_web_evidence.captured_at 必须是 UTC ISO 时间"
+            ) from exc
+        if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
+            raise ValueError(
+                "expected_web_evidence.captured_at 必须包含 UTC 时区"
+            )
+        return captured_at
+
+    @property
+    def canonical_url(self) -> str:
+        """返回与 Web 候选和 Citation 共用的 URL 身份。"""
+        return canonicalize_web_url(self.url)
+
+
 class ExpectedBehavior(Stage8SchemaModel):
     """
     人工期望的 Planner 终态行为和受控 Action 边界。
@@ -205,7 +271,7 @@ class ExpectedBehavior(Stage8SchemaModel):
     PlannerEvalResult，再由 Reward 对比 expected_behavior 评分。
     """
 
-    # 是否应该回答。为 true 时 expected_chunks 和 expected_answer_points 必须存在。
+    # 是否应该回答。为 true 时必须至少存在本地 chunk 或冻结 Web 证据，并填写答案要点。
     should_answer: bool
     # 是否应该拒答。例如缺少可靠证据、超出知识库范围或安全边界触发。
     should_refuse: bool
@@ -280,8 +346,10 @@ class PlannerEvalCase(Stage8SchemaModel):
     expected_subject_ids: list[str] = Field(default_factory=list)
     # 期望主题展示名。用于报告阅读，不作为稳定主键。
     expected_subject_names: list[str] = Field(default_factory=list)
-    # 期望证据 chunk。回答型样本必须填写，用于 R_retrieval 和 R_citation。
+    # 期望本地证据 chunk。本地回答型样本必须填写，用于 R_retrieval 和 R_citation。
     expected_chunks: list[ExpectedChunk] = Field(default_factory=list)
+    # 期望 Web 证据。Web 回答型样本必须填写，绑定 URL、抓取 hash 和事实 ID。
+    expected_web_evidence: list[ExpectedWebEvidence] = Field(default_factory=list)
     # 期望答案要点。用于 R_answer，回答型样本必须填写。
     expected_answer_points: list[str] = Field(default_factory=list)
     # 期望行为。描述应该回答/拒答/追问/是否 Web。
@@ -342,13 +410,28 @@ class PlannerEvalCase(Stage8SchemaModel):
 
     @model_validator(mode="after")
     def validate_case_boundaries(self) -> Self:
-        # 回答型样本没有 expected_chunks 或答案要点，会让 Reward 无法判断“答对了没有”，
-        # 因此在 schema 层直接拒绝。
+        # 回答型样本没有任何证据或答案要点，会让 Reward 无法判断“答对了没有”，
+        # 因此在 schema 层直接拒绝。本地和 Web 使用不同身份，不能强迫 Web 伪造 chunk。
         if self.expected_behavior.should_answer:
-            if not self.expected_chunks:
-                raise ValueError("should_answer=true 的样本必须标注 expected_chunks")
+            if not self.expected_chunks and not self.expected_web_evidence:
+                raise ValueError(
+                    "should_answer=true 的样本必须标注 expected_chunks 或 expected_web_evidence"
+                )
             if not self.expected_answer_points:
                 raise ValueError("should_answer=true 的样本必须标注 expected_answer_points")
+
+        if self.expected_web_evidence and not self.expected_behavior.should_call_web:
+            raise ValueError(
+                "存在 expected_web_evidence 时 expected_behavior.should_call_web 必须为 true"
+            )
+        if (
+            self.expected_behavior.should_call_web
+            and self.expected_behavior.should_answer
+            and not self.expected_web_evidence
+        ):
+            raise ValueError(
+                "Web 回答型样本必须标注 expected_web_evidence，不能只用本地 chunk 代替网页事实"
+            )
 
         if not self.acceptable_action_paths:
             raise ValueError("acceptable_action_paths 至少包含一条可接受 Action 路径")
@@ -379,6 +462,12 @@ class PlannerEvalCase(Stage8SchemaModel):
             # index_version 是防泄漏和可复现的关键边界。版本不一致时不能继续评测。
             if expected_version is not None and expected_version != chunk.index_version:
                 raise ValueError("expected_chunks 的 index_version 必须与 source_index_versions 一致")
+
+        canonical_web_urls = [
+            evidence.canonical_url for evidence in self.expected_web_evidence
+        ]
+        if len(canonical_web_urls) != len(set(canonical_web_urls)):
+            raise ValueError("expected_web_evidence 不能重复标注同一个规范化 URL")
         return self
 
     def _expected_terminal_action(self) -> QueryAction:

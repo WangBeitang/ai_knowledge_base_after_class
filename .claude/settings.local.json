@@ -7,7 +7,10 @@
       "Bash(curl -sL --max-time 15 \"https://archive.ics.uci.edu/api/dataset/601\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d.get\\(k\\) for k in ['name','description','variable_info','additional_info']}, indent=2, ensure_ascii=False\\)\\)\")",
       "Bash(curl -sL --max-time 15 \"https://archive.ics.uci.edu/api/dataset/447\")",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(shasum -a 256 /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage8/cases/planner_cases.jsonl /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage8/cases/split_manifest.json /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/balanced_dev/balanced_dev_case_evidence.jsonl /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/balanced_dev/second_review_queue.jsonl /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/balanced_dev/source_import_manifest.json /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/configs/planner_eval_route_matrix_v1.json /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/configs/balanced_dev_source_manifest_v1.json /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage8_5/artifacts/intermediate/sft_seed/curated_seed_train_cases.jsonl /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/route_seed/route_seed_cases.jsonl /Users/beitang/PycharmProjects/ai_knowledge_base_after_class/evaluation/stage9/artifacts/route_seed/route_seed_action_paths.jsonl)",
+      "Bash(python3 *)",
+      "Bash(shasum *)"
     ]
   }
 }
