@@ -80,7 +80,7 @@ import importlib.metadata
 import platform
 
 print(f"python（解释器）={platform.python_version()}")
-for package in ("torch", "transformers", "datasets", "peft", "bitsandbytes"):
+for package in ("torch", "transformers", "datasets", "peft", "bitsandbytes", "loguru", "pydantic"):
     try:
         print(f"{package}（训练依赖）={importlib.metadata.version(package)}")
     except importlib.metadata.PackageNotFoundError:

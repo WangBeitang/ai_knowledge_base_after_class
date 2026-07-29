@@ -16,8 +16,14 @@ from typing import Any, Callable
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-PREFLIGHT_VERSION = "stage9-cloud-runtime-preflight-v1"
+PREFLIGHT_VERSION = "stage9-cloud-runtime-preflight-v2"
 TRUTHY_VALUES = {"1", "true", "yes", "on"}
+SFT_ENTRYPOINT_MODULES = (
+    "evaluation.stage9.model_planner.sft_train",
+    "evaluation.stage9.admission.run_sft_expanded_dev_gate",
+)
+SFT_LOCKED_PACKAGES = ("loguru", "torch", "transformers", "peft", "pydantic")
+SFT_CHECKPOINT_PACKAGES = ("torch", "transformers", "peft")
 
 
 @dataclass(frozen=True)
@@ -44,6 +50,9 @@ def build_preflight_report(
         checkpoint_dir: Path,
         adapter_path: Path,
         model_path: str,
+        sft_python: Path,
+        expected_sft_python: Path,
+        sft_requirements_lock: Path,
         vllm_python: Path,
         vllm_freeze: Path,
         expected_vllm_version: str,
@@ -56,6 +65,7 @@ def build_preflight_report(
         min_data_free_gb: float,
         require_port_free: bool = True,
         environ: dict[str, str] | None = None,
+        sft_runtime_probe: Callable[[Path, dict[str, str]], dict[str, Any]] | None = None,
         runtime_probe: Callable[[Path, dict[str, str]], dict[str, Any]] | None = None,
         model_cache_probe: Callable[[Path, str, dict[str, str]], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
@@ -67,7 +77,9 @@ def build_preflight_report(
     resolved_project_root = project_root.resolve()
     checkpoint_abs = _resolve_project_path(resolved_project_root, checkpoint_dir)
     adapter_abs = _resolve_project_path(resolved_project_root, adapter_path)
+    sft_requirements_lock_abs = _resolve_project_path(resolved_project_root, sft_requirements_lock)
     vllm_freeze_abs = _resolve_project_path(resolved_project_root, vllm_freeze)
+    sft_runtime_probe = sft_runtime_probe or _probe_sft_runtime
     runtime_probe = runtime_probe or _probe_vllm_runtime
     model_cache_probe = model_cache_probe or _probe_model_cache
 
@@ -86,6 +98,44 @@ def build_preflight_report(
         vllm_freeze=vllm_freeze_abs,
     )
     checks.extend(artifact_checks)
+
+    sft_runtime_metadata: dict[str, Any] = {}
+    if not sft_python.is_file():
+        checks.append(_failed(
+            "sft_python",
+            "dependency",
+            "SFT Python 解释器不存在",
+            {"path": str(sft_python)},
+        ))
+    elif not sft_requirements_lock_abs.is_file():
+        checks.append(_failed(
+            "sft_requirements_lock",
+            "dependency",
+            "SFT 依赖锁文件不存在",
+            {"path": _relative_or_absolute(resolved_project_root, sft_requirements_lock_abs)},
+        ))
+    else:
+        try:
+            locked_versions = _parse_pinned_requirements(sft_requirements_lock_abs)
+            sft_runtime_metadata = sft_runtime_probe(sft_python, active_env)
+            checks.extend(_sft_runtime_checks(
+                sft_python=sft_python,
+                expected_sft_python=expected_sft_python,
+                metadata=sft_runtime_metadata,
+                locked_versions=locked_versions,
+                checkpoint_manifest=checkpoint_manifest,
+            ))
+        except Exception as exc:
+            checks.append(_failed(
+                "sft_runtime",
+                "dependency",
+                "无法用正式 SFT 解释器导入训练与 expanded dev 入口",
+                {
+                    "error": str(exc),
+                    "python": str(sft_python),
+                    "required_modules": list(SFT_ENTRYPOINT_MODULES),
+                },
+            ))
 
     runtime_metadata: dict[str, Any] = {}
     if not vllm_python.is_file():
@@ -157,11 +207,18 @@ def build_preflight_report(
             "adapter_path": _relative_or_absolute(resolved_project_root, adapter_abs),
             "checkpoint_run_id": checkpoint_manifest.get("run_id"),
             "model_path": model_path,
+            "sft_python": str(sft_python),
+            "expected_sft_python": str(expected_sft_python),
+            "sft_requirements_lock": _relative_or_absolute(
+                resolved_project_root,
+                sft_requirements_lock_abs,
+            ),
             "vllm_python": str(vllm_python),
             "vllm_freeze": _relative_or_absolute(resolved_project_root, vllm_freeze_abs),
             "host": host,
             "port": port,
         },
+        "sft_runtime_metadata": sft_runtime_metadata,
         "runtime_metadata": runtime_metadata,
         "checks": [asdict(check) for check in checks],
     }
@@ -230,6 +287,38 @@ def _environment_checks(mode: str, environ: dict[str, str]) -> list[PreflightChe
                 f"{variable} 未开启；GPU 运行可能再次联网下载",
                 {"value": raw_value or "<unset>"},
             ))
+
+    provider = str(environ.get("EXPANDED_DEV_PROVIDER") or "").strip()
+    if provider == "snapshot_expected_chunks":
+        checks.append(_passed(
+            "expanded_dev_provider",
+            "environment",
+            "expanded dev 使用冻结的 snapshot_expected_chunks Provider",
+            {"value": provider},
+        ))
+    else:
+        checks.append(_failed(
+            "expanded_dev_provider",
+            "environment",
+            "EXPANDED_DEV_PROVIDER 必须固定为 snapshot_expected_chunks",
+            {"value": provider or "<unset>"},
+        ))
+
+    overwrite = str(environ.get("EXPANDED_DEV_OVERWRITE") or "").strip()
+    if overwrite == "0":
+        checks.append(_passed(
+            "expanded_dev_overwrite",
+            "environment",
+            "EXPANDED_DEV_OVERWRITE=0，不覆盖既有正式评测产物",
+            {"value": overwrite},
+        ))
+    else:
+        checks.append(_failed(
+            "expanded_dev_overwrite",
+            "environment",
+            "EXPANDED_DEV_OVERWRITE 必须为 0",
+            {"value": overwrite or "<unset>"},
+        ))
     return checks
 
 
@@ -342,6 +431,133 @@ def _artifact_checks(
     return checks, manifest
 
 
+def _sft_runtime_checks(
+        *,
+        sft_python: Path,
+        expected_sft_python: Path,
+        metadata: dict[str, Any],
+        locked_versions: dict[str, str],
+        checkpoint_manifest: dict[str, Any],
+) -> list[PreflightCheck]:
+    """
+    校验 SFT runtime（监督微调运行环境）的解释器、正式入口和关键包版本。
+
+    locked_versions 来自云端训练锁文件；checkpoint_manifest 记录实际训练 checkpoint 使用的
+    框架版本。三者必须一致，避免新 shell 静默切回主项目 `.venv` 后继续生成错误评测结果。
+    """
+
+    checks: list[PreflightCheck] = []
+    # 不能用 Path.resolve()：不同 venv 的 python 往往都链接到同一个系统解释器，
+    # 跟随符号链接会抹掉 `.venv-sft` 与主项目 `.venv` 的身份差异。
+    configured_python = os.path.abspath(os.fspath(sft_python))
+    expected_python = os.path.abspath(os.fspath(expected_sft_python))
+    actual_python_raw = str(metadata.get("python_executable") or "").strip()
+    actual_python = os.path.abspath(actual_python_raw) if actual_python_raw else ""
+    configured_bin_dir = os.path.dirname(configured_python)
+    expected_bin_dir = os.path.dirname(expected_python)
+    actual_bin_dir = os.path.dirname(actual_python) if actual_python else ""
+    # 同一 venv 内 `python` 和 `python3` 可能互为别名，因此比较 bin 目录而不是文件名。
+    if actual_bin_dir == configured_bin_dir == expected_bin_dir:
+        checks.append(_passed(
+            "sft_python_identity",
+            "dependency",
+            "配置、实际执行和 `.venv-sft` 解释器身份一致",
+            {
+                "actual": actual_python,
+                "configured": configured_python,
+                "expected": expected_python,
+            },
+        ))
+    else:
+        checks.append(_failed(
+            "sft_python_identity",
+            "dependency",
+            "配置、实际执行或 `.venv-sft` 解释器身份不一致",
+            {
+                "actual": actual_python or "<missing>",
+                "configured": configured_python,
+                "expected": expected_python,
+            },
+        ))
+
+    imported_modules = set(metadata.get("imported_modules") or [])
+    missing_modules = [
+        module
+        for module in SFT_ENTRYPOINT_MODULES
+        if module not in imported_modules
+    ]
+    if not missing_modules:
+        checks.append(_passed(
+            "sft_entrypoint_imports",
+            "dependency",
+            "正式训练与 expanded dev 入口均可导入",
+            {"modules": list(SFT_ENTRYPOINT_MODULES)},
+        ))
+    else:
+        checks.append(_failed(
+            "sft_entrypoint_imports",
+            "dependency",
+            "正式训练或 expanded dev 入口未完成导入",
+            {"missing_modules": missing_modules},
+        ))
+
+    package_versions = {
+        str(name): str(version)
+        for name, version in dict(metadata.get("package_versions") or {}).items()
+    }
+    lock_mismatches = []
+    for package in SFT_LOCKED_PACKAGES:
+        actual = package_versions.get(package, "")
+        expected = locked_versions.get(package, "")
+        if not actual or not expected or actual != expected:
+            lock_mismatches.append({
+                "package": package,
+                "actual": actual or "<missing>",
+                "expected": expected or "<missing-in-lock>",
+            })
+    if not lock_mismatches:
+        checks.append(_passed(
+            "sft_lock_versions",
+            "dependency",
+            "SFT 关键包版本与训练锁文件一致",
+            {"versions": {name: package_versions[name] for name in SFT_LOCKED_PACKAGES}},
+        ))
+    else:
+        checks.append(_failed(
+            "sft_lock_versions",
+            "dependency",
+            "SFT 关键包版本与训练锁文件不一致",
+            {"mismatches": lock_mismatches},
+        ))
+
+    framework_versions = dict(checkpoint_manifest.get("framework_versions") or {})
+    checkpoint_mismatches = []
+    for package in SFT_CHECKPOINT_PACKAGES:
+        actual = package_versions.get(package, "")
+        expected = str(framework_versions.get(package) or "")
+        if not actual or not expected or actual != expected:
+            checkpoint_mismatches.append({
+                "package": package,
+                "actual": actual or "<missing>",
+                "expected": expected or "<missing-in-checkpoint>",
+            })
+    if not checkpoint_mismatches:
+        checks.append(_passed(
+            "sft_checkpoint_versions",
+            "dependency",
+            "SFT runtime 与 checkpoint 记录的框架版本一致",
+            {"versions": {name: package_versions[name] for name in SFT_CHECKPOINT_PACKAGES}},
+        ))
+    else:
+        checks.append(_failed(
+            "sft_checkpoint_versions",
+            "dependency",
+            "SFT runtime 与 checkpoint 记录的框架版本不一致",
+            {"mismatches": checkpoint_mismatches},
+        ))
+    return checks
+
+
 def _runtime_checks(
         *,
         mode: str,
@@ -413,6 +629,46 @@ def _runtime_checks(
     return checks
 
 
+def _probe_sft_runtime(sft_python: Path, environ: dict[str, str]) -> dict[str, Any]:
+    """
+    用正式 SFT Python 启动独立子进程并导入最终入口。
+
+    这里不加载模型、不执行推理；仅验证真实 import 链，包括项目日志模块等间接依赖。
+    """
+
+    code = f"""
+import importlib
+import importlib.metadata
+import json
+import platform
+import sys
+
+modules = {list(SFT_ENTRYPOINT_MODULES)!r}
+for module in modules:
+    importlib.import_module(module)
+
+packages = {list(SFT_LOCKED_PACKAGES)!r}
+print(json.dumps({{
+    "python_executable": sys.executable,
+    "python_version": platform.python_version(),
+    "package_versions": {{
+        package: importlib.metadata.version(package)
+        for package in packages
+    }},
+    "imported_modules": modules,
+}}, ensure_ascii=False))
+"""
+    completed = subprocess.run(
+        [str(sft_python), "-c", code],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=environ,
+        timeout=120,
+    )
+    return _last_json_line(completed.stdout)
+
+
 def _probe_vllm_runtime(vllm_python: Path, environ: dict[str, str]) -> dict[str, Any]:
     code = """
 import importlib.metadata
@@ -439,6 +695,21 @@ print(json.dumps({
         timeout=60,
     )
     return _last_json_line(completed.stdout)
+
+
+def _parse_pinned_requirements(path: Path) -> dict[str, str]:
+    """读取 `name==version` 锁定项；包名统一为小写并把下划线折叠为连字符。"""
+
+    versions: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "==" not in line:
+            continue
+        name, version = line.split("==", 1)
+        normalized_name = name.strip().lower().replace("_", "-")
+        normalized_version = version.split(";", 1)[0].strip()
+        versions[normalized_name] = normalized_version
+    return versions
 
 
 def _probe_model_cache(vllm_python: Path, model_path: str, environ: dict[str, str]) -> dict[str, Any]:
@@ -579,6 +850,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--checkpoint-dir", type=Path, required=True)
     parser.add_argument("--adapter-path", type=Path, required=True)
     parser.add_argument("--model-path", required=True)
+    parser.add_argument("--sft-python", type=Path, required=True)
+    parser.add_argument("--expected-sft-python", type=Path, required=True)
+    parser.add_argument("--sft-requirements-lock", type=Path, required=True)
     parser.add_argument("--vllm-python", type=Path, required=True)
     parser.add_argument("--vllm-freeze", type=Path, required=True)
     parser.add_argument("--expected-vllm-version", required=True)
@@ -602,6 +876,9 @@ def main(argv: list[str] | None = None) -> int:
         checkpoint_dir=args.checkpoint_dir,
         adapter_path=args.adapter_path,
         model_path=args.model_path,
+        sft_python=args.sft_python,
+        expected_sft_python=args.expected_sft_python,
+        sft_requirements_lock=args.sft_requirements_lock,
         vllm_python=args.vllm_python,
         vllm_freeze=args.vllm_freeze,
         expected_vllm_version=args.expected_vllm_version,
@@ -621,6 +898,8 @@ def main(argv: list[str] | None = None) -> int:
         "failed_check_count": report["failed_check_count"],
         "output": str(args.output),
         "preflight_version": report["preflight_version"],
+        "sft_python": report["runtime_identity"]["sft_python"],
+        "sft_package_versions": report["sft_runtime_metadata"].get("package_versions", {}),
     }, ensure_ascii=False, sort_keys=True))
     if not report["ok"]:
         for check in report["checks"]:

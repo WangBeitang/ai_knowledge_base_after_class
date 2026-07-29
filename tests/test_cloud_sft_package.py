@@ -75,6 +75,9 @@ def test_cloud_sft_scripts_keep_bootstrap_and_training_separate():
     train = (PROJECT_ROOT / "deploy/cloud_sft/run_sft_train.sh").read_text(encoding="utf-8")
     planner_server = (PROJECT_ROOT / "deploy/cloud_sft/run_planner_server.sh").read_text(encoding="utf-8")
     gpu_gate = (PROJECT_ROOT / "deploy/cloud_sft/run_gpu_acceptance_gate.sh").read_text(encoding="utf-8")
+    runtime_preflight = (
+        PROJECT_ROOT / "deploy/cloud_sft/run_runtime_preflight.sh"
+    ).read_text(encoding="utf-8")
 
     assert "sft_train.py" not in bootstrap
     assert "STAGE9_SFT_SMOKE_MAX_SAMPLES" in smoke
@@ -85,6 +88,9 @@ def test_cloud_sft_scripts_keep_bootstrap_and_training_separate():
     assert "run_planner_server.sh" in gpu_gate
     assert "run_planner_action_probe.sh" in gpu_gate
     assert "kill -TERM" in gpu_gate
+    assert "--expected-sft-python" in runtime_preflight
+    assert "--sft-requirements-lock" in runtime_preflight
+    assert "sys.executable（实际解释器）" in runtime_preflight
 
 
 def test_cloud_sft_uses_an_isolated_training_environment():
@@ -99,13 +105,16 @@ def test_cloud_sft_uses_an_isolated_training_environment():
     env_example = (PROJECT_ROOT / "deploy/cloud_sft/env.example").read_text(encoding="utf-8")
 
     assert "transformers==5.9.0" in requirement_lines
+    assert "loguru==0.7.3" in requirement_lines
     assert "transformers==5.9.0" in requirements_lock
+    assert "loguru==0.7.3" in requirements_lock
     assert all(not line.startswith("magic-pdf") for line in requirement_lines)
     assert "uv venv" in bootstrap
     assert "uv pip install" in bootstrap
     assert "uv sync" not in bootstrap
     assert "REQUIRE_CUDA=0：当前只做无卡环境准备" in bootstrap
     assert "SFT_VENV_PATH=" in env_example
+    assert "SFT_REQUIREMENTS_LOCK=deploy/cloud_sft/requirements-training.lock" in env_example
     assert "UV_SYNC_ARGS=" not in env_example
     assert "TRANSFORMERS_CACHE=" not in env_example
     assert "OMP_NUM_THREADS=1" in env_example

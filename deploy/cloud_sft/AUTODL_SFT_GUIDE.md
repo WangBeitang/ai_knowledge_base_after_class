@@ -372,6 +372,8 @@ REQUIRE_CUDA=0
 `requirements-training.txt（直接训练依赖清单）`解析生成。不要执行
 `uv add transformers==5.9.0`去修改主业务环境，也不要使用 `--frozen`跳过依赖检查；
 前者会与 `magic-pdf`发生版本冲突，后者会留下无法复现的损坏环境。
+训练锁文件还必须包含项目正式入口直接使用的 `loguru==0.7.3`，不能只列
+Torch、Transformers 和 PEFT 等模型训练包。
 
 5090 + QLoRA（4 位量化低秩适配）只改这两行：
 
@@ -546,14 +548,19 @@ bash deploy/cloud_sft/run_runtime_preflight.sh
 该命令只读检查，不会安装依赖、下载模型或启动服务。它会生成
 `runtime_preflight_no-card_<UTC时间>/preflight.json（无卡前置检查报告）`，并按以下层级给出失败：
 
-- `environment（环境）`：`OMP_NUM_THREADS`、离线开关和 `REQUIRE_CUDA`。
+- `environment（环境）`：`OMP_NUM_THREADS`、离线开关、expanded dev 固定配置和
+  `REQUIRE_CUDA`。
 - `storage（存储）`：系统盘、数据盘剩余空间。
 - `artifact（产物）`：checkpoint、adapter、manifest 和 vLLM freeze。
+- `dependency（依赖）`：实际解释器是否为 `.venv-sft`、正式训练与 expanded dev 入口能否
+  完整导入，以及 runtime、checkpoint manifest、训练锁文件三方版本是否一致。
 - `dependency/model_cache（依赖/模型缓存）`：vLLM/PyTorch 版本、CUDA backend 和基础模型离线缓存。
 - `network（网络端口）`：启动端口是否空闲。
 
 停止条件：任何 check（检查）为 `failed`时都不要开 GPU。尤其是
 `model_cache`失败，表示基础模型无法通过 `local_files_only（只读本地缓存）`解析；必须留在无卡模式补齐。
+`sft_python_identity`、`sft_entrypoint_imports`、`sft_lock_versions` 或
+`sft_checkpoint_versions`失败时也必须停在无卡模式修复，禁止临时换解释器或手工补包后直接开卡。
 
 ### 6. 切回正常有卡模式后的最终门禁
 

@@ -31,6 +31,7 @@ cd "$APP_ROOT"
 CLOUD_PREFLIGHT_MODE="${CLOUD_PREFLIGHT_MODE:-gpu}"
 SFT_VENV_PATH="${SFT_VENV_PATH:-$APP_ROOT/.venv-sft}"
 PYTHON_BIN="${PYTHON_BIN:-$SFT_VENV_PATH/bin/python}"
+SFT_REQUIREMENTS_LOCK="${SFT_REQUIREMENTS_LOCK:-deploy/cloud_sft/requirements-training.lock}"
 VLLM_VENV_PATH="${VLLM_VENV_PATH:-/root/.venv-vllm}"
 VLLM_VERSION="${VLLM_VERSION:-0.25.1}"
 VLLM_TORCH_BACKEND="${VLLM_TORCH_BACKEND:-cu130}"
@@ -57,6 +58,9 @@ args=(
   --checkpoint-dir "$SFT_CHECKPOINT_DIR"
   --adapter-path "$PLANNER_ADAPTER_PATH"
   --model-path "${PLANNER_MODEL_PATH:-Qwen/Qwen3.5-4B}"
+  --sft-python "$PYTHON_BIN"
+  --expected-sft-python "$SFT_VENV_PATH/bin/python"
+  --sft-requirements-lock "$SFT_REQUIREMENTS_LOCK"
   --vllm-python "$VLLM_VENV_PATH/bin/python"
   --vllm-freeze "$VLLM_ENV_FREEZE"
   --expected-vllm-version "$VLLM_VERSION"
@@ -72,6 +76,22 @@ args=(
 
 COMMAND_TEXT="$PYTHON_BIN ${args[*]}"
 printf '%s\n' "$COMMAND_TEXT" > "$RUN_DIR/command.txt"
+printf 'PYTHON_BIN（配置解释器）=%s\n' "$PYTHON_BIN"
+printf 'SFT_VENV_PATH（正式训练环境）=%s\n' "$SFT_VENV_PATH"
+"$PYTHON_BIN" - <<'PY'
+import importlib.metadata
+import platform
+import sys
+
+print(f"sys.executable（实际解释器）={sys.executable}")
+print(f"python（解释器版本）={platform.python_version()}")
+for package in ("torch", "transformers", "peft", "loguru", "pydantic"):
+    try:
+        version = importlib.metadata.version(package)
+    except importlib.metadata.PackageNotFoundError:
+        version = "unavailable"
+    print(f"{package}（SFT 关键依赖）={version}")
+PY
 printf 'preflight（前置检查）mode=%s status=running\n' "$CLOUD_PREFLIGHT_MODE"
 "$PYTHON_BIN" "${args[@]}" 2>&1 | tee "$RUN_DIR/preflight.log"
 printf 'preflight（前置检查）mode=%s status=completed\n' "$CLOUD_PREFLIGHT_MODE"

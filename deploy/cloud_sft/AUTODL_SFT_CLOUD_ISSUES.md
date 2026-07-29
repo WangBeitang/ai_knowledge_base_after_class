@@ -10,7 +10,8 @@
 - config（模型配置）和 tokenizer（分词器）已通过离线加载验证。
 - 4 条样本、1 个 step（训练步）的 LoRA smoke（低秩微调冒烟训练）成功，
   耗时约 4 秒，已生成 checkpoint（检查点）和 cloud run report（云端运行报告）。
-- 正式 LoRA SFT 已完成：155 条样本、20 个 step、1 个 epoch（训练轮次），
+- 正式 LoRA SFT 已完成：155 个 Action step（对应 70 个来源轨迹）、20 个 optimizer step、
+  1 个 epoch（训练轮次），
   `train_loss=0.2804`。这只说明训练过程成功，不代表 held-out（留出集）质量已经验证。
 - 正式 checkpoint 根目录约 101MB，LoRA adapter（低秩适配器）和训练报告均已核对：
   `evaluation/stage9/artifacts/sft/checkpoints/planner-sft-stage9-qwen3-5-4b-lora_20260727T085537Z_94a77563`。
@@ -21,7 +22,54 @@
 - checkpoint runtime（检查点运行时）的 CUDA device placement（显卡设备放置）代码问题
   已修复；完整 7 条 dev eval 已成功，平均 Reward 为 0.8444。该结果只属于小规模工程验收，
   不能作为正式泛化结论。
-- 当前已经切回无卡模式，正式 checkpoint 和 dev eval 报告仍保存在数据盘。
+- 2026-07-29 已完成正式 25 条 balanced dev GPU 复评：路线正确 8/25、macro accuracy=0.32，
+  决定 `reject_sft_v1_train_sft_v2`；heldout test 未运行。
+- expanded dev 的 29 文件 v2 归档已下载到本地长期备份并通过归档整体、manifest 和内部逐文件
+  SHA256 校验；归档 SHA256 为
+  `0f58738d92fb81f8f7bb3010c39cb7be95436947ed04ae4886b57cc82a106b44`。
+- 当前已经切回无卡模式，正式 checkpoint、训练报告和 expanded dev 结果仍保存在数据盘。
+
+## 2026-07-29 expanded dev 上云复评补充复盘
+
+### 本轮结论
+
+- GPU 运行链路正常：25 条全部完成，格式合法率 1.0，无 execution failure（执行失败）和
+  forbidden action（禁止动作）。
+- SFT v1 未通过 9.4 准入，但 17 条失败不能全部归因给模型。
+- 5 条 Web 和 2 条澄清属于明确的训练覆盖问题；5 条 HyDE 存在 evaluator false negative
+  （评测器误判）；5 条安全拒绝因 Provider 没有返回安全证据，暂时无法准确归因。
+- 评测契约、训练数据和完整经验见
+  [`阶段9-SFT-v1训练与复评复盘.md`](../../重构方案/阶段9-SFT-v1训练与复评复盘.md)。
+
+### 本轮新发现的云端问题
+
+| 问题 | 现象 | 根因 | 后续处理 |
+|---|---|---|---|
+| 正式入口缺少 `loguru` | 无卡 preflight 导入 expanded dev 入口时报 `ModuleNotFoundError: No module named 'loguru'` | `.venv-sft` 锁文件只覆盖训练包，没有覆盖正式评测入口导入的项目日志依赖 | 9.3.17 已把 `loguru==0.7.3`补入 source requirements、lock 和 import 门禁；待云端无卡重建验证 |
+| 新 shell 没有加载 `env.local` | `$PYTHON_BIN` 为空时执行 `uv pip freeze`，第一次得到主项目 `.venv` 的 `transformers=4.57.6` | 无卡重启后环境变量不会自动继承；uv 在解释器参数无效时选择了项目默认环境 | freeze 前强制 `source env.local`并打印 `$PYTHON_BIN`、`sys.executable`和核心包版本 |
+| 离线变量不完整 | `env.local`只有 `HF_HUB_OFFLINE=1`，缺少脚本硬门禁要求的 `TRANSFORMERS_OFFLINE=1` | 旧实例配置没有随新入口模板自动补齐 | 无卡阶段显式补齐并 grep 复核；正式脚本继续拒绝不完整离线配置 |
+| 只校验依赖列表不足 | 文件、checkpoint 和 SHA256 preflight 通过后，正式 Python 入口仍可能缺运行依赖 | 过去只检查若干包版本，没有导入最终执行模块 | 9.3.17 preflight 已使用正式 `$PYTHON_BIN`完整 import 训练与 expanded dev 入口，并校验解释器和版本身份 |
+| `screen`退出容易被误判为崩溃 | 25 条结束后 `screen -r`显示 `[screen is terminating]` | 未准入时脚本保存产物后按设计以退出码 3 结束，后台会话随子进程关闭 | 不重复启动；先定位唯一 `expanded_dev_gate_<timestamp>`并读取 log、decision 和 report |
+| 环境 freeze 可能记录错解释器 | 错误 freeze 看起来格式正常，版本却和 checkpoint manifest 不一致 | 没有在写文件前冻结解释器绝对路径和包身份 | 把 checkpoint manifest、lock、runtime freeze 三方一致性设为归档门禁 |
+
+### 本轮正确做法
+
+1. 先在无卡模式拉代码、备份 `env.local`、执行 checkpoint/data/hash preflight。
+2. 缺少 `loguru`时没有开 GPU，而是在无卡模式补包并重新通过完整入口检查。
+3. 有卡前显式检查离线变量、输出不存在、磁盘空间和 GPU 空进程。
+4. 正式评测运行在独立 `screen` 会话，并有逐 case 进度和 Action path。
+5. 门禁拒绝后立即切回无卡模式，没有继续占用 GPU 做分析和打包。
+6. 环境、checkpoint、训练 run、expanded dev run、准入决定和报告统一进入 v2 冻结归档。
+7. 下载后完成外层 SHA256、内外 manifest 对比和 29 文件逐文件 SHA256。
+
+### 本轮仍需整改
+
+- [x] 已把 `loguru==0.7.3`写入训练依赖源文件和锁文件。
+- [x] 无卡 preflight 已增加正式入口 import、解释器身份、锁文件/checkpoint 版本三方一致性硬门禁；
+  本地测试已通过，云端全新 `.venv-sft` 无卡验收待执行。
+- [ ] 修复 Snapshot Provider 的 HyDE 和安全拒绝 Observation 契约。
+- [ ] 契约修复后重跑 Reward v1.1 回归和 SFT v1 归因复评。
+- [ ] 只根据修正后仍成立的失败补独立 train-only 数据；不复制 balanced dev 或 heldout。
 
 ## 2026-07-27 首次正式上云复盘
 
@@ -155,6 +203,10 @@ checkpoint runtime、评测数据覆盖和产物路径。因此多个本应在�
 | 开卡后才发现 checkpoint、缓存或端口问题 | 过去只有人工命令，没有同一份结构化门禁 | 开卡后第一条业务命令运行 `run_gpu_acceptance_gate.sh`；preflight 任一层失败立即停卡 |
 | 单条 healthcheck 被误当成完整 smoke | healthcheck 只证明一个输入能走通 HTTP，不能覆盖全部 Action 和 Web 权限 | 固定运行 7 个 HTTP 探针：六类 Action 各一条，外加 Web 禁用边界 |
 | Action 不匹配导致工程验证和模型质量混在一起 | 协议故障与模型路由错误使用了同一个成败口径 | 9.3.10 默认只卡 HTTP/解析/model_id/Web 权限；Action 命中率留给 9.3.11 分析 |
+| expanded dev 无卡入口缺少 `loguru` | 训练锁文件没有覆盖项目日志模块依赖 | 在无卡模式临时补装；9.3.17 更新 requirements/lock，并让 preflight import 正式入口 |
+| 重启后 freeze 出现 `transformers=4.57.6` | 未重新 `source env.local`，`$PYTHON_BIN`为空，uv 选择主项目 `.venv` | freeze 前打印解释器路径和版本；与 checkpoint manifest、lock 三方交叉校验 |
+| HyDE 第一次检索已有 0.95 分目标证据却仍被要求 HyDE | Snapshot Provider 用 expected label 直接构造高分候选，路线前置条件与评分要求冲突 | 修复 Provider/Observation 契约或使用真实检索 observation replay，不能按该结果直接补模型数据 |
+| 安全拒绝 case 本地检索为空 | Provider 把 `should_answer=false`错误等价为“不返回本地证据” | 返回手册安全警告后再判断模型是否拒绝，当前 5 条不能准确归因 |
 
 不要使用 `uv add transformers==5.9.0 --frozen`强行修改主业务环境。
 
@@ -238,10 +290,9 @@ HF_HUB_OFFLINE=1
 
 ## 下一步
 
-1. 同步 9.3.10 代码到 AutoDL；无卡执行 `run_runtime_preflight.sh`和真实 Provider 最小探针。
-2. 下一次开 4090 后只执行 `run_gpu_acceptance_gate.sh`，生成六类 Action/Web 边界 HTTP 记录；
-   preflight 失败立即停卡，不在有卡模式安装或下载。
-3. 回传两份 smoke 产物后进入 9.3.11，分析 7 条 dev 结果并区分工程问题和模型质量问题。
-4. 在无卡模式补充并冻结独立、路线均衡的 dev/test 设计，先解决评测证据不足。
-5. 已完成 checkpoint、cloud run report、dev eval 和环境冻结清单的本地长期备份；后续不得
-   覆盖 `SFT v1 baseline（监督微调第一版基线）`，暂不进入 GRPO。
+1. 本地先执行 9.3.17：修复 `.venv-sft` 依赖、正式入口 import 和解释器身份门禁。
+2. 执行 9.3.18：修复 HyDE 与安全拒绝的 Provider/Observation 契约，优先冻结真实检索回放。
+3. 契约变化后执行 9.3.19：重跑 Reward v1.1 回归，默认不调整权重。
+4. 只在以上本地工作通过后再次申请 GPU，执行 9.3.20 的 SFT v1 校正复评。
+5. 根据校正后真实失败执行 9.3.21～9.3.23；在准入通过前不运行 heldout、不进入 9.4。
+6. 已完成 SFT v1 checkpoint 和首次 expanded dev 归档；后续运行不得覆盖原始 run_dir 和归档。
