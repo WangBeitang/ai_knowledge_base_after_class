@@ -65,6 +65,14 @@ CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_gpu_acce
 CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_dev_eval.sh
 ```
 
+10. 9.3.12～9.3.15A 的数据、阈值和 Reward 门禁全部冻结后，运行完整 25 条
+    expanded dev 与 9.4 准入门禁：
+
+```bash
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local \
+bash deploy/cloud_sft/run_expanded_dev_gate.sh
+```
+
 ## 脚本边界
 
 - `requirements-training.txt`：固定 SFT（监督微调）专用依赖，不包含 `magic-pdf（PDF 解析框架）`
@@ -84,11 +92,14 @@ CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local bash deploy/cloud_sft/run_dev_eval
 - `run_provider_probe.sh`：通过真实业务 Provider 执行一条已审核 Web 路线并写入 JSONL 审计记录；
   不依赖 GPU，但依赖业务侧 Web/Milvus 配置。
 - `run_dev_eval.sh`：用指定 checkpoint（检查点）跑 dev case（开发样本）并生成报告。
+- `run_expanded_dev_gate.sh`：任务 9.3.16 正式入口；模型加载前校验 25 条 reviewed dev、
+  checkpoint、snapshot、Reward v1.1 和冻结阈值，运行后生成逐 case 结果与 9.4 准入决定。
 - `scripts/cloud_sft/collect_cloud_run_report.py`：收集 code version（代码版本）、config hash（配置哈希）、
   model profile（模型配置档案）、train manifest（训练清单）、Reward profile（奖励函数配置）、
   snapshot_id（快照身份）和运行命令。
-- `scripts/cloud_sft/freeze_sft_artifacts.py`：校验 checkpoint、正式训练报告和 dev eval 的
-  `run_id（运行身份）`一致性，生成逐文件 SHA256（文件哈希）、冻结 manifest（清单）和可下载归档。
+- `scripts/cloud_sft/freeze_sft_artifacts.py`：校验 checkpoint、正式训练报告和历史 dev eval
+  或 9.3.16 expanded dev run 的 `run_id（运行身份）`一致性，生成逐文件 SHA256（文件哈希）、
+  冻结 manifest（清单）和可下载归档。
 
 ## 密钥要求
 

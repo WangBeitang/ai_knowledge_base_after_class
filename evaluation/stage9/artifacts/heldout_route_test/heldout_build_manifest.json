@@ -1,0 +1,83 @@
+{
+  "build_version": "stage9-heldout-route-test-build-v3",
+  "built_at": "2026-07-29T04:50:00+00:00",
+  "status": "reviewed_freeze_complete",
+  "model_execution_performed": false,
+  "heldout_inference_result_count": 0,
+  "core_answer_test": {
+    "case_count": 35,
+    "canonical_sha256_before": "74412bcc5a91c363e5de339bd2ac3976bfb5feebdbbb04f30d1521613fb4eee3",
+    "canonical_sha256_after": "74412bcc5a91c363e5de339bd2ac3976bfb5feebdbbb04f30d1521613fb4eee3",
+    "unchanged": true
+  },
+  "route_heldout_test": {
+    "candidate_count": 25,
+    "reviewed_count": 25,
+    "pending_count": 0,
+    "rejected_count": 0,
+    "route_counts": {
+      "local_answer": 5,
+      "hyde_fallback": 5,
+      "web_required": 5,
+      "ask_clarification": 5,
+      "safe_refuse": 5
+    },
+    "reviewed_route_counts": {
+      "local_answer": 5,
+      "hyde_fallback": 5,
+      "web_required": 5,
+      "ask_clarification": 5,
+      "safe_refuse": 5
+    }
+  },
+  "source_independence": {
+    "train_dev_source_document_count": 11,
+    "heldout_source_document_count": 5,
+    "source_document_overlap_count": 0,
+    "leakage_group_overlap_count": 0
+  },
+  "source_import_manifest": "evaluation/stage9/artifacts/heldout_route_test/source_import_manifest.json",
+  "source_import_manifest_sha256": "1069841adf7015aa8f8b66cc4f1b17f42cb31b1d1e146d3207a5dcd094290ef2",
+  "web_evidence_manifest": "evaluation/stage9/artifacts/heldout_route_test/web_evidence_manifest.json",
+  "web_evidence_manifest_sha256": "d1b56248cdc3844e0b68e54f339cdf093944f38593eb6be45cd0bf36d2215859",
+  "route_matrix": "evaluation/stage9/configs/planner_eval_route_matrix_v1.json",
+  "route_matrix_sha256": "e9345a2e04d76ee825eacae82aa26bf867528e3eea513c134a545dbb76948383",
+  "reward_profile": "evaluation/stage9/configs/reward_v1_1_training_profile.json",
+  "reward_profile_sha256": "2d4fc0f92c51beaf655fed57d2f5d3b43abaa50eeb4117ddb66b694f901ccf4e",
+  "snapshot_id": "stage9-heldout-route-test-env-20260729-v3",
+  "environment_snapshot": "evaluation/stage9/artifacts/heldout_route_test/environment_snapshot.json",
+  "environment_snapshot_sha256": "fb2e1fbc858ee72eabddf190ccde2bd96945b36dd5626cb4a84b575cbbbb0160",
+  "independent_review_decisions": [
+    {
+      "path": "evaluation/stage9/artifacts/heldout_route_test/independent_review_round1/review_round1_clean_decisions.jsonl",
+      "sha256": "59f1cae2b8036b98141d7135bc37ce1f990cd09f3c2cc64541faec0a8b9152db"
+    },
+    {
+      "path": "evaluation/stage9/artifacts/heldout_route_test/independent_review_round2/review_round2_clean_decisions.jsonl",
+      "sha256": "200ea78ccea83c45a87539d057b61fd75fac995fe759afcec0cfca47e9a2f6c5"
+    }
+  ],
+  "cross_split_leakage_finding_count": 0,
+  "outputs": {
+    "evaluation/stage8/cases/planner_cases.jsonl": {
+      "sha256": "00fe0cb5299a30c36cb10f27197dcfb43e09cf3ec6027604fd40b305a78f82c7",
+      "bytes": 170357
+    },
+    "evaluation/stage8/cases/split_manifest.json": {
+      "sha256": "8a226055b5825f186f66049ed49b43cff57a98fb03d6db49aacf011d82ecde03",
+      "bytes": 13873
+    },
+    "evaluation/stage9/artifacts/heldout_route_test/heldout_case_evidence.jsonl": {
+      "sha256": "5a37d087a74f11a45c65458d20a78018a971afd6bef09ed994ac4efdead8a467",
+      "bytes": 64522
+    },
+    "evaluation/stage9/artifacts/heldout_route_test/independent_review_queue.jsonl": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "evaluation/stage9/artifacts/reports/阶段9-heldout-route-test冻结报告.md": {
+      "sha256": "e809db0643aadecfff73f57659d9814b3b34c137936952ba539b7d7bd458527b",
+      "bytes": 1549
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "matrix_version": "stage9-planner-eval-route-matrix-v1",
+  "route_buckets": [
+    {
+      "route_bucket": "hyde_fallback",
+      "name_zh": "本地不足后 HyDE 回退",
+      "purpose": "验证本地证据不足时进入 HyDE，而不是提前回答。",
+      "classification_rule": "所有接受路径都要求 hyde_search；case 级标签必须再冻结最终 answer/refuse。",
+      "acceptable_path_templates": [
+        [
+          "local_search",
+          "hyde_search",
+          "answer"
+        ],
+        [
+          "local_search",
+          "hyde_search",
+          "refuse"
+        ]
+      ],
+      "case_level_rule": "每条 case 只能声明符合业务标签的路径子集；不能把本桶全部模板无差别复制到每条 case。"
+    },
+    {
+      "route_bucket": "ask_clarification",
+      "name_zh": "信息不足时澄清",
+      "purpose": "验证关键主体、代码或上下文缺失时向用户澄清。",
+      "classification_rule": "expected_behavior.should_ask_clarification=true。",
+      "acceptable_path_templates": [
+        [
+          "ask_clarification"
+        ],
+        [
+          "local_search",
+          "ask_clarification"
+        ]
+      ],
+      "case_level_rule": "每条 case 只能声明符合业务标签的路径子集；不能把本桶全部模板无差别复制到每条 case。"
+    }
+  ],
+  "blind_review_rule": "逐 case 判断 evidence、route、leakage 与表达；不能根据每桶数量倒推审核决定。"
+}

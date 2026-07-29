@@ -61,6 +61,7 @@ def freeze_web_evidence(
     source_manifest_path: Path = DEFAULT_SOURCE_MANIFEST,
     output_path: Path = DEFAULT_OUTPUT,
     timeout_seconds: float = 30.0,
+    freeze_version: str = FREEZE_VERSION,
 ) -> dict[str, Any]:
     source_manifest = json.loads(source_manifest_path.read_text(encoding="utf-8"))
     captured_at = datetime.now(UTC).replace(microsecond=0).isoformat()
@@ -127,7 +128,7 @@ def freeze_web_evidence(
             )
 
     output = {
-        "freeze_version": FREEZE_VERSION,
+        "freeze_version": freeze_version,
         "source_manifest_version": source_manifest["manifest_version"],
         "source_manifest_path": str(
             source_manifest_path.resolve().relative_to(PROJECT_ROOT)

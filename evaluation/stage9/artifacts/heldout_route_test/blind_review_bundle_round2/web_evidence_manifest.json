@@ -1,0 +1,9 @@
+{
+  "freeze_version": "stage9-heldout-route-test-web-evidence-freeze-v1",
+  "source_manifest_version": "stage9-heldout-route-test-web-source-manifest-v1",
+  "source_manifest_path": "evaluation/stage9/configs/heldout_route_test_web_source_manifest_v1.json",
+  "source_manifest_sha256": "3ed7ef95a7d14d2b4bff24063e90639e1dc8be3c25a29057461af0feea53d37c",
+  "captured_at": "2026-07-28T12:06:15+00:00",
+  "source_count": 0,
+  "sources": []
+}

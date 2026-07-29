@@ -1,0 +1,65 @@
+{
+  "manifest_version": "stage9-heldout-route-test-source-manifest-v1",
+  "purpose": "任务 9.3.14 的独立来源文档清单。来源设备、正文 SHA256 和问题表达不得进入 train/balanced dev；所有本地证据 case 必须基于生产导入后的真实 chunk 身份构建。",
+  "dataset_id": "dataset_default_equipment_ops",
+  "owner_user_id": "eval_demo_user",
+  "tenant_id": "tenant_default",
+  "visibility": "public",
+  "sources": [
+    {
+      "source_id": "h3c-er2100-guide-6w104",
+      "publisher": "H3C",
+      "title": "H3C ER2100 企业级路由器用户手册",
+      "source_version": "6W104",
+      "source_role": "heldout_route_test",
+      "document_id": "doc_stage9_test_h3c_er2100_guide_6w104",
+      "local_path": "doc/H3C ER2100企业级路由器 用户手册-6W104-整本手册.pdf",
+      "source_url": "https://www.h3c.com/cn/d_201509/892076_30005_0.htm",
+      "sha256": "391ecdf261f2912c8a0508df285cf0e6e35ff0d19393e3354b3070e2027742f9"
+    },
+    {
+      "source_id": "huawei-display-b5-341w-guide-v04",
+      "publisher": "Huawei",
+      "title": "华为显示器 B5-341W 用户指南",
+      "source_version": "ZQE-CBA,04,zh-cn",
+      "source_role": "heldout_route_test",
+      "document_id": "doc_stage9_test_huawei_display_b5_341w_v04",
+      "local_path": "doc/华为显示器 B5-341W 用户指南-(ZQE-CBA,04,zh-cn).pdf",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15816552/",
+      "sha256": "b599069adb3003fc70e37e602f36c9d3636a7eecff70b33ddff613e3f3876651"
+    },
+    {
+      "source_id": "huawei-matebook-b3-520-guide-v03",
+      "publisher": "Huawei",
+      "title": "HUAWEI MateBook B3-520 用户手册",
+      "source_version": "BohrDZ,03,zh-cn",
+      "source_role": "heldout_route_test",
+      "document_id": "doc_stage9_test_huawei_matebook_b3_520_v03",
+      "local_path": "doc/HUAWEI MateBook B3-520 用户手册-(03,zh-cn,BohrDZ).pdf",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn16057627/",
+      "sha256": "63fdee1c706e09c7bb9f3266cd72ceff73289900a89f12da2a2b8221303cb5c0"
+    },
+    {
+      "source_id": "huawei-matestation-b520-guide-v02",
+      "publisher": "Huawei",
+      "title": "HUAWEI MateStation B520 用户手册",
+      "source_version": "PanguBZ,Windows11_02,zh-cn",
+      "source_role": "heldout_route_test",
+      "document_id": "doc_stage9_test_huawei_matestation_b520_v02",
+      "local_path": "doc/HUAWEI Matestation B520 用户手册-(PanguBZ,Windows11_02,zh-cn).pdf",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15841903/",
+      "sha256": "9431d66c09a1700b7a9c29775d0bb18c8259aeb30f37c40c30f7bccccb4aa825"
+    },
+    {
+      "source_id": "huawei-tablet-c7-guide-harmonyos2-v01",
+      "publisher": "Huawei",
+      "title": "华为平板 C7 用户指南",
+      "source_version": "DBY-W09,HarmonyOS 2_01,zh-cn",
+      "source_role": "heldout_route_test",
+      "document_id": "doc_stage9_test_huawei_tablet_c7_hmos2_v01",
+      "local_path": "doc/华为平板 C7 用户指南-(DBY-W09,HarmonyOS 2_01,ZH-CN).pdf",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15880996/",
+      "sha256": "29d3023fc8fd6cd9a215cc2df5d880875bc94cc0664a26f87cbdb996fcff9087"
+    }
+  ]
+}

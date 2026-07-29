@@ -3,7 +3,12 @@ import subprocess
 from pathlib import Path
 
 from scripts.cloud_sft.collect_cloud_run_report import REPORT_VERSION, build_report
-from scripts.cloud_sft.freeze_sft_artifacts import FREEZE_VERSION, freeze_sft_artifacts
+from scripts.cloud_sft.freeze_sft_artifacts import (
+    EXPANDED_DEV_RUN_FILES,
+    FREEZE_VERSION,
+    _dev_run_layout,
+    freeze_sft_artifacts,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +28,7 @@ REQUIRED_DEPLOY_FILES = [
     Path("deploy/cloud_sft/run_provider_probe.sh"),
     Path("deploy/cloud_sft/run_gpu_acceptance_gate.sh"),
     Path("deploy/cloud_sft/run_dev_eval.sh"),
+    Path("deploy/cloud_sft/run_expanded_dev_gate.sh"),
 ]
 
 REQUIRED_SHELL_SCRIPTS = [
@@ -35,6 +41,7 @@ REQUIRED_SHELL_SCRIPTS = [
     Path("deploy/cloud_sft/run_provider_probe.sh"),
     Path("deploy/cloud_sft/run_gpu_acceptance_gate.sh"),
     Path("deploy/cloud_sft/run_dev_eval.sh"),
+    Path("deploy/cloud_sft/run_expanded_dev_gate.sh"),
 ]
 
 
@@ -106,6 +113,11 @@ def test_cloud_sft_uses_an_isolated_training_environment():
     assert "TRANSFORMERS_OFFLINE=1" in env_example
     assert "REQUIRE_GPU_PREFLIGHT=1" in env_example
     assert "VLLM_ENV_FREEZE=" in env_example
+    assert "EXPANDED_DEV_MAX_CASES" not in env_example
+    assert (
+        "EXPANDED_DEV_SNAPSHOT="
+        "evaluation/stage9/artifacts/heldout_route_test/environment_snapshot.json"
+    ) in env_example
 
 
 def test_collect_cloud_run_report_writes_auditable_json(tmp_path):
@@ -129,6 +141,58 @@ def test_collect_cloud_run_report_writes_auditable_json(tmp_path):
     assert payload["reward_profile"]["reward_version"] == "reward-v1.1"
     assert payload["files"]["training_config"]["sha256"]
     assert payload["commands"] == ["uv run pytest tests/test_cloud_sft_package.py"]
+
+
+def test_collect_cloud_run_report_binds_expanded_dev_admission(tmp_path):
+    output = tmp_path / "cloud_run_report.json"
+    admission_output = tmp_path / "sft_9_4_admission_decision.json"
+    admission_report = tmp_path / "admission.md"
+    _write_json(
+        admission_output,
+        {
+            "admission_version": "stage9-sft-expanded-dev-admission-v1",
+            "eval_run_id": "eval-1",
+            "snapshot_id": "snapshot-1",
+            "reward_version": "reward-v1.1",
+            "heldout_inference_result_count": 0,
+            "checkpoint": {"run_id": "checkpoint-1"},
+            "summary": {
+                "decision": "allow_stage9_4",
+                "eligible_for_stage9_4": True,
+                "case_count": 25,
+                "route_macro_accuracy": 0.84,
+                "failed_case_ids": [],
+            },
+        },
+    )
+    _write_text(admission_report, "# admission\n")
+
+    build_report(
+        training_config=Path(
+            "evaluation/stage9/configs/planner_sft_qwen3_5_4b_lora.json"
+        ),
+        output=output,
+        admission_decision_output=admission_output,
+        admission_report=admission_report,
+    )
+    payload = json.loads(output.read_text(encoding="utf-8"))
+
+    assert payload["admission_decision"]["decision"] == "allow_stage9_4"
+    assert payload["admission_decision"]["eligible_for_stage9_4"] is True
+    assert payload["admission_decision"]["heldout_inference_result_count"] == 0
+    assert payload["files"]["admission_decision_output"]["sha256"]
+    assert payload["files"]["admission_report"]["sha256"]
+
+
+def test_freeze_sft_artifacts_recognizes_expanded_dev_run(tmp_path):
+    for relative_path in EXPANDED_DEV_RUN_FILES:
+        _write_text(tmp_path / relative_path, "artifact\n")
+
+    kind, eval_path, required = _dev_run_layout(tmp_path)
+
+    assert kind == "stage9_3_16_expanded_dev_gate"
+    assert eval_path == Path("sft_expanded_dev_eval.json")
+    assert required == EXPANDED_DEV_RUN_FILES
 
 
 def test_freeze_sft_artifacts_writes_verified_archive(tmp_path):

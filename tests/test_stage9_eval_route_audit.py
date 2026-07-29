@@ -15,7 +15,7 @@ from evaluation.stage9.model_planner.audit_eval_route_coverage import (
 def test_current_inventory_and_route_coverage_are_audited():
     audit = audit_evaluation_data()
 
-    assert audit.planner_case_count == 71
+    assert audit.planner_case_count == 96
     assert audit.sft_sample_count == 155
     assert audit.sft_source_case_count == 70
 
@@ -29,13 +29,24 @@ def test_current_inventory_and_route_coverage_are_audited():
         == 5
     )
     assert coverage[("current_dev_candidate", RouteBucket.HYDE_FALLBACK)].case_count == 5
-    assert coverage[("current_dev_candidate", RouteBucket.WEB_REQUIRED)].formal_gold_case_count == 0
+    assert coverage[("current_dev_candidate", RouteBucket.WEB_REQUIRED)].formal_gold_case_count == 5
     assert coverage[("current_dev_candidate", RouteBucket.WEB_REQUIRED)].case_count == 5
     assert coverage[("current_dev_candidate", RouteBucket.ASK_CLARIFICATION)].case_count == 5
     assert coverage[("current_dev_candidate", RouteBucket.SAFE_REFUSE)].case_count == 5
     assert coverage[("core_answer_test", RouteBucket.LOCAL_ANSWER)].case_count == 35
     assert coverage[("core_answer_test", RouteBucket.LOCAL_ANSWER)].formal_gold_case_count == 35
     assert coverage[("core_answer_test", RouteBucket.SAFE_REFUSE)].case_count == 0
+    expected_reviewed = {
+        RouteBucket.LOCAL_ANSWER: 5,
+        RouteBucket.HYDE_FALLBACK: 5,
+        RouteBucket.WEB_REQUIRED: 5,
+        RouteBucket.ASK_CLARIFICATION: 5,
+        RouteBucket.SAFE_REFUSE: 5,
+    }
+    for bucket in RouteBucket:
+        heldout = coverage[("route_heldout_test", bucket)]
+        assert heldout.case_count == 5
+        assert heldout.formal_gold_case_count == expected_reviewed[bucket]
 
 
 def test_train_template_repetition_remains_visible_but_balanced_dev_has_no_leakage():
@@ -66,14 +77,14 @@ def test_train_template_repetition_remains_visible_but_balanced_dev_has_no_leaka
     ]
 
     case_by_id = {case.case_id: case for case in audit.cases}
-    pending = case_by_id[
+    reviewed_web = case_by_id[
         "planner-dev-balanced-web-b5-firmware-upgrade-guidance"
     ]
-    assert pending.formal_eval_gold_eligible is False
-    assert "human_review_pending" in pending.exclusion_reasons
-    assert pending.source_traceable is True
+    assert reviewed_web.formal_eval_gold_eligible is True
+    assert "human_review_pending" not in reviewed_web.exclusion_reasons
+    assert reviewed_web.source_traceable is True
     assert (
-        pending.source_traceability
+        reviewed_web.source_traceability
         == "web_url_capture_hash_and_fact_ids_complete"
     )
 

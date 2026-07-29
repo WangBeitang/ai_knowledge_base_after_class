@@ -328,11 +328,21 @@ def build_route_matrix(audit: EvalRouteAudit) -> dict[str, Any]:
         },
     }
     observed = {
-        "balanced_dev_reusable_formal_gold": _formal_counts(audit.cases, split="dev"),
-        "heldout_route_test_reusable_formal_gold": {
-            bucket.value: 0 for bucket in RouteBucket
-        },
-        "core_answer_test_preserved": _formal_counts(audit.cases, split="test"),
+        "balanced_dev_reusable_formal_gold": _formal_counts(
+            audit.cases,
+            split="dev",
+            logical_eval_set="current_dev_candidate",
+        ),
+        "heldout_route_test_reusable_formal_gold": _formal_counts(
+            audit.cases,
+            split="test",
+            logical_eval_set="route_heldout_test",
+        ),
+        "core_answer_test_preserved": _formal_counts(
+            audit.cases,
+            split="test",
+            logical_eval_set="core_answer_test",
+        ),
     }
     return {
         "matrix_version": MATRIX_VERSION,
@@ -661,7 +671,11 @@ def _case_audit(
     review_status = str(raw.get("human_review_status") or "unknown")
     route_bucket = RouteBucket(raw["_route_bucket"])
     source_traceable, traceability = _traceability(raw, route_bucket)
-    logical_eval_set = _logical_eval_set(source_dataset, split)
+    logical_eval_set = _logical_eval_set(
+        source_dataset,
+        split,
+        gold_origin=str(raw.get("gold_origin") or ""),
+    )
     exclusion_reasons: list[str] = []
     if split not in {"dev", "test"} or source_dataset != "planner_case_registry":
         exclusion_reasons.append("train_only_not_independent_eval_gold")
@@ -745,10 +759,17 @@ def _review_evidence(row: dict[str, Any], source_dataset: str) -> str:
     return "人工标记 reviewed；个人身份未记录"
 
 
-def _logical_eval_set(source_dataset: str, split: str) -> str:
+def _logical_eval_set(
+    source_dataset: str,
+    split: str,
+    *,
+    gold_origin: str = "",
+) -> str:
     if source_dataset in {"curated_seed_source", "route_seed_source"}:
         return "sft_train_only"
     if split == "test":
+        if gold_origin == "heldout_gold":
+            return "route_heldout_test"
         return "core_answer_test"
     if split == "dev":
         return "current_dev_candidate"
@@ -778,6 +799,7 @@ def _coverage(cases: list[CaseAudit]) -> list[CoverageRecord]:
         ("train", "sft_train_only"),
         ("dev", "current_dev_candidate"),
         ("test", "core_answer_test"),
+        ("test", "route_heldout_test"),
     ]:
         for bucket in RouteBucket:
             selected = groups[(split, logical_eval_set, bucket)]
@@ -930,6 +952,11 @@ def _conclusions(
         for row in coverage
         if row.logical_eval_set == "core_answer_test"
     }
+    heldout_test = {
+        row.route_bucket: row
+        for row in coverage
+        if row.logical_eval_set == "route_heldout_test"
+    }
     repeated_route_case_count = sum(
         len(group.case_ids)
         for group in duplicate_groups
@@ -954,26 +981,44 @@ def _conclusions(
         "source case；训练 step 数不是独立问题数。",
         f"route seed 有 {repeated_route_case_count} 个 case 落在重复 query 模板组中；"
         "case_id 数量会高估语义多样性。",
-        f"现有 dev 只有 {formal_dev_total} 条可计入当前正式 Gold，且全部属于 "
-        f"`local_answer`；其余桶正式 Gold 分别为 "
+        f"现有 dev 有 {formal_dev_total} 条可计入当前正式 Gold；五路线正式 Gold 分别为 "
+        f"local={dev[RouteBucket.LOCAL_ANSWER].formal_gold_case_count}、"
         f"HyDE={dev[RouteBucket.HYDE_FALLBACK].formal_gold_case_count}、"
         f"Web={dev[RouteBucket.WEB_REQUIRED].formal_gold_case_count}、"
         f"澄清={dev[RouteBucket.ASK_CLARIFICATION].formal_gold_case_count}、"
         f"拒绝={dev[RouteBucket.SAFE_REFUSE].formal_gold_case_count}。",
         f"现有 test 的 {core_test[RouteBucket.LOCAL_ANSWER].case_count} 条全部属于 "
         "`local_answer`，保留为 `core_answer_test`，不能代替五路线 heldout。",
+        "新增 route_heldout_test 候选五路线分别为 "
+        f"local={heldout_test[RouteBucket.LOCAL_ANSWER].case_count}、"
+        f"HyDE={heldout_test[RouteBucket.HYDE_FALLBACK].case_count}、"
+        f"Web={heldout_test[RouteBucket.WEB_REQUIRED].case_count}、"
+        f"澄清={heldout_test[RouteBucket.ASK_CLARIFICATION].case_count}、"
+        f"拒绝={heldout_test[RouteBucket.SAFE_REFUSE].case_count}；"
+        "pending 候选在独立审核前不计入正式 Gold。",
         f"检测到 {len(leakage_findings)} 个跨 split 重复/近重复配对，涉及 "
         f"{len(leaked_dev_ids)} 个 dev case；命中样本不得在复核前计入独立评测证据。",
         "因此 7 条 dev 结果只能作为工程回归和失败线索，不能证明 SFT v1 的独立泛化质量。",
-        "9.3.13/9.3.14 必须按已冻结矩阵补齐 reviewed、可追溯且与 train 隔离的数据。",
+        "9.3.13 balanced dev 门禁已满足；9.3.14 heldout 候选已冻结，"
+        "仍需独立盲审且不得在 9.3.16 前运行。",
     ]
 
 
-def _formal_counts(cases: list[CaseAudit], *, split: str) -> dict[str, int]:
+def _formal_counts(
+    cases: list[CaseAudit],
+    *,
+    split: str,
+    logical_eval_set: str | None = None,
+) -> dict[str, int]:
     counts = Counter(
         case.route_bucket.value
         for case in cases
-        if case.split == split and case.formal_eval_gold_eligible
+        if case.split == split
+        and (
+            logical_eval_set is None
+            or case.logical_eval_set == logical_eval_set
+        )
+        and case.formal_eval_gold_eligible
     )
     return {bucket.value: counts[bucket.value] for bucket in RouteBucket}
 

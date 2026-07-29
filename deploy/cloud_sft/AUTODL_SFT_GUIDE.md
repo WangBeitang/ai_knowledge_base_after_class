@@ -994,8 +994,8 @@ DEV_EVAL_MAX_CASES=7
 
 原因：
 
-- 当前 `planner_cases.jsonl`的 dev split（开发集划分）总共就是 7 条，因此这里是完整
-  dev eval，不是从更大 dev 集抽样。
+- 这组配置用于复现第一轮只有 7 条 dev 时的历史评测；当前 registry 已扩充为 25 条，
+  因而 `DEV_EVAL_MAX_CASES=7`现在只能做运行时回归，不能作为正式质量结论。
 - 先验证 checkpoint runtime（检查点运行时）和 Planner（规划器）调用链。
 - 等真实 Milvus/Web（向量数据库/网页检索）配置稳定后，再切：
 
@@ -1007,6 +1007,66 @@ DEV_EVAL_PROVIDER=milvus
 提示可选 fast path（加速实现）不可用，并不代表正在下载。当前 PyTorch fallback（回退实现）
 可以继续使用；在 `HF_HUB_OFFLINE=1`时，缺少本地模型缓存会直接报离线错误。
 
+## 任务 9.3.16：跑完整 expanded dev 与 9.4 准入门禁
+
+上面的 `run_dev_eval.sh`保留为首轮 7 条历史开发集运行入口，不能代替 9.3.16。
+9.3.16 必须使用新增的 25 条 reviewed balanced dev（已审核均衡开发集），五条路线各 5 条，
+并按 9.3.12 在看结果前冻结的阈值判定。
+
+运行前先确认 vLLM 已停止、`nvidia-smi`没有残留模型进程，并保持：
+
+```dotenv
+REQUIRE_CUDA=1
+HF_HUB_OFFLINE=1
+TRANSFORMERS_OFFLINE=1
+EXPANDED_DEV_PROVIDER=snapshot_expected_chunks
+EXPANDED_DEV_OVERWRITE=0
+```
+
+正式运行：
+
+```bash
+cd /root/autodl-tmp/ai_knowledge_base_after_class
+
+# 推荐先在无卡模式执行；只校验输入，不加载模型、不写推理结果。
+set -a
+source deploy/cloud_sft/env.local
+set +a
+"$PYTHON_BIN" -m evaluation.stage9.admission.run_sft_expanded_dev_gate \
+  --checkpoint "$SFT_CHECKPOINT_DIR" \
+  --preflight-only
+
+# preflight 通过后再切回有卡模式执行正式 25 条推理。
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local \
+bash deploy/cloud_sft/run_expanded_dev_gate.sh
+```
+
+脚本会在加载模型、开始 GPU 推理前检查：
+
+- checkpoint 必须是 `transformers_causal_lm` 的 LoRA/QLoRA 正式产物，禁止 smoke；
+- Reward v1.1、9.3.15A 验证、路线矩阵、25 条 dev 和 snapshot 的 SHA256 必须一致；
+- 只能运行 25 条 reviewed dev，不能设置 `max_cases`，不能混入 test/heldout；
+- 固定输出默认不存在，防止静默覆盖上一轮准入记录；
+- Hugging Face 与 Transformers 必须为离线模式，避免 GPU 计费期间重新下载模型。
+
+执行结束后固定生成：
+
+```text
+evaluation/stage9/artifacts/sft/sft_expanded_dev_eval.json
+evaluation/stage9/artifacts/sft/sft_9_4_admission_decision.json
+evaluation/stage9/artifacts/reports/阶段9-SFT-9.4准入报告.md
+evaluation/stage9/artifacts/cloud_runs/expanded_dev_gate_<timestamp>/
+```
+
+若全部门禁通过，脚本输出
+`eligible_for_stage9_4=true`并正常退出。若未通过，逐 case 产物和报告仍会保存，
+随后以退出码 `3`停止，明确禁止进入 9.4；此时只能根据 dev 失败补独立 train-only 数据，
+不能把 balanced dev 或 heldout 原题放入训练集。
+
+9.3.16 完成后再次运行 `freeze_sft_artifacts.py`时，把 `--dev-run-dir`指向
+`expanded_dev_gate_<timestamp>`。冻结器会识别 `stage9_3_16_expanded_dev_gate`布局，
+把原始 eval、准入决定、Markdown 报告、日志、命令和 cloud run report 一并收入归档。
+
 ## 完成后必须下载和备份
 
 训练完成后至少下载：
@@ -1017,6 +1077,7 @@ cloud_run_report.json
 checkpoint_manifest.json
 train_metrics.json
 dev_eval 输出 JSON
+9.3.16 admission decision JSON 与准入报告
 ```
 
 这步做什么：

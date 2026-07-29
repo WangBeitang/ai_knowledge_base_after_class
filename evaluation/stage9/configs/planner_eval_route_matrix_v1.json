@@ -1,7 +1,7 @@
 {
   "matrix_version": "stage9-planner-eval-route-matrix-v1",
   "audit_version": "stage9-eval-route-audit-v1",
-  "frozen_at": "2026-07-28T04:10:13+00:00",
+  "frozen_at": "2026-07-29T05:11:45+00:00",
   "status": "frozen_before_balanced_eval_generation",
   "purpose": "在创建 balanced dev 和 heldout route test、以及查看其模型结果前，冻结路线定义、数量下限、接受路径和工程阈值。",
   "evaluation_sets": {
@@ -145,18 +145,18 @@
   },
   "observed_current_coverage": {
     "balanced_dev_reusable_formal_gold": {
-      "local_answer": 4,
-      "hyde_fallback": 0,
-      "web_required": 0,
-      "ask_clarification": 0,
-      "safe_refuse": 0
+      "local_answer": 5,
+      "hyde_fallback": 5,
+      "web_required": 5,
+      "ask_clarification": 5,
+      "safe_refuse": 5
     },
     "heldout_route_test_reusable_formal_gold": {
-      "local_answer": 0,
-      "hyde_fallback": 0,
-      "web_required": 0,
-      "ask_clarification": 0,
-      "safe_refuse": 0
+      "local_answer": 5,
+      "hyde_fallback": 5,
+      "web_required": 5,
+      "ask_clarification": 5,
+      "safe_refuse": 5
     },
     "core_answer_test_preserved": {
       "local_answer": 35,
@@ -169,12 +169,12 @@
   "audit_source_files": [
     {
       "logical_path": "evaluation/stage8/cases/planner_cases.jsonl",
-      "sha256": "58e20db417eea5162279281e50d7cc07ec0c1380523cac007728ee880fe71cc3",
-      "record_count": 53
+      "sha256": "00fe0cb5299a30c36cb10f27197dcfb43e09cf3ec6027604fd40b305a78f82c7",
+      "record_count": 96
     },
     {
       "logical_path": "evaluation/stage8/cases/split_manifest.json",
-      "sha256": "3d2e020713ae181c0737ae1d62ae18af7e58a5173f6cc562cfb440ce345afce4",
+      "sha256": "8a226055b5825f186f66049ed49b43cff57a98fb03d6db49aacf011d82ecde03",
       "record_count": 1
     },
     {

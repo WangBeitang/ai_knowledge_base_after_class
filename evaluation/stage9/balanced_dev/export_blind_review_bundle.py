@@ -220,8 +220,16 @@ def _build_review_cases(
     *,
     queue_rows: list[dict[str, Any]],
     planner_rows: list[dict[str, Any]],
+    case_specs: Iterable[Any] = CASE_SPECS,
+    hyde_probes: dict[str, dict[str, Any]] = HYDE_PROBES,
+    expected_route_counts: dict[str, int] | None = None,
+    required_review_status: str | None = "pending",
 ) -> list[dict[str, Any]]:
-    """把 pending queue 和当前 case 契约合成可重算 fingerprint 的无审核结论输入。"""
+    """把冻结 queue 和 case 契约合成可重算 fingerprint 的无审核结论输入。
+
+    正常送审必须要求 ``pending``。审核结束后的历史包若需要从已冻结 queue 重建，可由
+    调用方显式传入 ``None``；输出仍只投影 ``SAFE_EVAL_CASE_FIELDS``，不会写入审核状态。
+    """
 
     queue_by_id = _unique_by_id(
         queue_rows,
@@ -233,8 +241,9 @@ def _build_review_cases(
         field_name="case_id",
         source_name="planner_cases",
     )
-    spec_by_id = {spec.case_id: spec for spec in CASE_SPECS}
-    if len(spec_by_id) != len(CASE_SPECS):
+    case_specs = tuple(case_specs)
+    spec_by_id = {spec.case_id: spec for spec in case_specs}
+    if len(spec_by_id) != len(case_specs):
         raise ValueError("CASE_SPECS 存在重复 case_id")
 
     unknown = sorted(set(queue_by_id) - set(spec_by_id))
@@ -255,8 +264,15 @@ def _build_review_cases(
         case_payload = case.model_dump(mode="json")
         if case.query != spec.query:
             raise ValueError(f"planner case 与 CaseSpec query 漂移：{case_id}")
-        if case.human_review_status.value != "pending":
-            raise ValueError(f"clean bundle 只能导出 pending case：{case_id}")
+        if (
+            required_review_status is not None
+            and case.human_review_status.value != required_review_status
+        ):
+            raise ValueError(
+                "clean bundle case 审核状态不符合导出阶段："
+                f"{case_id}={case.human_review_status.value}, "
+                f"required={required_review_status}"
+            )
 
         fingerprint_payload = asdict(spec)
         if _sha256_bytes(_canonical_json(fingerprint_payload)) != expected_fingerprint:
@@ -278,16 +294,17 @@ def _build_review_cases(
                 "route_rationale": spec.route_rationale,
                 "evidence_refs": queue_row.get("evidence_refs", []),
                 "web_evidence_refs": queue_row.get("web_evidence_refs", []),
-                "hyde_probe": HYDE_PROBES.get(spec.hyde_probe_id),
+                "hyde_probe": hyde_probes.get(spec.hyde_probe_id),
             }
         )
 
     route_counts = Counter(row["route_bucket"] for row in review_cases)
-    if route_counts != {
+    expected_route_counts = expected_route_counts or {
         "hyde_fallback": 3,
         "web_required": 5,
         "ask_clarification": 2,
-    }:
+    }
+    if route_counts != expected_route_counts:
         raise ValueError(f"当前盲审队列路线分布漂移：{dict(route_counts)}")
     return review_cases
 
@@ -575,11 +592,17 @@ def _validate_clean_json_file(path: Path) -> None:
         raise ValueError(f"盲审包包含历史审核标记：{path.name} {markers}")
 
 
-def _review_instructions(bundle_id: str) -> str:
-    return f"""# Stage 9 balanced dev clean blind review inputs
+def _review_instructions(
+    bundle_id: str,
+    *,
+    task_label: str = "balanced dev",
+    bundle_version: str = BUNDLE_VERSION,
+    case_count: int = 10,
+) -> str:
+    return f"""# Stage 9 {task_label} clean blind review inputs
 
 - Bundle ID：`{bundle_id}`
-- Bundle version：`{BUNDLE_VERSION}`
+- Bundle version：`{bundle_version}`
 - 该目录是本轮唯一允许读取的项目审核数据目录。
 - 只允许额外读取 `local_source_manifest.json` 指向的本地 PDF，以及包内 URL 指向的官方网页。
 - 禁止读取仓库其他 case 台账、审核决定、审核报告、Git 历史或先前 Agent 对话。
@@ -587,7 +610,7 @@ def _review_instructions(bundle_id: str) -> str:
 
 ## 文件用途
 
-- `review_cases.jsonl`：10 条待审 case、可复算 fingerprint 的 payload、评测契约和冻结引用。
+- `review_cases.jsonl`：{case_count} 条待审 case、可复算 fingerprint 的 payload、评测契约和冻结引用。
 - `local_source_manifest.json`：本轮引用的本地 PDF 身份和路径。
 - `local_evidence_manifest.json`：本轮实际引用的生产 chunk 身份子集，不含正文和审核状态。
 - `web_source_manifest.json`：本轮引用的官方网页及必需短语。
@@ -686,6 +709,13 @@ def export_blind_review_bundle(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     generated_at: str | None = None,
     overwrite: bool = False,
+    case_specs: Iterable[Any] = CASE_SPECS,
+    hyde_probes: dict[str, dict[str, Any]] = HYDE_PROBES,
+    expected_route_counts: dict[str, int] | None = None,
+    bundle_version: str = BUNDLE_VERSION,
+    bundle_id_prefix: str = "stage9-balanced-dev-clean",
+    task_label: str = "balanced dev",
+    required_review_status: str | None = "pending",
 ) -> dict[str, Any]:
     """构建审核包并在返回前执行完整污染与 hash 校验。"""
 
@@ -711,6 +741,10 @@ def export_blind_review_bundle(
     review_cases = _build_review_cases(
         queue_rows=queue_rows,
         planner_rows=planner_rows,
+        case_specs=case_specs,
+        hyde_probes=hyde_probes,
+        expected_route_counts=expected_route_counts,
+        required_review_status=required_review_status,
     )
     target_case_ids = {row["case_id"] for row in review_cases}
     leakage_reference = _build_leakage_reference(
@@ -744,16 +778,21 @@ def export_blind_review_bundle(
     _write_json(output_dir / "route_policy.json", route_policy)
 
     queue_sha256 = _sha256_file(queue_path)
-    bundle_id = f"stage9-balanced-dev-clean-{queue_sha256[:16]}"
+    bundle_id = f"{bundle_id_prefix}-{queue_sha256[:16]}"
     (output_dir / "REVIEW_INSTRUCTIONS.md").write_text(
-        _review_instructions(bundle_id),
+        _review_instructions(
+            bundle_id,
+            task_label=task_label,
+            bundle_version=bundle_version,
+            case_count=len(review_cases),
+        ),
         encoding="utf-8",
     )
 
     generated_at = generated_at or datetime.now(UTC).replace(microsecond=0).isoformat()
     files_before_manifest = sorted(OUTPUT_FILE_NAMES - {"bundle_manifest.json"})
     manifest = {
-        "bundle_version": BUNDLE_VERSION,
+        "bundle_version": bundle_version,
         "sanitization_policy_version": SANITIZATION_POLICY_VERSION,
         "bundle_id": bundle_id,
         "generated_at": generated_at,

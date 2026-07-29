@@ -1,4 +1,5 @@
 import json
+import shutil
 from collections import Counter
 from pathlib import Path
 
@@ -33,10 +34,53 @@ def _all_keys(value):
             yield from _all_keys(child)
 
 
+def _pending_fixture(tmp_path: Path) -> tuple[Path, Path]:
+    """从已冻结的 round4 clean bundle 重建无历史决定的 pending 输入。"""
+
+    review_rows = _read_jsonl(DEFAULT_OUTPUT_DIR / "review_cases.jsonl")
+    target_ids = {row["case_id"] for row in review_rows}
+    planner_rows = _read_jsonl(
+        Path("evaluation/stage8/cases/planner_cases.jsonl")
+    )
+    for row in planner_rows:
+        if row["case_id"] in target_ids:
+            row["human_review_status"] = "pending"
+    planner_path = tmp_path / "planner_cases.jsonl"
+    queue_path = tmp_path / "queue.jsonl"
+    planner_path.write_text(
+        "".join(
+            json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n"
+            for row in planner_rows
+        ),
+        encoding="utf-8",
+    )
+    queue_path.write_text(
+        "".join(
+            json.dumps(
+                {
+                    "case_id": row["case_id"],
+                    "case_fingerprint": row["case_fingerprint"],
+                    "evidence_refs": row["evidence_refs"],
+                    "web_evidence_refs": row["web_evidence_refs"],
+                },
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            + "\n"
+            for row in review_rows
+        ),
+        encoding="utf-8",
+    )
+    return queue_path, planner_path
+
+
 def test_blind_review_bundle_exports_only_sanitized_review_inputs(tmp_path):
     output_dir = tmp_path / "blind_review_bundle"
+    queue_path, planner_path = _pending_fixture(tmp_path)
 
     result = export_blind_review_bundle(
+        queue_path=queue_path,
+        planner_cases_path=planner_path,
         output_dir=output_dir,
         generated_at="2026-07-28T10:00:00+00:00",
     )
@@ -106,13 +150,18 @@ def test_blind_review_bundle_exports_only_sanitized_review_inputs(tmp_path):
 
 def test_blind_review_bundle_refuses_silent_overwrite(tmp_path):
     output_dir = tmp_path / "blind_review_bundle"
+    queue_path, planner_path = _pending_fixture(tmp_path)
     export_blind_review_bundle(
+        queue_path=queue_path,
+        planner_cases_path=planner_path,
         output_dir=output_dir,
         generated_at="2026-07-28T10:00:00+00:00",
     )
 
     with pytest.raises(FileExistsError, match="拒绝静默覆盖"):
         export_blind_review_bundle(
+            queue_path=queue_path,
+            planner_cases_path=planner_path,
             output_dir=output_dir,
             generated_at="2026-07-28T10:00:00+00:00",
         )
@@ -120,10 +169,7 @@ def test_blind_review_bundle_refuses_silent_overwrite(tmp_path):
 
 def test_blind_review_bundle_validator_rejects_injected_review_field(tmp_path):
     output_dir = tmp_path / "blind_review_bundle"
-    export_blind_review_bundle(
-        output_dir=output_dir,
-        generated_at="2026-07-28T10:00:00+00:00",
-    )
+    shutil.copytree(DEFAULT_OUTPUT_DIR, output_dir)
     review_cases_path = output_dir / "review_cases.jsonl"
     rows = _read_jsonl(review_cases_path)
     rows[0]["human_review_status"] = "reviewed"

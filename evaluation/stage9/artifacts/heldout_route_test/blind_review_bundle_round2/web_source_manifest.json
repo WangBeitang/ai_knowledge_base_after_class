@@ -1,0 +1,5 @@
+{
+  "manifest_version": "stage9-heldout-route-test-web-source-manifest-v1",
+  "purpose": "任务 9.3.14 的 Web route heldout 来源。仅冻结官方页面在抓取时点可核验的事实，不保存整页正文，也不把这些问题用于训练或模型选择。",
+  "sources": []
+}

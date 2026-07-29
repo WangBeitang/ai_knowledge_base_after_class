@@ -1,7 +1,7 @@
 {
   "build_version": "stage9-balanced-dev-build-v2",
   "built_at": "2026-07-28T07:40:00+00:00",
-  "status": "candidate_complete_second_review_pending",
+  "status": "reviewed_gate_passed",
   "source_import_manifest": "evaluation/stage9/artifacts/balanced_dev/source_import_manifest.json",
   "source_import_manifest_sha256": "9674ee1580f8960d47d3d9ac0459f5486e8324fe1e51e3397e2c5e3089ceec33",
   "web_evidence_manifest": "evaluation/stage9/artifacts/balanced_dev/web_evidence_manifest.json",
@@ -12,7 +12,7 @@
   "retired_pending_dev_count": 3,
   "superseded_round3_rejected_count": 7,
   "new_candidate_count": 21,
-  "pending_second_review_count": 10,
+  "pending_second_review_count": 0,
   "inventory": {
     "dev_case_count": 25,
     "route_counts": {
@@ -24,9 +24,9 @@
     },
     "reviewed_counts": {
       "local_answer": 5,
-      "hyde_fallback": 2,
-      "web_required": 0,
-      "ask_clarification": 3,
+      "hyde_fallback": 5,
+      "web_required": 5,
+      "ask_clarification": 5,
       "safe_refuse": 5
     },
     "unique_leakage_group_counts": {
@@ -36,25 +36,25 @@
       "ask_clarification": 5,
       "safe_refuse": 5
     },
-    "review_gate_passed": false
+    "review_gate_passed": true
   },
   "train_dev_leakage_finding_count": 0,
   "outputs": {
     "evaluation/stage8/cases/planner_cases.jsonl": {
-      "sha256": "c816bb46bec6bab3992816e97f29f967d9157036c7f005c36953792936b79d9a",
-      "bytes": 121546
+      "sha256": "09fe6fb3830b63b4981fe3288281b9e639cf682cc7b0364c5f95ffa0d0447277",
+      "bytes": 166671
     },
     "evaluation/stage8/cases/split_manifest.json": {
-      "sha256": "8326dcef38a286f97355ec02953f8b5a7be9422200f66fb70db1e7a6e233cab7",
-      "bytes": 7556
+      "sha256": "f4b56a190fd4c3ca50f060756d3c0611db719c5f496c4092dce5462a332302f2",
+      "bytes": 13808
     },
     "evaluation/stage9/artifacts/balanced_dev/balanced_dev_case_evidence.jsonl": {
-      "sha256": "fa87012e5f5747098605397fbebd1b69580aa205bb83c494edfab57e1650a22f",
-      "bytes": 43763
+      "sha256": "d07716bf7801b9f35fff23c4b4731ed79fc7ad73773661bbba978a41650ee194",
+      "bytes": 55024
     },
     "evaluation/stage9/artifacts/balanced_dev/second_review_queue.jsonl": {
-      "sha256": "9a23b4617a985b165f28b9d1d2c2fd6984bcceb298f6d2b0383215190186b9bb",
-      "bytes": 26416
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
     },
     "evaluation/stage9/artifacts/balanced_dev/retired_pending_dev_cases.jsonl": {
       "sha256": "9257e592b4c1fedece91ad8246046536c2143d91b351e8276f144e182e5ec938",
@@ -65,8 +65,8 @@
       "bytes": 13005
     },
     "evaluation/stage9/artifacts/reports/阶段9-balanced-dev审核报告.md": {
-      "sha256": "78ab6446850bd4be91f7257cdb0c52e7e62e54901757b9dff0254b0095ba8079",
-      "bytes": 3455
+      "sha256": "92004e4bd52adfc648fe009f5d78e70c7254cc581b5bf07c7354c374deb873f7",
+      "bytes": 3434
     }
   }
 }

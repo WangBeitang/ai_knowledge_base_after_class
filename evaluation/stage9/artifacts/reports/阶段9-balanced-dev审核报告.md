@@ -2,13 +2,13 @@
 
 - 构建版本：`stage9-balanced-dev-build-v2`
 - 构建时间：`2026-07-28T07:40:00+00:00`
-- 当前验收状态：**未通过：候选集已补齐，但独立二审尚未完成**
+- 当前验收状态：**通过：25 条均有独立二审记录**
 - 来源导入清单：`evaluation/stage9/artifacts/balanced_dev/source_import_manifest.json`
 - 来源导入清单 SHA256：`9674ee1580f8960d47d3d9ac0459f5486e8324fe1e51e3397e2c5e3089ceec33`
 - Web 证据清单：`evaluation/stage9/artifacts/balanced_dev/web_evidence_manifest.json`
 - Web 证据清单 SHA256：`6f823cd870e73690f1a23f325b8480d718911ca6229e218a18303f690609bc72`
 - case 证据台账：`evaluation/stage9/artifacts/balanced_dev/balanced_dev_case_evidence.jsonl`
-- case 证据台账 SHA256：`fa87012e5f5747098605397fbebd1b69580aa205bb83c494edfab57e1650a22f`
+- case 证据台账 SHA256：`d07716bf7801b9f35fff23c4b4731ed79fc7ad73773661bbba978a41650ee194`
 
 ## 结论
 
@@ -25,9 +25,9 @@
 | route bucket | 候选数 | reviewed | pending/rejected | 唯一 leakage group |
 |---|---:|---:|---:|---:|
 | `local_answer` | 5 | 5 | 0 | 5 |
-| `hyde_fallback` | 5 | 2 | 3 | 5 |
-| `web_required` | 5 | 0 | 5 | 5 |
-| `ask_clarification` | 5 | 3 | 2 | 5 |
+| `hyde_fallback` | 5 | 5 | 0 | 5 |
+| `web_required` | 5 | 5 | 0 | 5 |
+| `ask_clarification` | 5 | 5 | 0 | 5 |
 | `safe_refuse` | 5 | 5 | 0 | 5 |
 
 ## 来源与构题方法

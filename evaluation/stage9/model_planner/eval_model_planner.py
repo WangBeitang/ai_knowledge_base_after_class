@@ -43,11 +43,13 @@ def run_model_planner_eval(
         split: CaseSplit | str,
         output_path: str | Path | None = None,
         provider_name: str = SNAPSHOT_EXPECTED_PROVIDER_NAME,
+        reward_config: RewardConfig | None = None,
         max_cases: int | None = None,
         run_id: str | None = None,
 ) -> BaselineEvalOutput:
     """在固定 snapshot（快照）下执行 SFT（监督微调）Planner 离线评测。"""
 
+    active_reward_config = reward_config or RewardConfig()
     active_split = CaseSplit(split)
     selected_cases = [case for case in cases if case.split == active_split]
     if max_cases is not None:
@@ -82,7 +84,7 @@ def run_model_planner_eval(
             run_id=f"{normalized_run_id}_sft_{case.case_id}",
             planner_mode=PlannerMode.SFT,
         )
-        reward = score_trajectory(case, trajectory, RewardConfig())
+        reward = score_trajectory(case, trajectory, active_reward_config)
         results.append(_result_from_trajectory(
             run_id=normalized_run_id,
             case=case,
@@ -104,7 +106,7 @@ def run_model_planner_eval(
         created_at=datetime.now(UTC).isoformat(timespec="seconds"),
         split=active_split,
         snapshot_id=snapshot.snapshot_id,
-        reward_version=RewardConfig().reward_version,
+        reward_version=active_reward_config.reward_version,
         requested_planners=[PlannerMode.SFT],
         action_provider=provider.__class__.__name__,
         case_count=len(selected_cases),

@@ -97,8 +97,7 @@ def test_balanced_dev_artifacts_have_five_routes_and_real_chunk_identity():
         case for case in dev if case.case_id.startswith("planner-dev-balanced-")
     ]
     assert Counter(case.human_review_status.value for case in balanced_cases) == {
-        "reviewed": 11,
-        "pending": 10,
+        "reviewed": 21,
     }
     assert {
         case.case_id

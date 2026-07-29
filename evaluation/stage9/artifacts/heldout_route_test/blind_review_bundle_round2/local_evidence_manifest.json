@@ -1,0 +1,118 @@
+{
+  "import_version": "stage9-balanced-dev-source-import-v1",
+  "source_manifest_version": "stage9-heldout-route-test-source-manifest-v1",
+  "imported_at": "2026-07-28T12:02:59.239729+00:00",
+  "source_manifest_sha256": "28137ddc77543a7c5dd917c992cd70c3911eb93662b232cc289c2877d441a69a",
+  "documents": [
+    {
+      "source_id": "huawei-display-b5-341w-guide-v04",
+      "publisher": "Huawei",
+      "title": "华为显示器 B5-341W 用户指南",
+      "source_version": "ZQE-CBA,04,zh-cn",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15816552/",
+      "source_sha256": "b599069adb3003fc70e37e602f36c9d3636a7eecff70b33ddff613e3f3876651",
+      "document_id": "doc_stage9_test_huawei_display_b5_341w_v04",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_4e92dbbfc21edeab",
+      "standard_subject_name": "华为 B5-341W",
+      "source_chunk_count": 38,
+      "included_chunk_count": 1,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_test_huawei_display_b5_341w_v04",
+          "chunk_id": 467551067585612181,
+          "index_version": 1,
+          "chunk_index": 11,
+          "title": "## 开启与关闭显示器：_1",
+          "parent_title": "## 开启与关闭显示器：",
+          "content_chars": 128,
+          "content_sha256": "108fc6638a2ba8f82bfc1da92953d6384ce60c4ef41e514a73f0355023ed2b05"
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-matebook-b3-520-guide-v03",
+      "publisher": "Huawei",
+      "title": "HUAWEI MateBook B3-520 用户手册",
+      "source_version": "BohrDZ,03,zh-cn",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn16057627/",
+      "source_sha256": "63fdee1c706e09c7bb9f3266cd72ceff73289900a89f12da2a2b8221303cb5c0",
+      "document_id": "doc_stage9_test_huawei_matebook_b3_520_v03",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_a0e2ed2f3c9c7f6c",
+      "standard_subject_name": "HUAWEI MateBook B3-520",
+      "source_chunk_count": 60,
+      "included_chunk_count": 1,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_test_huawei_matebook_b3_520_v03",
+          "chunk_id": 467551067585612287,
+          "index_version": 1,
+          "chunk_index": 33,
+          "title": "## 解决方案：_1",
+          "parent_title": "## 解决方案：",
+          "content_chars": 253,
+          "content_sha256": "81966bda47c5c0ea292afc5b5b9268c1f2af81dd6a729e87a43d7808415d70a2"
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-tablet-c7-guide-harmonyos2-v01",
+      "publisher": "Huawei",
+      "title": "华为平板 C7 用户指南",
+      "source_version": "DBY-W09,HarmonyOS 2_01,zh-cn",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15880996/",
+      "source_sha256": "29d3023fc8fd6cd9a215cc2df5d880875bc94cc0664a26f87cbdb996fcff9087",
+      "document_id": "doc_stage9_test_huawei_tablet_c7_hmos2_v01",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_54bfd5f0206413ae",
+      "standard_subject_name": "华为平板 C7",
+      "source_chunk_count": 512,
+      "included_chunk_count": 3,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_test_huawei_tablet_c7_hmos2_v01",
+          "chunk_id": 467551067585612505,
+          "index_version": 1,
+          "chunk_index": 185,
+          "title": "## 连接平板和笔记本_1",
+          "parent_title": "## 连接平板和笔记本",
+          "content_chars": 380,
+          "content_sha256": "7abdf02ca774ca690eb51dfda9aae137e98534a1a3b63cda4ab140ae77c0ba24"
+        },
+        {
+          "document_id": "doc_stage9_test_huawei_tablet_c7_hmos2_v01",
+          "chunk_id": 467551067585612642,
+          "index_version": 1,
+          "chunk_index": 322,
+          "title": "## 将录音文件转换成文本_1",
+          "parent_title": "## 将录音文件转换成文本",
+          "content_chars": 345,
+          "content_sha256": "2424bbaabd064018a7a34138f4c0e0dbaebfd2bd0329b7dccad45aa5b9afd689"
+        },
+        {
+          "document_id": "doc_stage9_test_huawei_tablet_c7_hmos2_v01",
+          "chunk_id": 467551067585612798,
+          "index_version": 1,
+          "chunk_index": 478,
+          "title": "## 关闭屏幕朗读_1",
+          "parent_title": "## 关闭屏幕朗读",
+          "content_chars": 159,
+          "content_sha256": "5aa734649a49fc90df8947d3cf0dc4177ab51b13ca75fcdb585145431cba9c24"
+        }
+      ]
+    }
+  ]
+}

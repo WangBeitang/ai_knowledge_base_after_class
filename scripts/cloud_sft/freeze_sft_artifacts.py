@@ -14,7 +14,7 @@ from typing import Any, Iterable
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-FREEZE_VERSION = "stage9-sft-artifact-freeze-v1"
+FREEZE_VERSION = "stage9-sft-artifact-freeze-v2"
 REQUIRED_CHECKPOINT_FILES = (
     Path("checkpoint_manifest.json"),
     Path("train_metrics.json"),
@@ -22,10 +22,18 @@ REQUIRED_CHECKPOINT_FILES = (
     Path("model/adapter/adapter_config.json"),
     Path("model/adapter/adapter_model.safetensors"),
 )
-REQUIRED_DEV_RUN_FILES = (
+LEGACY_DEV_RUN_FILES = (
     Path("sft_eval_dev.json"),
     Path("cloud_run_report.json"),
     Path("dev_eval.log"),
+    Path("command.txt"),
+)
+EXPANDED_DEV_RUN_FILES = (
+    Path("sft_expanded_dev_eval.json"),
+    Path("sft_9_4_admission_decision.json"),
+    Path("阶段9-SFT-9.4准入报告.md"),
+    Path("cloud_run_report.json"),
+    Path("expanded_dev_gate.log"),
     Path("command.txt"),
 )
 
@@ -62,7 +70,10 @@ def freeze_sft_artifacts(
     for relative_path in REQUIRED_CHECKPOINT_FILES:
         _require_file(checkpoint_abs / relative_path, f"checkpoint 文件 {relative_path}")
     _require_file(train_run_abs / "cloud_run_report.json", "正式训练 cloud run report")
-    for relative_path in REQUIRED_DEV_RUN_FILES:
+    dev_run_kind, dev_eval_relative, required_dev_files = _dev_run_layout(
+        dev_run_abs
+    )
+    for relative_path in required_dev_files:
         _require_file(dev_run_abs / relative_path, f"dev eval 文件 {relative_path}")
     for required_path, description in (
         (vllm_freeze_abs, "vLLM 环境冻结清单"),
@@ -86,7 +97,7 @@ def freeze_sft_artifacts(
     _require_report_run_id(train_report, run_id, "正式训练 cloud run report")
     dev_report = _read_json(dev_run_abs / "cloud_run_report.json")
     _require_report_run_id(dev_report, run_id, "dev eval cloud run report")
-    dev_eval = _read_json(dev_run_abs / "sft_eval_dev.json")
+    dev_eval = _read_json(dev_run_abs / dev_eval_relative)
     dev_checkpoint = _dev_eval_checkpoint(dev_eval)
     if run_id not in dev_checkpoint:
         raise ValueError(
@@ -121,6 +132,7 @@ def freeze_sft_artifacts(
         "checkpoint_dir": _relative_text(project_root, checkpoint_abs),
         "train_run_dir": _relative_text(project_root, train_run_abs),
         "dev_run_dir": _relative_text(project_root, dev_run_abs),
+        "dev_run_kind": dev_run_kind,
         "vllm_freeze": _relative_text(project_root, vllm_freeze_abs),
         "code_version": checkpoint_manifest.get("code_version"),
         "base_model_id": checkpoint_manifest.get("base_model_id"),
@@ -173,6 +185,32 @@ def freeze_sft_artifacts(
         "archive_sha256_file": str(archive_sha256_path),
         "manifest": str(manifest_path),
     }
+
+
+def _dev_run_layout(dev_run_dir: Path) -> tuple[str, Path, tuple[Path, ...]]:
+    """识别历史 7 条 dev run 或 9.3.16 expanded dev run，二者都可冻结但不能混装。"""
+
+    expanded_exists = all(
+        (dev_run_dir / path).is_file() for path in EXPANDED_DEV_RUN_FILES
+    )
+    legacy_exists = all(
+        (dev_run_dir / path).is_file() for path in LEGACY_DEV_RUN_FILES
+    )
+    if expanded_exists:
+        return (
+            "stage9_3_16_expanded_dev_gate",
+            Path("sft_expanded_dev_eval.json"),
+            EXPANDED_DEV_RUN_FILES,
+        )
+    if legacy_exists:
+        return (
+            "legacy_dev_eval",
+            Path("sft_eval_dev.json"),
+            LEGACY_DEV_RUN_FILES,
+        )
+    raise FileNotFoundError(
+        "dev run_dir 既不满足历史 dev eval，也不满足 9.3.16 expanded dev 产物契约"
+    )
 
 
 def _supporting_paths(project_root: Path, training_config: dict[str, Any]) -> tuple[Path, ...]:

@@ -1,0 +1,106 @@
+{
+  "bundle_version": "stage9-heldout-route-test-blind-review-bundle-v1",
+  "sanitization_policy_version": "stage9-blind-review-sanitization-v1",
+  "bundle_id": "stage9-heldout-route-test-clean-c52eea2519a1a065",
+  "generated_at": "2026-07-28T12:25:00+00:00",
+  "case_count": 25,
+  "route_counts": {
+    "ask_clarification": 5,
+    "hyde_fallback": 5,
+    "local_answer": 5,
+    "safe_refuse": 5,
+    "web_required": 5
+  },
+  "queue_sha256": "c52eea2519a1a0657dcdd711738fdf6c8caebf1326633cae82d017c228b36ffe",
+  "input_files": [
+    {
+      "name": "queue",
+      "logical_path": "evaluation/stage9/artifacts/heldout_route_test/independent_review_queue.jsonl",
+      "sha256": "c52eea2519a1a0657dcdd711738fdf6c8caebf1326633cae82d017c228b36ffe"
+    },
+    {
+      "name": "planner_cases",
+      "logical_path": "evaluation/stage8/cases/planner_cases.jsonl",
+      "sha256": "02c0e11fe2cac15ec59b6edd3e82e453b30c9d65250bb0f957bf6fd716e0c77d"
+    },
+    {
+      "name": "curated_cases",
+      "logical_path": "evaluation/stage8_5/artifacts/intermediate/sft_seed/curated_seed_train_cases.jsonl",
+      "sha256": "8da9b1fb1650e90c088e7ee486a984363623a0a8ea51df120543ec4d7d7d7a4f"
+    },
+    {
+      "name": "route_cases",
+      "logical_path": "evaluation/stage9/artifacts/route_seed/route_seed_cases.jsonl",
+      "sha256": "d15b5e90e425bb741b3cde98d1544a11bb653a0d1130f89c8daae6b532989a2c"
+    },
+    {
+      "name": "local_source_manifest",
+      "logical_path": "evaluation/stage9/configs/heldout_route_test_source_manifest_v1.json",
+      "sha256": "28137ddc77543a7c5dd917c992cd70c3911eb93662b232cc289c2877d441a69a"
+    },
+    {
+      "name": "local_evidence_manifest",
+      "logical_path": "evaluation/stage9/artifacts/heldout_route_test/source_import_manifest.json",
+      "sha256": "1069841adf7015aa8f8b66cc4f1b17f42cb31b1d1e146d3207a5dcd094290ef2"
+    },
+    {
+      "name": "web_source_manifest",
+      "logical_path": "evaluation/stage9/configs/heldout_route_test_web_source_manifest_v1.json",
+      "sha256": "3ed7ef95a7d14d2b4bff24063e90639e1dc8be3c25a29057461af0feea53d37c"
+    },
+    {
+      "name": "web_evidence_manifest",
+      "logical_path": "evaluation/stage9/artifacts/heldout_route_test/web_evidence_manifest.json",
+      "sha256": "d1b56248cdc3844e0b68e54f339cdf093944f38593eb6be45cd0bf36d2215859"
+    },
+    {
+      "name": "route_matrix",
+      "logical_path": "evaluation/stage9/configs/planner_eval_route_matrix_v1.json",
+      "sha256": "6906c3d6781eb0cf5b9523edfbc18b9eebed4e6b8ae8a1834f12215c16607db4"
+    }
+  ],
+  "output_files": [
+    {
+      "file": "REVIEW_INSTRUCTIONS.md",
+      "sha256": "9988cf8c0b1c3707f2df958a5faf3045983a4430bb09743be5e560fcd8767442",
+      "bytes": 1772
+    },
+    {
+      "file": "leakage_reference.jsonl",
+      "sha256": "2cd67abfd38cdba0f402cdeb09e317233fa9d156f92636770343c867ba198c65",
+      "bytes": 40154
+    },
+    {
+      "file": "local_evidence_manifest.json",
+      "sha256": "fba49d66748f702344c5bbfdeb5f3f83bb77bae9558b666a097131de777ebc71",
+      "bytes": 11102
+    },
+    {
+      "file": "local_source_manifest.json",
+      "sha256": "9f47f7c37117f03d70a6e8877a401402f2cef85512ca16991cbb37a2691cb8ab",
+      "bytes": 3265
+    },
+    {
+      "file": "review_cases.jsonl",
+      "sha256": "787373b1a99a5208e79742c5eac1dc50a167b0a99a0ff857eb75d63e6c65c53d",
+      "bytes": 89135
+    },
+    {
+      "file": "route_policy.json",
+      "sha256": "d55665e2189830541ebeb0c89b9cd22ea6878edccdde5eaf10fe878575f31761",
+      "bytes": 3355
+    },
+    {
+      "file": "web_evidence_manifest.json",
+      "sha256": "144e017b15b76b1c2415043a4ef496bd0e5ea58d234ebeab109cae3d49ba93f0",
+      "bytes": 7125
+    },
+    {
+      "file": "web_source_manifest.json",
+      "sha256": "a1a85d59636cff3ad6d808e59519963fd0cf9856225c53205a94968d541aa022",
+      "bytes": 4119
+    }
+  ],
+  "contamination_scan": "passed",
+  "historical_decision_count": 0
+}

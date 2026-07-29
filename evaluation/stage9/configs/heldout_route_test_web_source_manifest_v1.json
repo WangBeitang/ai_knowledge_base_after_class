@@ -1,0 +1,97 @@
+{
+  "manifest_version": "stage9-heldout-route-test-web-source-manifest-v1",
+  "purpose": "任务 9.3.14 的 Web route heldout 来源。仅冻结官方页面在抓取时点可核验的事实，不保存整页正文，也不把这些问题用于训练或模型选择。",
+  "sources": [
+    {
+      "source_id": "h3c-er2100-current-quick-start-page",
+      "publisher": "H3C",
+      "source_title": "H3C ER2100 企业级路由器快速入门",
+      "url": "https://www.h3c.com/cn/d_201711/1045290_30005_0.htm",
+      "facts": [
+        {
+          "fact_id": "er2100_current_quick_start_version_and_download",
+          "statement": "H3C 官方当前快速入门页面的版本为 5PW102，正文下载大小标为 2.36 MB，内容包含快速上网向导。",
+          "required_phrases": [
+            "H3C ER2100企业级路由器 快速入门-5PW102",
+            "本章节下载",
+            "2.36 MB",
+            "快速上网向导"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-display-b5-341w-crosshair-support-current",
+      "publisher": "Huawei",
+      "source_title": "华为显示器游戏准星与游戏中准星不重合",
+      "url": "https://consumer.huawei.com/cn/support/content/zh-cn15896627/",
+      "facts": [
+        {
+          "fact_id": "display_crosshair_alignment_steps",
+          "statement": "B5-341W 适用该支持页；显示器准星默认在屏幕正中间，可在 OSD 的游戏辅助中选择准星并退出菜单后用摇杆移动对齐。",
+          "required_phrases": [
+            "华为显示器 B5-341W",
+            "显示器的准星已经默认设置在屏幕正中间",
+            "游戏辅助＞游戏准星",
+            "使用摇杆的上、下、左、右方向键移动准星位置"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-matestation-b520-wake-on-lan-current",
+      "publisher": "Huawei",
+      "source_title": "华为计算机如何在 BIOS 中开启、关闭网络唤醒功能",
+      "url": "https://consumer.huawei.com/cn/support/content/zh-cn15825340/",
+      "facts": [
+        {
+          "fact_id": "matestation_b520_wake_on_lan_bios_steps",
+          "statement": "当前支持机型列表包含 MateStation B520；开机后长按 F2 进入 Setup，启用 Wake on LAN 等选项并用 F10 保存退出。",
+          "required_phrases": [
+            "当前支持的机型：HUAWEI MateStation B520",
+            "开机后立即长按 F2 键进入 Setup 界面",
+            "Wake on LAN（网络唤醒）",
+            "按 F10 键保存退出"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-matebook-b3-520-windows11-support-current",
+      "publisher": "Huawei",
+      "source_title": "哪些计算机支持升级 Windows 11 系统",
+      "url": "https://consumer.huawei.com/cn/support/content/zh-cn15873085/",
+      "facts": [
+        {
+          "fact_id": "matebook_b3_520_windows11_supported_models",
+          "statement": "华为官网当前把 MateBook B3-520 列为支持升级 Windows 11，并列出 BDZ-WDH9A、BDZ-WDI9A、BDZ-WFH9A、BDZ-WFH9B、BDZ-WFE9A、BDZ-WFE9B。",
+          "required_phrases": [
+            "HUAWEI MateBook B3-520",
+            "BDZ-WDH9A",
+            "BDZ-WDI9A",
+            "BDZ-WFH9A",
+            "BDZ-WFH9B",
+            "BDZ-WFE9A",
+            "BDZ-WFE9B"
+          ]
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-tablet-c7-ethernet-dock-current",
+      "publisher": "Huawei",
+      "source_title": "华为平板是否支持通过转接口或扩展坞连接网线上网",
+      "url": "https://consumer.huawei.com/cn/support/content/zh-cn15910890/",
+      "facts": [
+        {
+          "fact_id": "tablet_c7_ethernet_dock_support",
+          "statement": "当前支持列表包含华为平板 C7（Debussy）；页面推荐使用 HUAWEI MateDock 3 扩展坞（CD12）连接平板和网线。",
+          "required_phrases": [
+            "推荐您使用 HUAWEI MateDock 3 扩展坞（CD12）连接平板和网线",
+            "华为平板 C7（Debussy）"
+          ]
+        }
+      ]
+    }
+  ]
+}

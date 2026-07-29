@@ -13,7 +13,7 @@ from typing import Any
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-REPORT_VERSION = "stage9-cloud-sft-run-report-v1"
+REPORT_VERSION = "stage9-cloud-sft-run-report-v2"
 
 
 def build_report(
@@ -25,6 +25,8 @@ def build_report(
         model_profile: Path | None = None,
         checkpoint_dir: Path | None = None,
         dev_eval_output: Path | None = None,
+        admission_decision_output: Path | None = None,
+        admission_report: Path | None = None,
         commands: list[str] | None = None,
         notes: str = "",
 ) -> dict[str, Any]:
@@ -43,6 +45,12 @@ def build_report(
         "reward_profile": _file_record(inferred_reward_profile) if inferred_reward_profile else None,
         "checkpoint_manifest": _file_record(checkpoint_manifest) if checkpoint_manifest else None,
         "dev_eval_output": _file_record(dev_eval_output) if dev_eval_output else None,
+        "admission_decision_output": (
+            _file_record(admission_decision_output)
+            if admission_decision_output
+            else None
+        ),
+        "admission_report": _file_record(admission_report) if admission_report else None,
     }
 
     train_manifest_payload = _read_json(inferred_train_manifest) if inferred_train_manifest else None
@@ -50,6 +58,11 @@ def build_report(
     model_profile_payload = _read_json(inferred_model_profile) if inferred_model_profile else None
     checkpoint_payload = _read_json(checkpoint_manifest) if checkpoint_manifest else None
     dev_eval_payload = _read_json(dev_eval_output) if dev_eval_output else None
+    admission_payload = (
+        _read_json(admission_decision_output)
+        if admission_decision_output
+        else None
+    )
 
     report = {
         "report_version": REPORT_VERSION,
@@ -63,6 +76,7 @@ def build_report(
         "reward_profile": _summarize_reward_profile(reward_profile_payload),
         "checkpoint_manifest": _summarize_checkpoint(checkpoint_payload),
         "dev_eval": _summarize_dev_eval(dev_eval_payload),
+        "admission_decision": _summarize_admission(admission_payload),
         "files": {name: record for name, record in files.items() if record is not None},
     }
     _write_json(output, report)
@@ -219,6 +233,30 @@ def _summarize_dev_eval(payload: dict[str, Any] | None) -> dict[str, Any] | None
     }
 
 
+def _summarize_admission(payload: dict[str, Any] | None) -> dict[str, Any] | None:
+    """抽取 9.3.16 准入决定；逐 case 证据仍保留在原始 decision JSON。"""
+
+    if payload is None:
+        return None
+    summary = payload.get("summary") or {}
+    checkpoint = payload.get("checkpoint") or {}
+    return {
+        "admission_version": payload.get("admission_version"),
+        "eval_run_id": payload.get("eval_run_id"),
+        "checkpoint_run_id": checkpoint.get("run_id"),
+        "snapshot_id": payload.get("snapshot_id"),
+        "reward_version": payload.get("reward_version"),
+        "decision": summary.get("decision"),
+        "eligible_for_stage9_4": summary.get("eligible_for_stage9_4"),
+        "case_count": summary.get("case_count"),
+        "route_macro_accuracy": summary.get("route_macro_accuracy"),
+        "failed_case_ids": summary.get("failed_case_ids"),
+        "heldout_inference_result_count": payload.get(
+            "heldout_inference_result_count"
+        ),
+    }
+
+
 def _read_json(path: Path | None) -> dict[str, Any] | None:
     if path is None:
         return None
@@ -333,6 +371,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model-profile", type=Path, default=None, help="可选 model profile（模型配置档案）路径。")
     parser.add_argument("--checkpoint-dir", type=Path, default=None, help="可选 checkpoint（检查点）目录。")
     parser.add_argument("--dev-eval-output", type=Path, default=None, help="可选 dev eval（开发集评测）输出 JSON。")
+    parser.add_argument(
+        "--admission-decision-output",
+        type=Path,
+        default=None,
+        help="可选 9.3.16 机器可读准入决定 JSON。",
+    )
+    parser.add_argument(
+        "--admission-report",
+        type=Path,
+        default=None,
+        help="可选 9.3.16 人工准入报告 Markdown。",
+    )
     parser.add_argument("--command", action="append", default=[], help="本次运行命令，可重复传入。")
     parser.add_argument("--notes", default="", help="人工备注，不要写入密钥。")
     args = parser.parse_args(argv)
@@ -345,6 +395,8 @@ def main(argv: list[str] | None = None) -> int:
         model_profile=args.model_profile,
         checkpoint_dir=args.checkpoint_dir,
         dev_eval_output=args.dev_eval_output,
+        admission_decision_output=args.admission_decision_output,
+        admission_report=args.admission_report,
         commands=args.command,
         notes=args.notes,
     )

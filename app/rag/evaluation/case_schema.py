@@ -644,6 +644,21 @@ class PlannerEvalResult(Stage8SchemaModel):
         return [_validate_chunk_id(chunk_id) for chunk_id in chunk_ids]
 
 
+class LogicalTestSet(Stage8SchemaModel):
+    """同一 ``test`` split 内的逻辑测试集边界和运行权限。"""
+
+    # 该逻辑测试集冻结的 case 数量；必须和对应 case_id 清单一致。
+    case_count: int = Field(ge=0)
+    # 是否计入五路线覆盖矩阵。原 35 条核心回答集为 false，新路线留出集为 true。
+    counts_toward_route_matrix: bool
+    # 是否允许参与 Prompt、Reward 或 checkpoint 选择；heldout 必须为 false。
+    allowed_for_model_selection: bool | None = None
+    # 数据不可进入训练等静态用途说明。
+    policy: str = ""
+    # 何时允许执行该逻辑测试集的运行门禁。
+    run_policy: str = ""
+
+
 class SplitManifest(Stage8SchemaModel):
     """
     阶段 8 split 边界记录。
@@ -664,6 +679,12 @@ class SplitManifest(Stage8SchemaModel):
     dev_case_ids: list[str] = Field(default_factory=list)
     # 隔离测试 case_id 列表，禁止导出训练。
     test_case_ids: list[str] = Field(default_factory=list)
+    # 原有核心回答测试集的 case_id 子集；只做历史回答能力回归。
+    core_answer_test_case_ids: list[str] = Field(default_factory=list)
+    # 新增五路线留出测试集的 case_id 子集；禁止参与模型选择。
+    route_heldout_test_case_ids: list[str] = Field(default_factory=list)
+    # test split 内逻辑测试集的数量、用途和运行门禁。
+    logical_test_sets: dict[str, LogicalTestSet] = Field(default_factory=dict)
     # Demo 回归 case_id 列表，禁止导出训练。
     demo_regression_case_ids: list[str] = Field(default_factory=list)
     # 泄漏组到 split 的映射。用于防止同一问题改写跨 split。
@@ -675,6 +696,8 @@ class SplitManifest(Stage8SchemaModel):
         "train_case_ids",
         "dev_case_ids",
         "test_case_ids",
+        "core_answer_test_case_ids",
+        "route_heldout_test_case_ids",
         "demo_regression_case_ids",
     )
     @classmethod
@@ -696,6 +719,31 @@ class SplitManifest(Stage8SchemaModel):
                 if previous_split and previous_split != split:
                     raise ValueError(f"case_id={case_id} 不能同时属于 {previous_split.value} 和 {split.value}")
                 seen[case_id] = split
+        if self.core_answer_test_case_ids or self.route_heldout_test_case_ids:
+            core_ids = set(self.core_answer_test_case_ids)
+            heldout_ids = set(self.route_heldout_test_case_ids)
+            test_ids = set(self.test_case_ids)
+            if core_ids & heldout_ids:
+                raise ValueError(
+                    "core_answer_test 与 route_heldout_test 的 case_id 不能重叠"
+                )
+            if core_ids | heldout_ids != test_ids:
+                raise ValueError(
+                    "两个逻辑测试集的 case_id 并集必须恰好等于 test_case_ids"
+                )
+            expected_keys = {"core_answer_test", "route_heldout_test"}
+            if set(self.logical_test_sets) != expected_keys:
+                raise ValueError(
+                    "logical_test_sets 必须同时定义 core_answer_test 和 "
+                    "route_heldout_test"
+                )
+            if (
+                self.logical_test_sets["core_answer_test"].case_count
+                != len(core_ids)
+                or self.logical_test_sets["route_heldout_test"].case_count
+                != len(heldout_ids)
+            ):
+                raise ValueError("logical_test_sets.case_count 与对应 case_id 清单不一致")
         return self
 
 

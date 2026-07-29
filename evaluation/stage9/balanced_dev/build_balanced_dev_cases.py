@@ -879,12 +879,14 @@ def _live_chunk(document: dict[str, Any], chunk: dict[str, Any]) -> dict[str, An
 def _verify_live_sources(
     documents: dict[str, dict[str, Any]],
     chunks: dict[tuple[str, int], dict[str, Any]],
+    *,
+    case_specs: tuple[CaseSpec, ...] = CASE_SPECS,
 ) -> dict[tuple[str, int], dict[str, Any]]:
     """回读所有被引用 chunk，验证正文 hash 和构题短语。"""
 
     refs = {
         (ref.source_id, ref.chunk_index): ref
-        for spec in CASE_SPECS
+        for spec in case_specs
         for ref in spec.evidence_refs
     }
     live: dict[tuple[str, int], dict[str, Any]] = {}
@@ -909,6 +911,8 @@ def _case_from_spec(
     chunks: dict[tuple[str, int], dict[str, Any]],
     web_sources: dict[str, dict[str, Any]],
     decision: ReviewDecision | None,
+    split: str = "dev",
+    local_gold_origin: str = "production_chunk_gold",
 ) -> PlannerEvalCase:
     source_ids = list(dict.fromkeys(ref.source_id for ref in spec.evidence_refs))
     source_documents = [documents[source_id] for source_id in source_ids]
@@ -984,7 +988,7 @@ def _case_from_spec(
     payload = {
         "case_id": spec.case_id,
         "case_group": spec.case_group,
-        "split": "dev",
+        "split": split,
         "leakage_group_id": spec.leakage_group_id,
         "query": spec.query,
         "query_variants": list(spec.query_variants),
@@ -1031,7 +1035,7 @@ def _case_from_spec(
         "gold_origin": (
             "heldout_gold"
             if expected_web_evidence
-            else "production_chunk_gold"
+            else local_gold_origin
         ),
         "human_review_status": review_status,
         "notes": notes,
@@ -1047,6 +1051,7 @@ def _evidence_record(
     chunks: dict[tuple[str, int], dict[str, Any]],
     web_sources: dict[str, dict[str, Any]],
     decision: ReviewDecision | None,
+    hyde_probes: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     refs = []
     for ref in spec.evidence_refs:
@@ -1122,7 +1127,7 @@ def _evidence_record(
         "evidence_refs": refs,
         "web_evidence_refs": web_refs,
         "expected_answer_points": list(spec.expected_answer_points),
-        "hyde_probe": HYDE_PROBES.get(spec.hyde_probe_id),
+        "hyde_probe": (hyde_probes or HYDE_PROBES).get(spec.hyde_probe_id),
     }
 
 

@@ -1,0 +1,268 @@
+{
+  "import_version": "stage9-balanced-dev-source-import-v1",
+  "source_manifest_version": "stage9-heldout-route-test-source-manifest-v1",
+  "imported_at": "2026-07-28T12:02:59.239729+00:00",
+  "source_manifest_sha256": "28137ddc77543a7c5dd917c992cd70c3911eb93662b232cc289c2877d441a69a",
+  "documents": [
+    {
+      "source_id": "h3c-er2100-guide-6w104",
+      "publisher": "H3C",
+      "title": "H3C ER2100 企业级路由器用户手册",
+      "source_version": "6W104",
+      "source_url": "https://www.h3c.com/cn/d_201509/892076_30005_0.htm",
+      "source_sha256": "391ecdf261f2912c8a0508df285cf0e6e35ff0d19393e3354b3070e2027742f9",
+      "document_id": "doc_stage9_test_h3c_er2100_guide_6w104",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_c1f40114d49173ae",
+      "standard_subject_name": "H3C ER2100",
+      "source_chunk_count": 292,
+      "included_chunk_count": 4,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_test_h3c_er2100_guide_6w104",
+          "chunk_id": 467551067585611904,
+          "index_version": 1,
+          "chunk_index": 32,
+          "title": "## 3.2 登录路由器Web设置页面_1",
+          "parent_title": "## 3.2 登录路由器Web设置页面",
+          "content_chars": 608,
+          "content_sha256": "646f43a56f98194d7fed8657eb63dfc2d3902627bb6960834eaf1c441aa6c1dd"
+        },
+        {
+          "document_id": "doc_stage9_test_h3c_er2100_guide_6w104",
+          "chunk_id": 467551067585611914,
+          "index_version": 1,
+          "chunk_index": 42,
+          "title": "## 5.1.1 连接到因特网_1",
+          "parent_title": "## 5.1.1 连接到因特网",
+          "content_chars": 951,
+          "content_sha256": "98f40e24e4e70510432ad41847110c45caa9a73bd10e8758a70675d68aedd941"
+        },
+        {
+          "document_id": "doc_stage9_test_h3c_er2100_guide_6w104",
+          "chunk_id": 467551067585611919,
+          "index_version": 1,
+          "chunk_index": 47,
+          "title": "## 5.1.2 设置WAN口MAC地址克隆_1",
+          "parent_title": "## 5.1.2 设置WAN口MAC地址克隆",
+          "content_chars": 154,
+          "content_sha256": "160c495d717922c12b884a72a2913f261cea7c6b0501c3a2d50cade297e50616"
+        },
+        {
+          "document_id": "doc_stage9_test_h3c_er2100_guide_6w104",
+          "chunk_id": 467551067585612074,
+          "index_version": 1,
+          "chunk_index": 202,
+          "title": "## Λ注意_1",
+          "parent_title": "## Λ注意",
+          "content_chars": 137,
+          "content_sha256": "b48b8dd815e307dca6fb48dafee950d8fffc7cfef60bba725dfefda42897187e"
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-display-b5-341w-guide-v04",
+      "publisher": "Huawei",
+      "title": "华为显示器 B5-341W 用户指南",
+      "source_version": "ZQE-CBA,04,zh-cn",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15816552/",
+      "source_sha256": "b599069adb3003fc70e37e602f36c9d3636a7eecff70b33ddff613e3f3876651",
+      "document_id": "doc_stage9_test_huawei_display_b5_341w_v04",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_4e92dbbfc21edeab",
+      "standard_subject_name": "华为 B5-341W",
+      "source_chunk_count": 38,
+      "included_chunk_count": 3,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_test_huawei_display_b5_341w_v04",
+          "chunk_id": 467551067585612173,
+          "index_version": 1,
+          "chunk_index": 3,
+          "title": "## 显示器外观和接口介绍_2",
+          "parent_title": "## 显示器外观和接口介绍",
+          "content_chars": 841,
+          "content_sha256": "22dde54c788b5799c992b149c07b396fa095361a02350a9d0550eba853a27770"
+        },
+        {
+          "document_id": "doc_stage9_test_huawei_display_b5_341w_v04",
+          "chunk_id": 467551067585612181,
+          "index_version": 1,
+          "chunk_index": 11,
+          "title": "## 开启与关闭显示器：_1",
+          "parent_title": "## 开启与关闭显示器：",
+          "content_chars": 128,
+          "content_sha256": "108fc6638a2ba8f82bfc1da92953d6384ce60c4ef41e514a73f0355023ed2b05"
+        },
+        {
+          "document_id": "doc_stage9_test_huawei_display_b5_341w_v04",
+          "chunk_id": 467551067585612199,
+          "index_version": 1,
+          "chunk_index": 29,
+          "title": "## 电源安全_1",
+          "parent_title": "## 电源安全",
+          "content_chars": 264,
+          "content_sha256": "c3059ea133120e799dc30ce7e145f6fe459c3e23d74b3a192e09f1685fa0e175"
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-matebook-b3-520-guide-v03",
+      "publisher": "Huawei",
+      "title": "HUAWEI MateBook B3-520 用户手册",
+      "source_version": "BohrDZ,03,zh-cn",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn16057627/",
+      "source_sha256": "63fdee1c706e09c7bb9f3266cd72ceff73289900a89f12da2a2b8221303cb5c0",
+      "document_id": "doc_stage9_test_huawei_matebook_b3_520_v03",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_a0e2ed2f3c9c7f6c",
+      "standard_subject_name": "HUAWEI MateBook B3-520",
+      "source_chunk_count": 60,
+      "included_chunk_count": 2,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_test_huawei_matebook_b3_520_v03",
+          "chunk_id": 467551067585612274,
+          "index_version": 1,
+          "chunk_index": 20,
+          "title": "## 高能模式_1",
+          "parent_title": "## 高能模式",
+          "content_chars": 938,
+          "content_sha256": "e1dc2741e9fe3371159174596bfa73a4cc961010c9fef10195fa429f2c1669c3"
+        },
+        {
+          "document_id": "doc_stage9_test_huawei_matebook_b3_520_v03",
+          "chunk_id": 467551067585612301,
+          "index_version": 1,
+          "chunk_index": 47,
+          "title": "## 配件要求_1",
+          "parent_title": "## 配件要求",
+          "content_chars": 145,
+          "content_sha256": "4f976f81a61e66c5efc16ea78aafc21a89c565819e35d31d468a4b5505263bbd"
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-matestation-b520-guide-v02",
+      "publisher": "Huawei",
+      "title": "HUAWEI MateStation B520 用户手册",
+      "source_version": "PanguBZ,Windows11_02,zh-cn",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15841903/",
+      "source_sha256": "9431d66c09a1700b7a9c29775d0bb18c8259aeb30f37c40c30f7bccccb4aa825",
+      "document_id": "doc_stage9_test_huawei_matestation_b520_v02",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_0b37042d2396bf85",
+      "standard_subject_name": "HUAWEI Matestation B520",
+      "source_chunk_count": 31,
+      "included_chunk_count": 3,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_test_huawei_matestation_b520_v02",
+          "chunk_id": 467551067585612219,
+          "index_version": 1,
+          "chunk_index": 2,
+          "title": "## 外观介绍_2",
+          "parent_title": "## 外观介绍",
+          "content_chars": 993,
+          "content_sha256": "7d90e826d303f21df52b4b83ba8b1a712831c657d17da0614ff4f41a88a8a579"
+        },
+        {
+          "document_id": "doc_stage9_test_huawei_matestation_b520_v02",
+          "chunk_id": 467551067585612225,
+          "index_version": 1,
+          "chunk_index": 8,
+          "title": "## F10 一键恢复出_1",
+          "parent_title": "## F10 一键恢复出",
+          "content_chars": 157,
+          "content_sha256": "8718b539b35df4c1b47f48e52c178b3cc732bd4786c3c6a665d45359691ef642"
+        },
+        {
+          "document_id": "doc_stage9_test_huawei_matestation_b520_v02",
+          "chunk_id": 467551067585612235,
+          "index_version": 1,
+          "chunk_index": 18,
+          "title": "## 电源安全_1",
+          "parent_title": "## 电源安全",
+          "content_chars": 176,
+          "content_sha256": "9fa2a9cf605ebb0fa92361a0f6c7ac207c5ec9ada82430e7b0cad5ceace5d552"
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-tablet-c7-guide-harmonyos2-v01",
+      "publisher": "Huawei",
+      "title": "华为平板 C7 用户指南",
+      "source_version": "DBY-W09,HarmonyOS 2_01,zh-cn",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15880996/",
+      "source_sha256": "29d3023fc8fd6cd9a215cc2df5d880875bc94cc0664a26f87cbdb996fcff9087",
+      "document_id": "doc_stage9_test_huawei_tablet_c7_hmos2_v01",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_54bfd5f0206413ae",
+      "standard_subject_name": "华为平板 C7",
+      "source_chunk_count": 512,
+      "included_chunk_count": 4,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_test_huawei_tablet_c7_hmos2_v01",
+          "chunk_id": 467551067585612375,
+          "index_version": 1,
+          "chunk_index": 55,
+          "title": "## 使用组合键截取屏幕_1",
+          "parent_title": "## 使用组合键截取屏幕",
+          "content_chars": 32,
+          "content_sha256": "2f8b9dff4c0b0f2f7c3bb2bac65a76fa619a74e065d706eed097bd8bdf459105"
+        },
+        {
+          "document_id": "doc_stage9_test_huawei_tablet_c7_hmos2_v01",
+          "chunk_id": 467551067585612421,
+          "index_version": 1,
+          "chunk_index": 101,
+          "title": "## 强制重启平板_1",
+          "parent_title": "## 强制重启平板",
+          "content_chars": 60,
+          "content_sha256": "55085283f60756db22fe69075d8d2b11462d4191955e2e32080b1ee042b3afa6"
+        },
+        {
+          "document_id": "doc_stage9_test_huawei_tablet_c7_hmos2_v01",
+          "chunk_id": 467551067585612423,
+          "index_version": 1,
+          "chunk_index": 103,
+          "title": "## 充电注意事项_1",
+          "parent_title": "## 充电注意事项",
+          "content_chars": 371,
+          "content_sha256": "6712a2492ca210f0f8b59b6e2aecd5a981c0bc159a32b581a5c155a8b2a889ca"
+        },
+        {
+          "document_id": "doc_stage9_test_huawei_tablet_c7_hmos2_v01",
+          "chunk_id": 467551067585612505,
+          "index_version": 1,
+          "chunk_index": 185,
+          "title": "## 连接平板和笔记本_1",
+          "parent_title": "## 连接平板和笔记本",
+          "content_chars": 380,
+          "content_sha256": "7abdf02ca774ca690eb51dfda9aae137e98534a1a3b63cda4ab140ae77c0ba24"
+        }
+      ]
+    }
+  ]
+}
