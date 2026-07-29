@@ -46,6 +46,10 @@ if [[ ! -x "$PYTHON_BIN" ]]; then
   echo "训练 Python 解释器不存在：$PYTHON_BIN" >&2
   exit 2
 fi
+if ! command -v uv >/dev/null 2>&1; then
+  echo "缺少 uv（Python 包管理器），无法生成 SFT 环境冻结文件。" >&2
+  exit 2
+fi
 
 if [[ -z "${SFT_CHECKPOINT_DIR:-}" || -z "${PLANNER_ADAPTER_PATH:-}" ]]; then
   echo "必须设置 SFT_CHECKPOINT_DIR 和 PLANNER_ADAPTER_PATH。" >&2
@@ -94,6 +98,11 @@ for package in ("torch", "transformers", "peft", "loguru", "pydantic"):
 PY
 printf 'preflight（前置检查）mode=%s status=running\n' "$CLOUD_PREFLIGHT_MODE"
 "$PYTHON_BIN" "${args[@]}" 2>&1 | tee "$RUN_DIR/preflight.log"
+SFT_ENV_FREEZE="$RUN_DIR/sft_environment_freeze.txt"
+SFT_ENV_FREEZE_TMP="$SFT_ENV_FREEZE.tmp"
+uv pip freeze --python "$PYTHON_BIN" > "$SFT_ENV_FREEZE_TMP"
+mv "$SFT_ENV_FREEZE_TMP" "$SFT_ENV_FREEZE"
 printf 'preflight（前置检查）mode=%s status=completed\n' "$CLOUD_PREFLIGHT_MODE"
 printf 'run_dir（运行目录）=%s\n' "$RUN_DIR"
 printf 'output（报告）=%s\n' "$CLOUD_PREFLIGHT_OUTPUT"
+printf 'sft_environment_freeze（SFT 环境冻结文件）=%s\n' "$SFT_ENV_FREEZE"

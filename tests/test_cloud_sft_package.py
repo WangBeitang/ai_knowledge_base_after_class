@@ -91,6 +91,8 @@ def test_cloud_sft_scripts_keep_bootstrap_and_training_separate():
     assert "--expected-sft-python" in runtime_preflight
     assert "--sft-requirements-lock" in runtime_preflight
     assert "sys.executable（实际解释器）" in runtime_preflight
+    assert 'uv pip freeze --python "$PYTHON_BIN"' in runtime_preflight
+    assert "sft_environment_freeze.txt" in runtime_preflight
 
 
 def test_cloud_sft_uses_an_isolated_training_environment():

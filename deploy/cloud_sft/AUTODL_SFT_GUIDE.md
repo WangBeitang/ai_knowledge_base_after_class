@@ -546,7 +546,9 @@ bash deploy/cloud_sft/run_runtime_preflight.sh
 ```
 
 该命令只读检查，不会安装依赖、下载模型或启动服务。它会生成
-`runtime_preflight_no-card_<UTC时间>/preflight.json（无卡前置检查报告）`，并按以下层级给出失败：
+`runtime_preflight_no-card_<UTC时间>/preflight.json（无卡前置检查报告）`和同目录下的
+`sft_environment_freeze.txt（SFT 环境冻结文件）`。冻结文件只在所有 preflight check
+通过后生成，并明确使用 `$PYTHON_BIN`，避免再次记录成主项目 `.venv`。报告按以下层级给出失败：
 
 - `environment（环境）`：`OMP_NUM_THREADS`、离线开关、expanded dev 固定配置和
   `REQUIRE_CUDA`。

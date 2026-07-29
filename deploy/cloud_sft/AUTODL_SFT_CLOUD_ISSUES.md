@@ -45,7 +45,7 @@
 
 | 问题 | 现象 | 根因 | 后续处理 |
 |---|---|---|---|
-| 正式入口缺少 `loguru` | 无卡 preflight 导入 expanded dev 入口时报 `ModuleNotFoundError: No module named 'loguru'` | `.venv-sft` 锁文件只覆盖训练包，没有覆盖正式评测入口导入的项目日志依赖 | 9.3.17 已把 `loguru==0.7.3`补入 source requirements、lock 和 import 门禁；待云端无卡重建验证 |
+| 正式入口缺少 `loguru` | 无卡 preflight 导入 expanded dev 入口时报 `ModuleNotFoundError: No module named 'loguru'` | `.venv-sft` 锁文件只覆盖训练包，没有覆盖正式评测入口导入的项目日志依赖 | 9.3.17 已把 `loguru==0.7.3`补入 source requirements、lock 和 import 门禁；云端锁文件 audit 与完整入口 import 已通过 |
 | 新 shell 没有加载 `env.local` | `$PYTHON_BIN` 为空时执行 `uv pip freeze`，第一次得到主项目 `.venv` 的 `transformers=4.57.6` | 无卡重启后环境变量不会自动继承；uv 在解释器参数无效时选择了项目默认环境 | freeze 前强制 `source env.local`并打印 `$PYTHON_BIN`、`sys.executable`和核心包版本 |
 | 离线变量不完整 | `env.local`只有 `HF_HUB_OFFLINE=1`，缺少脚本硬门禁要求的 `TRANSFORMERS_OFFLINE=1` | 旧实例配置没有随新入口模板自动补齐 | 无卡阶段显式补齐并 grep 复核；正式脚本继续拒绝不完整离线配置 |
 | 只校验依赖列表不足 | 文件、checkpoint 和 SHA256 preflight 通过后，正式 Python 入口仍可能缺运行依赖 | 过去只检查若干包版本，没有导入最终执行模块 | 9.3.17 preflight 已使用正式 `$PYTHON_BIN`完整 import 训练与 expanded dev 入口，并校验解释器和版本身份 |
@@ -66,7 +66,7 @@
 
 - [x] 已把 `loguru==0.7.3`写入训练依赖源文件和锁文件。
 - [x] 无卡 preflight 已增加正式入口 import、解释器身份、锁文件/checkpoint 版本三方一致性硬门禁；
-  本地测试已通过，云端全新 `.venv-sft` 无卡验收待执行。
+  本地测试及云端正式 `.venv-sft` 无卡核心门禁均已通过；自动环境 freeze 产物待更新脚本后复跑确认。
 - [ ] 修复 Snapshot Provider 的 HyDE 和安全拒绝 Observation 契约。
 - [ ] 契约修复后重跑 Reward v1.1 回归和 SFT v1 归因复评。
 - [ ] 只根据修正后仍成立的失败补独立 train-only 数据；不复制 balanced dev 或 heldout。

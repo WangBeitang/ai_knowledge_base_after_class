@@ -86,7 +86,8 @@ bash deploy/cloud_sft/run_expanded_dev_gate.sh
 - `run_planner_server.sh`：复用 `deploy/planner_model_server/run_vllm_planner_server.sh` 启动 vLLM（大模型推理服务框架）。
 - `run_runtime_preflight.sh`：只读检查 `.venv-sft` 解释器身份、正式训练/expanded dev
   入口导入、训练锁文件与 checkpoint 框架版本、环境、磁盘、离线模型缓存、
-  vLLM/PyTorch/CUDA 版本和端口；检查失败时禁止启动 vLLM。
+  vLLM/PyTorch/CUDA 版本和端口；通过后用同一 `$PYTHON_BIN`生成 SFT 环境冻结文件，
+  检查失败时禁止启动 vLLM。
 - `run_planner_action_probe.sh`：通过真实 vLLM HTTP 服务覆盖六类 Action，并额外验证 Web 禁用边界。
 - `run_gpu_acceptance_gate.sh`：串联 GPU preflight、vLLM 启停、健康等待和 HTTP 探针，
   结束时主动停止本次启动的服务并记录显存进程。
