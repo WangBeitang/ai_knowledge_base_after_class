@@ -4,6 +4,7 @@ from collections.abc import Mapping
 
 from app.process.query.agent.state import QueryGraphState
 from app.rag.query.contracts import (
+    DEFAULT_EVIDENCE_EXCERPT_CHARS,
     EvidenceSourceType,
     EvidenceSummary,
     IdentifierResolutionStatus,
@@ -128,7 +129,9 @@ def _evidence_summaries(reranked_docs: list[Mapping[str, object]]) -> list[Evide
                 source_type=EvidenceSourceType(document.get("source_type")),
                 rerank_score=document.get("rerank_score"),
                 matched_identifiers=extract_identifiers_from_record(document),
-                content_excerpt=str(document.get("content") or "")[:500],
+                content_excerpt=str(document.get("content") or "")[
+                    :DEFAULT_EVIDENCE_EXCERPT_CHARS
+                ],
             )
         )
     return summaries

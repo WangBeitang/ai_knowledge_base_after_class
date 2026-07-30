@@ -58,12 +58,12 @@ def record_expanded_dev_observations(
         action_provider: OfflineActionProvider | None = None,
 ) -> Counter[str]:
     """
-    为每条 reviewed dev（已审核开发集）录制完整检索动作集合。
+    为每条 reviewed dev（已审核开发集）录制可接受路线实际需要的检索动作。
 
-    每个 case 都录制 local_search -> hyde_search；允许 Web（网页检索）的 case 再录制
-    web_search。这样模型即使选择了错误检索路线，Replay（回放）也能返回真实结果，
-    不会把“缺少回放记录”误判为模型路线错误。终态 answer/refuse/ask 不依赖 Provider，
-    因此不在本文件中录制。
+    动作集合来自 acceptable_action_paths（可接受动作路径），而不是为每条 case 强行执行
+    local/HyDE/Web。这样 Web-only 或直接追问样本不会为了“补齐记录”绕过 subject scope
+    （主体范围）硬门禁，也不会重新引入按 Gold（标准答案）伪造候选的污染。终态
+    answer/refuse/ask 不依赖 Provider，因此不在本文件中录制。
     """
 
     if max_cases is not None and max_cases <= 0:
@@ -150,6 +150,35 @@ def _reviewed_dev_cases(path: str | Path) -> list[PlannerEvalCase]:
     return cases
 
 
+def retrieval_actions_for_case(case: PlannerEvalCase) -> list[QueryAction]:
+    """
+    返回可接受路径实际出现的检索 Action（动作），并保持固定执行顺序。
+
+    错误路线由 Evaluator（评测器）依据 acceptable_action_paths 判错；录制器不能为了给
+    错误路线准备候选而放宽 subject、dataset 或权限边界。
+    """
+
+    retrieval_actions = {
+        action
+        for path in case.acceptable_action_paths
+        for action in path
+        if action in {
+            QueryAction.LOCAL_SEARCH,
+            QueryAction.HYDE_SEARCH,
+            QueryAction.WEB_SEARCH,
+        }
+    }
+    return [
+        action
+        for action in (
+            QueryAction.LOCAL_SEARCH,
+            QueryAction.HYDE_SEARCH,
+            QueryAction.WEB_SEARCH,
+        )
+        if action in retrieval_actions
+    ]
+
+
 def _retrieval_decisions(case: PlannerEvalCase) -> list[PlannerDecision]:
     """
     生成动作覆盖计划；这里只决定“要录哪些动作”，不根据正确答案构造候选。
@@ -157,27 +186,19 @@ def _retrieval_decisions(case: PlannerEvalCase) -> list[PlannerDecision]:
     Query（查询文本）固定使用 case.query，真实候选完全由 Milvus/Web Provider 返回。
     """
 
-    decisions = [
+    reason_codes = {
+        QueryAction.LOCAL_SEARCH: PlannerReasonCode.INITIAL_LOCAL_SEARCH,
+        QueryAction.HYDE_SEARCH: PlannerReasonCode.LOCAL_LOW_SCORE,
+        QueryAction.WEB_SEARCH: PlannerReasonCode.REALTIME_QUERY,
+    }
+    return [
         PlannerDecision(
-            action=QueryAction.LOCAL_SEARCH,
+            action=action,
             query=case.query,
-            reason_code=PlannerReasonCode.INITIAL_LOCAL_SEARCH,
-        ),
-        PlannerDecision(
-            action=QueryAction.HYDE_SEARCH,
-            query=case.query,
-            reason_code=PlannerReasonCode.LOCAL_LOW_SCORE,
-        ),
-    ]
-    if case.expected_behavior.should_call_web:
-        decisions.append(
-            PlannerDecision(
-                action=QueryAction.WEB_SEARCH,
-                query=case.query,
-                reason_code=PlannerReasonCode.REALTIME_QUERY,
-            )
+            reason_code=reason_codes[action],
         )
-    return decisions
+        for action in retrieval_actions_for_case(case)
+    ]
 
 
 def _build_parser() -> argparse.ArgumentParser:

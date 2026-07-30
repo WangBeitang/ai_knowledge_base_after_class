@@ -106,6 +106,24 @@ def test_equipment_model_variants_share_one_canonical_form(variant):
     }
 
 
+@pytest.mark.parametrize(
+    ("variant", "canonical"),
+    [
+        ("P5", "P5"),
+        ("PixLab B5", "PIXLAB B5"),
+        ("RS12", "RS 12"),
+        ("华为擎云 P5", "P5"),
+    ],
+)
+def test_equipment_model_supports_real_single_digit_product_names(
+    variant,
+    canonical,
+):
+    assert extract_query_identifiers(f"{variant} 怎么操作？") == {
+        "equipment_model": [canonical]
+    }
+
+
 def test_alarm_codes_are_extracted_independently_and_ambiguous_words_are_ignored():
     assert extract_query_identifiers("E021 和 E020 分别是什么故障？") == {
         "alarm_code": ["E021", "E020"]

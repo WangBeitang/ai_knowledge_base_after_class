@@ -29,6 +29,7 @@ from app.rag.evaluation.case_schema import (
 from app.rag.query.config import PLANNER_MAX_STEPS
 from app.rag.query.contracts import (
     Citation,
+    DEFAULT_EVIDENCE_EXCERPT_CHARS,
     EvidenceSourceType,
     EvidenceSummary,
     IdentifierResolutionStatus,
@@ -968,7 +969,7 @@ def _candidate_to_evidence_summary(
         source_type=candidate.source_type,
         rerank_score=candidate.rerank_score,
         matched_identifiers=_matched_identifiers([candidate], requested_identifiers),
-        content_excerpt=candidate.content[:500],
+        content_excerpt=candidate.content[:DEFAULT_EVIDENCE_EXCERPT_CHARS],
     )
 
 

@@ -40,6 +40,7 @@ from evaluation.stage9.providers.record_expanded_dev_observations import (  # no
     DEFAULT_CASES,
     DEFAULT_RECORDS,
     DEFAULT_SNAPSHOT,
+    retrieval_actions_for_case,
 )
 
 
@@ -67,7 +68,7 @@ class CaseReplayCoverage(ReplayContractModel):
 
     case_id: str = Field(min_length=1, description="评测样本 ID。")
     required_actions: list[QueryAction] = Field(
-        description="为避免错误路线因缺记录而失败，本 case 必须冻结的检索动作。",
+        description="本 case 的 acceptable_action_paths 实际需要冻结的检索动作。",
     )
     recorded_actions: list[QueryAction] = Field(
         description="使用 case.query 作为标准查询时已经找到的真实动作记录。",
@@ -120,7 +121,7 @@ class ExpandedDevReplayContract(ReplayContractModel):
     record_count: int = Field(ge=1)
     required_record_count: int = Field(
         ge=1,
-        description="25 条标准 query 完整覆盖 local/HyDE/Web 所需的最少记录数。",
+        description="25 条标准 query 覆盖所有可接受检索路径所需的最少记录数。",
     )
     extra_record_count: int = Field(
         ge=0,
@@ -224,17 +225,11 @@ def validate_expanded_dev_replay(
         *_validate_hyde_routes(cases, indexed),
         *_validate_safe_refuse_routes(cases, indexed),
     ]
-    failed_routes = [
-        f"{check.case_id}:{check.explanation}"
-        for check in route_checks
-        if not check.passed
-    ]
-    if failed_routes:
-        raise ValueError(f"expanded dev 路线 Observation 契约不成立：{failed_routes}")
+    route_contract_ok = all(check.passed for check in route_checks)
 
     return ExpandedDevReplayContract(
         created_at=datetime.now(UTC).isoformat(timespec="seconds"),
-        ok=True,
+        ok=route_contract_ok,
         snapshot_id=snapshot.snapshot_id,
         records_path=_logical(records_file),
         records_sha256=_sha256(records_file),
@@ -281,6 +276,21 @@ def render_replay_report(contract: ExpandedDevReplayContract) -> str:
     safety_checks = [
         check for check in contract.route_checks if check.route_type == "safe_refuse"
     ]
+    route_rows = [
+        "| "
+        + " | ".join(
+            [
+                check.case_id,
+                check.route_type,
+                str(check.local_target_rank or "-"),
+                str(check.hyde_target_rank or "-"),
+                "通过" if check.passed else "失败",
+                check.explanation,
+            ]
+        )
+        + " |"
+        for check in contract.route_checks
+    ]
     return "\n".join(
         [
             "# 阶段 9 expanded dev 离线评测环境修复报告",
@@ -302,9 +312,19 @@ def render_replay_report(contract: ExpandedDevReplayContract) -> str:
             f"- safe_refuse（安全拒绝）：`{sum(check.passed for check in safety_checks)}/{len(safety_checks)}` "
             "能在 local_search 中看到来源手册警告证据。",
             "",
+            "## 逐条结果",
+            "",
+            "| case_id | 路线 | local 目标名次 | HyDE 目标名次 | 结论 | 说明 |",
+            "|---|---|---:|---:|---|---|",
+            *route_rows,
+            "",
             "## 边界",
             "",
-            "- 本报告证明真实检索结果已经被记录并可用于不可变 Replay（回放）。",
+            (
+                "- 本报告证明真实检索记录满足关键路线契约，可以进入不可变 Replay（回放）。"
+                if contract.ok
+                else "- 真实检索记录本身完整，但关键路线契约未通过；不得用于模型准入复评。"
+            ),
             "- 本报告不运行 SFT checkpoint，不代表模型已经掌握 HyDE 或安全拒绝。",
             "- 后续模型复评必须同时绑定本记录文件、环境 snapshot 和 SHA256。",
             "",
@@ -328,12 +348,9 @@ def _reviewed_dev_cases(path: str | Path) -> list[PlannerEvalCase]:
 
 
 def _required_actions(case: PlannerEvalCase) -> list[QueryAction]:
-    """冻结所有合法检索动作；错误路线也必须得到真实 Observation，而不是缺记录。"""
+    """复用录制器的路线动作选择，避免录制与校验两侧发生契约漂移。"""
 
-    actions = [QueryAction.LOCAL_SEARCH, QueryAction.HYDE_SEARCH]
-    if case.expected_behavior.should_call_web:
-        actions.append(QueryAction.WEB_SEARCH)
-    return actions
+    return retrieval_actions_for_case(case)
 
 
 def _validate_record_payload(
@@ -561,7 +578,7 @@ def main(argv: list[str] | None = None) -> int:
             ensure_ascii=False,
         )
     )
-    return 0
+    return 0 if contract.ok else 2
 
 
 if __name__ == "__main__":

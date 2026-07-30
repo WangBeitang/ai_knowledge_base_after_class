@@ -43,10 +43,12 @@ PART_NUMBER_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-# 设备型号使用“至少两个字母 + 至少两位数字”的保守规则。单字母 E 开头的报警码不会
-# 落入该规则；已经被 SOP/零件规则占用的文本区间也会在提取时排除。
+# 设备型号至少包含字母和数字，允许 HAK180、RS12、P5、PixLab B5 等真实形态。
+# 单字母 E 开头的报警码会先被更明确的报警码规则占用；SOP/零件编号也会在设备型号
+# 提取前占用对应文本区间，避免把更明确的业务标识降级解释成设备型号。
 EQUIPMENT_MODEL_PATTERN = re.compile(
-    r"(?<![A-Za-z0-9])([A-Za-z]{2,})[\s_-]*(\d{2,}[A-Za-z0-9]*)(?![A-Za-z0-9])",
+    r"(?<![A-Za-z0-9])([A-Za-z]+(?:[\s_-]+[A-Za-z]+)*?)[\s_-]*"
+    r"([A-Za-z]?\d+[A-Za-z0-9]*)(?![A-Za-z0-9])",
     re.IGNORECASE,
 )
 
@@ -99,13 +101,14 @@ def _deduplicate(values: Iterable[str]) -> list[str]:
 
 def normalize_equipment_model(prefix: str, number: str | None = None) -> str:
     """
-    把设备型号统一成 ``字母前缀 + 空格 + 数字后缀``，例如 ``HAK 180``。
+    把设备型号统一成稳定型号 token，例如 ``HAK 180``、``P5``、``PIXLAB B5``。
 
-    ``number`` 为空时会从完整文本重新解析，供 metadata 和测试直接调用；无法满足保守
-    型号规则时返回空字符串，不擅自把普通单词或短数字当设备型号。
+    ``number`` 为空时会从完整展示文本中查找型号片段，供 metadata、case 标注和测试
+    直接调用；因此“华为擎云 P5”会取出 ``P5``，不会把中文品牌前缀写入 Milvus 精确
+    过滤值。无法找到合法型号片段时返回空字符串。
     """
     if number is None:
-        match = EQUIPMENT_MODEL_PATTERN.fullmatch(str(prefix or "").strip())
+        match = EQUIPMENT_MODEL_PATTERN.search(str(prefix or "").strip())
         if not match:
             return ""
         prefix, number = match.group(1), match.group(2)
@@ -113,6 +116,10 @@ def normalize_equipment_model(prefix: str, number: str | None = None) -> str:
     normalized_number = re.sub(r"[\s_-]+", "", str(number or "")).upper()
     if not normalized_prefix or not normalized_number:
         return ""
+    if normalized_number[0].isalpha():
+        return f"{normalized_prefix} {normalized_number}"
+    if len(normalized_prefix) == 1:
+        return f"{normalized_prefix}{normalized_number}"
     return f"{normalized_prefix} {normalized_number}"
 
 

@@ -23,6 +23,12 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 MAX_EVIDENCE_SUMMARY_COUNT = 5
 MAX_EVIDENCE_EXCERPT_CHARS = 500
 MAX_EVIDENCE_TOTAL_CHARS = 2_000
+# 自动构造 Observation（观察结果）时使用的默认截断长度。单条 schema 仍允许最多
+# 500 字，但默认按“5 条摘要也不突破 2,000 字总预算”分配，避免构造阶段自相矛盾。
+DEFAULT_EVIDENCE_EXCERPT_CHARS = min(
+    MAX_EVIDENCE_EXCERPT_CHARS,
+    MAX_EVIDENCE_TOTAL_CHARS // MAX_EVIDENCE_SUMMARY_COUNT,
+)
 
 NonNegativeInt = Annotated[int, Field(ge=0)]
 PositiveStep = Annotated[int, Field(ge=1)]

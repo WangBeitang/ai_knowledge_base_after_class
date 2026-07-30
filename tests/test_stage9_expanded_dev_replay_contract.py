@@ -23,6 +23,7 @@ from evaluation.stage9.providers.record_expanded_dev_observations import (
     DEFAULT_CASES,
     DEFAULT_SNAPSHOT,
     record_expanded_dev_observations,
+    retrieval_actions_for_case,
 )
 from evaluation.stage9.providers.validate_expanded_dev_replay import (
     REPLAY_CONTRACT_VERSION,
@@ -46,8 +47,8 @@ def test_expanded_dev_replay_contract_accepts_complete_real_records(tmp_path: Pa
     assert contract.contract_version == REPLAY_CONTRACT_VERSION
     assert contract.ok is True
     assert contract.case_count == 25
-    assert contract.record_count == 55
-    assert contract.required_record_count == 55
+    assert contract.record_count == 32
+    assert contract.required_record_count == 32
     assert contract.extra_record_count == 0
     assert len(contract.route_checks) == 10
     assert all(check.passed for check in contract.route_checks)
@@ -66,12 +67,17 @@ def test_expanded_dev_replay_contract_rejects_hyde_target_leaked_into_local(
         },
     )
 
-    with pytest.raises(ValueError, match="路线 Observation 契约不成立"):
-        validate_expanded_dev_replay(
-            cases_path=DEFAULT_CASES,
-            snapshot_path=DEFAULT_SNAPSHOT,
-            records_path=records,
-        )
+    contract = validate_expanded_dev_replay(
+        cases_path=DEFAULT_CASES,
+        snapshot_path=DEFAULT_SNAPSHOT,
+        records_path=records,
+    )
+
+    assert contract.ok is False
+    assert any(
+        check.case_id == hyde_case.case_id and not check.passed
+        for check in contract.route_checks
+    )
 
 
 def test_expanded_dev_replay_contract_rejects_missing_standard_action(
@@ -103,12 +109,17 @@ def test_expanded_dev_replay_contract_rejects_missing_safety_warning(
         },
     )
 
-    with pytest.raises(ValueError, match="安全证据"):
-        validate_expanded_dev_replay(
-            cases_path=DEFAULT_CASES,
-            snapshot_path=DEFAULT_SNAPSHOT,
-            records_path=records,
-        )
+    contract = validate_expanded_dev_replay(
+        cases_path=DEFAULT_CASES,
+        snapshot_path=DEFAULT_SNAPSHOT,
+        records_path=records,
+    )
+
+    assert contract.ok is False
+    assert any(
+        check.case_id == safety_case.case_id and not check.passed
+        for check in contract.route_checks
+    )
 
 
 def test_expanded_dev_replay_contract_rejects_non_milvus_source(tmp_path: Path):
@@ -238,13 +249,14 @@ def test_expanded_dev_recorder_covers_local_and_hyde_without_terminal_action(
     tmp_path: Path,
 ):
     output = tmp_path / "recorded.jsonl"
+    hyde_case = next(case for case in _dev_cases() if _is_strict_hyde(case))
 
     counts = record_expanded_dev_observations(
         cases_path=DEFAULT_CASES,
         snapshot_path=DEFAULT_SNAPSHOT,
         output_path=output,
         chunk_status_filter_enabled=False,
-        max_cases=1,
+        case_ids={hyde_case.case_id},
         action_provider=_FakeMilvusProvider(),
     )
     records = read_provider_observation_records(output)
@@ -299,32 +311,19 @@ def _write_complete_records(
             if _is_strict_hyde(case)
             else generic.model_copy(deep=True)
         )
-        records.append(
-            _record(
-                case,
-                QueryAction.LOCAL_SEARCH,
-                [local_candidate],
-                snapshot_id=snapshot.snapshot_id,
-                retrieval_config_version=snapshot.retrieval_config_version,
-                retrieval_config_hash=config_hash,
-            )
-        )
-        records.append(
-            _record(
-                case,
-                QueryAction.HYDE_SEARCH,
-                [hyde_candidate],
-                snapshot_id=snapshot.snapshot_id,
-                retrieval_config_version=snapshot.retrieval_config_version,
-                retrieval_config_hash=config_hash,
-            )
-        )
-        if case.expected_behavior.should_call_web:
+        candidates_by_action = {
+            QueryAction.LOCAL_SEARCH: [local_candidate],
+            QueryAction.HYDE_SEARCH: [hyde_candidate],
+            QueryAction.WEB_SEARCH: [_web_candidate(case)]
+            if case.expected_web_evidence
+            else [],
+        }
+        for action in retrieval_actions_for_case(case):
             records.append(
                 _record(
                     case,
-                    QueryAction.WEB_SEARCH,
-                    [_web_candidate(case)],
+                    action,
+                    candidates_by_action[action],
                     snapshot_id=snapshot.snapshot_id,
                     retrieval_config_version=snapshot.retrieval_config_version,
                     retrieval_config_hash=config_hash,
