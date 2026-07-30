@@ -186,7 +186,8 @@ class RecordingActionProvider:
     记录型 ActionProvider（动作执行器）。
 
     它包装真实 Provider（执行器），并在 OfflineRagEnvironment（离线 RAG 环境）生成
-    Observation（观察结果）后追加写入 JSONL（逐行 JSON）审计记录。
+    Observation（观察结果）后追加写入 JSONL（逐行 JSON）审计记录。普通诊断可以限制
+    candidate 正文长度；需要不可变 Replay（回放）的正式记录应传 None，完整保留候选正文。
     """
 
     provider_name = "recording_action_provider"
@@ -196,13 +197,20 @@ class RecordingActionProvider:
             wrapped_provider: OfflineActionProvider,
             *,
             output_path: str | Path,
-            max_candidate_content_chars: int = 500,
+            max_candidate_content_chars: int | None = 500,
     ) -> None:
-        if max_candidate_content_chars <= 0:
+        if (
+            max_candidate_content_chars is not None
+            and max_candidate_content_chars <= 0
+        ):
             raise ValueError("max_candidate_content_chars 必须大于 0")
         self.wrapped_provider = wrapped_provider
         self.output_path = Path(output_path)
-        self.max_candidate_content_chars = int(max_candidate_content_chars)
+        self.max_candidate_content_chars = (
+            int(max_candidate_content_chars)
+            if max_candidate_content_chars is not None
+            else None
+        )
 
     @property
     def wrapped_provider_name(self) -> str:
@@ -357,10 +365,14 @@ def _default_web_search(state: QueryGraphState) -> Mapping[str, Any]:
     return search_by_web(state)
 
 
-def _candidate_payload(candidate: RetrievalCandidate, *, max_content_chars: int) -> dict[str, Any]:
+def _candidate_payload(
+        candidate: RetrievalCandidate,
+        *,
+        max_content_chars: int | None,
+) -> dict[str, Any]:
     payload = candidate.model_dump(mode="json")
     content = str(payload.get("content") or "")
-    if len(content) > max_content_chars:
+    if max_content_chars is not None and len(content) > max_content_chars:
         payload["content"] = content[:max_content_chars]
         payload["content_truncated"] = True
     else:

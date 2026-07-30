@@ -33,6 +33,7 @@ from app.rag.query.model_planner import ModelPlanner  # noqa: E402
 
 
 MODEL_PLANNER_EVAL_VERSION = "stage9-model-planner-eval-v1"
+REPLAY_PROVIDER_NAME = "replay"
 
 
 def run_model_planner_eval(
@@ -43,6 +44,7 @@ def run_model_planner_eval(
         split: CaseSplit | str,
         output_path: str | Path | None = None,
         provider_name: str = SNAPSHOT_EXPECTED_PROVIDER_NAME,
+        provider_records_path: str | Path | None = None,
         reward_config: RewardConfig | None = None,
         max_cases: int | None = None,
         run_id: str | None = None,
@@ -58,7 +60,12 @@ def run_model_planner_eval(
         raise ValueError(f"没有 split={active_split.value} 的可评测 case")
 
     snapshot = load_environment_snapshot(snapshot_path)
-    provider = _build_provider(provider_name, selected_cases, snapshot)
+    provider = _build_provider(
+        provider_name,
+        selected_cases,
+        snapshot,
+        provider_records_path=provider_records_path,
+    )
     normalized_run_id = run_id or f"stage9_sft_eval_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}_{uuid.uuid4().hex[:8]}"
     planner = ModelPlanner.from_checkpoint(checkpoint_dir)
     environment = OfflineRagEnvironment(
@@ -129,6 +136,8 @@ def _build_provider(
         provider_name: str,
         cases: list[PlannerEvalCase],
         snapshot: Any,
+        *,
+        provider_records_path: str | Path | None = None,
 ) -> OfflineActionProvider:
     if provider_name == SNAPSHOT_EXPECTED_PROVIDER_NAME:
         return SnapshotExpectedChunkActionProvider(cases, snapshot)
@@ -138,6 +147,14 @@ def _build_provider(
         from app.rag.evaluation.action_providers import MilvusActionProvider
 
         return MilvusActionProvider()
+    if provider_name == REPLAY_PROVIDER_NAME:
+        if provider_records_path is None:
+            raise ValueError(
+                "provider=replay（回放执行器）必须提供 provider_records_path（真实动作记录文件）"
+            )
+        from app.rag.evaluation.action_providers import ReplayActionProvider
+
+        return ReplayActionProvider(provider_records_path)
     raise ValueError(f"未知 action provider：{provider_name}")
 
 
@@ -263,7 +280,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--provider",
         default=SNAPSHOT_EXPECTED_PROVIDER_NAME,
-        choices=[SNAPSHOT_EXPECTED_PROVIDER_NAME, "empty", "milvus"],
+        choices=[SNAPSHOT_EXPECTED_PROVIDER_NAME, "empty", "milvus", REPLAY_PROVIDER_NAME],
+    )
+    parser.add_argument(
+        "--provider-records",
+        type=Path,
+        help="provider=replay 时必填；记录来自真实 Provider（动作执行器）的 JSONL 文件。",
     )
     parser.add_argument("--max-cases", type=int, default=None)
     args = parser.parse_args(argv)
@@ -274,6 +296,7 @@ def main(argv: list[str] | None = None) -> int:
         split=args.split,
         output_path=args.output,
         provider_name=args.provider,
+        provider_records_path=args.provider_records,
         max_cases=args.max_cases,
     )
     print(f"run_id={output.run_id}")
