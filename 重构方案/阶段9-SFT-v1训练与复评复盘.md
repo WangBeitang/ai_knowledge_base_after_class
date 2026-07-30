@@ -10,6 +10,8 @@
 - [`阶段9.md`](./阶段9.md)：阶段任务、执行顺序和验收标准。
 - [`AUTODL_SFT_GUIDE.md`](../deploy/cloud_sft/AUTODL_SFT_GUIDE.md)：AutoDL 可复制操作步骤。
 - [`AUTODL_SFT_CLOUD_ISSUES.md`](../deploy/cloud_sft/AUTODL_SFT_CLOUD_ISSUES.md)：云端环境和平台坑点。
+- [`阶段9-离线评测失真问题与面试价值复盘.md`](./阶段9-离线评测失真问题与面试价值复盘.md)：
+  Provider/Observation 契约问题、修复路线和可直接使用的面试表达。
 - 云端生成的 `阶段9-SFT-9.4准入报告.md`：本次 25 条逐 case 正式结果。
 
 本文只使用已经冻结和校验的证据，不把 snapshot（快照）、离线占位回答、dev 结果或训练 loss
