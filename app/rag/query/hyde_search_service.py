@@ -102,6 +102,31 @@ def generate_hyde_answer(rewritten_query):
     return result
 
 
+def build_hyde_grounded_query(state: QueryGraphState, rewritten_query: str) -> str:
+    """
+    把已确认的设备主体补入 HyDE（假设式改写检索）输入。
+
+    subject_ids（主体 ID）负责限制 Milvus（向量数据库）的检索范围，但只做过滤并不能
+    告诉生成 HyDE 假设答案的 LLM 当前“这台机器”究竟是什么。这里仅补充 State（运行
+    状态）中已经确认的 standard_subject_names（标准主体名称），不读取 Gold（标准答案）
+    或 expected_chunks（期望切片），因此不会把评测答案泄漏给 Provider（动作执行器）。
+    """
+
+    subject_names = [
+        str(name).strip()
+        for name in (state.get("standard_subject_names") or [])
+        if str(name).strip()
+    ]
+    # 展示名只有在存在稳定 subject_id（主体 ID）时才可视为“已确认”，避免把歧义
+    # 候选名称当成事实塞进 HyDE。
+    if not subject_names or not (state.get("subject_ids") or []):
+        return rewritten_query
+    return (
+        f"已确认设备主体：{'、'.join(dict.fromkeys(subject_names))}。\n"
+        f"用户问题：{rewritten_query}"
+    )
+
+
 def search_by_hyde(state: QueryGraphState) -> QueryGraphState:
     """
     HyDE 检索服务：
@@ -115,17 +140,19 @@ def search_by_hyde(state: QueryGraphState) -> QueryGraphState:
     retrieval_mode = normalize_retrieval_mode(state.get("retrieval_mode"))
     state["retrieval_mode"] = retrieval_mode.value
 
-    # 2.根据问题调用模型生成假设性答案
-    hyde_answer = generate_hyde_answer(rewritten_query)
+    # 2. 根据问题和已经确认的设备主体生成假设性答案。只把 subject_id 用在 Milvus
+    # 过滤中会丢失“这台机器”“大孔”等指代的业务语义，导致 LLM 猜错设备。
+    grounded_query = build_hyde_grounded_query(state, rewritten_query)
+    hyde_answer = generate_hyde_answer(grounded_query)
 
-    # 2.混合检索
+    # 3. 混合检索也使用同一份主体化问题，避免生成阶段和向量化阶段的输入不一致。
     hyde_embedding_chunks = query_chunk_by_milvus(
-        rewritten_query,
+        grounded_query,
         hyde_answer,
         filter_expr,
         retrieval_mode=retrieval_mode,
     )
 
-    # 3.结果回写
+    # 4.结果回写
     state["hyde_embedding_chunks"] = hyde_embedding_chunks
     return state

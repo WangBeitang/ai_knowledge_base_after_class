@@ -1,0 +1,102 @@
+{
+  "bundle_version": "stage9-balanced-dev-route-repair-blind-review-v1",
+  "sanitization_policy_version": "stage9-blind-review-sanitization-v1",
+  "bundle_id": "stage9-balanced-dev-route-repair-002ef20c3e7e8c1c",
+  "generated_at": "2026-07-30T08:00:00+00:00",
+  "case_count": 2,
+  "route_counts": {
+    "safe_refuse": 2
+  },
+  "queue_sha256": "002ef20c3e7e8c1cfdf7809993f6dc6817499f655ba677a26491670d6c8fb4e1",
+  "input_files": [
+    {
+      "name": "queue",
+      "logical_path": "evaluation/stage9/artifacts/balanced_dev/second_review_queue.jsonl",
+      "sha256": "002ef20c3e7e8c1cfdf7809993f6dc6817499f655ba677a26491670d6c8fb4e1"
+    },
+    {
+      "name": "planner_cases",
+      "logical_path": "evaluation/stage8/cases/planner_cases.jsonl",
+      "sha256": "18ffc1d733ce9d8ad4ce44468b1f626d1e2781c13226487c92d80e0e168edfb6"
+    },
+    {
+      "name": "curated_cases",
+      "logical_path": "evaluation/stage8_5/artifacts/intermediate/sft_seed/curated_seed_train_cases.jsonl",
+      "sha256": "8da9b1fb1650e90c088e7ee486a984363623a0a8ea51df120543ec4d7d7d7a4f"
+    },
+    {
+      "name": "route_cases",
+      "logical_path": "evaluation/stage9/artifacts/route_seed/route_seed_cases.jsonl",
+      "sha256": "d15b5e90e425bb741b3cde98d1544a11bb653a0d1130f89c8daae6b532989a2c"
+    },
+    {
+      "name": "local_source_manifest",
+      "logical_path": "evaluation/stage9/configs/balanced_dev_source_manifest_v1.json",
+      "sha256": "5d2a285509a69d285ad894d32cadbcc71a50a9284f310ae851ca64a939f6e647"
+    },
+    {
+      "name": "local_evidence_manifest",
+      "logical_path": "evaluation/stage9/artifacts/balanced_dev/source_import_manifest.json",
+      "sha256": "9674ee1580f8960d47d3d9ac0459f5486e8324fe1e51e3397e2c5e3089ceec33"
+    },
+    {
+      "name": "web_source_manifest",
+      "logical_path": "evaluation/stage9/configs/balanced_dev_web_source_manifest_v1.json",
+      "sha256": "93759fa691922afaa953d08cacd1c61edda447d2d4d85a12ad5d5e056e5fb41d"
+    },
+    {
+      "name": "web_evidence_manifest",
+      "logical_path": "evaluation/stage9/artifacts/balanced_dev/web_evidence_manifest.json",
+      "sha256": "6f823cd870e73690f1a23f325b8480d718911ca6229e218a18303f690609bc72"
+    },
+    {
+      "name": "route_matrix",
+      "logical_path": "evaluation/stage9/configs/planner_eval_route_matrix_v1.json",
+      "sha256": "e9345a2e04d76ee825eacae82aa26bf867528e3eea513c134a545dbb76948383"
+    }
+  ],
+  "output_files": [
+    {
+      "file": "REVIEW_INSTRUCTIONS.md",
+      "sha256": "8eed76723216519d6f1dbd24f0eeca6333c1ffbeb8bae79aa4d915f1d97fab37",
+      "bytes": 1785
+    },
+    {
+      "file": "leakage_reference.jsonl",
+      "sha256": "c6421543eb6878c4ee6fbe2136de2f476a9e1eb5b75967f4da9042fc819f1bcb",
+      "bytes": 47804
+    },
+    {
+      "file": "local_evidence_manifest.json",
+      "sha256": "dd37c6773ae48d62d43f17b17959d5e723529e6d2ad87b7265010f5626afb8ae",
+      "bytes": 3226
+    },
+    {
+      "file": "local_source_manifest.json",
+      "sha256": "38cee8f1aaeb58aee79e8875270c14a025b37dce09d03fe950affa5293677bde",
+      "bytes": 1537
+    },
+    {
+      "file": "review_cases.jsonl",
+      "sha256": "0c1a9180950210208ad545912419047c39d228ae160c86940593265531896270",
+      "bytes": 7286
+    },
+    {
+      "file": "route_policy.json",
+      "sha256": "e542a2d0ef23034f4fb47f0c610e516e8feecfe645d3f6c3b1f3750786b1c88d",
+      "bytes": 792
+    },
+    {
+      "file": "web_evidence_manifest.json",
+      "sha256": "acee99d122bc804a70ec3a37d59f29aa761db416686b34e0212d4bfa3e53e3b6",
+      "bytes": 420
+    },
+    {
+      "file": "web_source_manifest.json",
+      "sha256": "e52c761d80eb90004b5f9f26fa64c1e0a15adafe4fb1c19ced9093d6d5b7f9d1",
+      "bytes": 298
+    }
+  ],
+  "contamination_scan": "passed",
+  "historical_decision_count": 0
+}

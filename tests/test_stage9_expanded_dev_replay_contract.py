@@ -10,7 +10,11 @@ from app.rag.evaluation.action_providers import (
     read_provider_observation_records,
 )
 from app.rag.evaluation.baseline_runner import load_environment_snapshot
-from app.rag.evaluation.case_schema import PlannerEvalCase, load_planner_cases
+from app.rag.evaluation.case_schema import (
+    HumanReviewStatus,
+    PlannerEvalCase,
+    load_planner_cases,
+)
 from app.rag.query.contracts import (
     EvidenceSourceType,
     ObservationStatus,
@@ -37,9 +41,10 @@ from evaluation.stage9.model_planner.eval_model_planner import (
 
 def test_expanded_dev_replay_contract_accepts_complete_real_records(tmp_path: Path):
     records = _write_complete_records(tmp_path)
+    cases_path = _all_reviewed_cases_path(tmp_path)
 
     contract = validate_expanded_dev_replay(
-        cases_path=DEFAULT_CASES,
+        cases_path=cases_path,
         snapshot_path=DEFAULT_SNAPSHOT,
         records_path=records,
     )
@@ -59,6 +64,7 @@ def test_expanded_dev_replay_contract_rejects_hyde_target_leaked_into_local(
     tmp_path: Path,
 ):
     cases = _dev_cases()
+    cases_path = _all_reviewed_cases_path(tmp_path)
     hyde_case = next(case for case in cases if _is_strict_hyde(case))
     records = _write_complete_records(
         tmp_path,
@@ -68,7 +74,7 @@ def test_expanded_dev_replay_contract_rejects_hyde_target_leaked_into_local(
     )
 
     contract = validate_expanded_dev_replay(
-        cases_path=DEFAULT_CASES,
+        cases_path=cases_path,
         snapshot_path=DEFAULT_SNAPSHOT,
         records_path=records,
     )
@@ -80,16 +86,49 @@ def test_expanded_dev_replay_contract_rejects_hyde_target_leaked_into_local(
     )
 
 
+def test_hyde_route_ignores_supporting_chunk_seen_by_local(tmp_path: Path):
+    cases = _dev_cases()
+    cases_path = _all_reviewed_cases_path(tmp_path)
+    hyde_case = next(
+        case
+        for case in cases
+        if case.case_id == "planner-dev-balanced-hyde-p5-print-serial-page"
+    )
+    supporting = next(
+        chunk for chunk in hyde_case.expected_chunks if chunk.relevance.value == "supporting"
+    )
+    records = _write_complete_records(
+        tmp_path,
+        local_override={
+            hyde_case.case_id: _local_candidate(hyde_case, supporting)
+        },
+    )
+
+    contract = validate_expanded_dev_replay(
+        cases_path=cases_path,
+        snapshot_path=DEFAULT_SNAPSHOT,
+        records_path=records,
+    )
+
+    check = next(
+        item for item in contract.route_checks if item.case_id == hyde_case.case_id
+    )
+    assert check.passed is True
+    assert check.local_target_rank is None
+    assert check.hyde_target_rank == 1
+
+
 def test_expanded_dev_replay_contract_rejects_missing_standard_action(
     tmp_path: Path,
 ):
     records = _write_complete_records(tmp_path)
+    cases_path = _all_reviewed_cases_path(tmp_path)
     lines = records.read_text(encoding="utf-8").splitlines()
     records.write_text("\n".join(lines[:-1]) + "\n", encoding="utf-8")
 
     with pytest.raises(ValueError, match="缺少标准查询动作记录"):
         validate_expanded_dev_replay(
-            cases_path=DEFAULT_CASES,
+            cases_path=cases_path,
             snapshot_path=DEFAULT_SNAPSHOT,
             records_path=records,
         )
@@ -99,6 +138,7 @@ def test_expanded_dev_replay_contract_rejects_missing_safety_warning(
     tmp_path: Path,
 ):
     cases = _dev_cases()
+    cases_path = _all_reviewed_cases_path(tmp_path)
     safety_case = next(
         case for case in cases if case.expected_behavior.should_refuse
     )
@@ -110,7 +150,7 @@ def test_expanded_dev_replay_contract_rejects_missing_safety_warning(
     )
 
     contract = validate_expanded_dev_replay(
-        cases_path=DEFAULT_CASES,
+        cases_path=cases_path,
         snapshot_path=DEFAULT_SNAPSHOT,
         records_path=records,
     )
@@ -124,6 +164,7 @@ def test_expanded_dev_replay_contract_rejects_missing_safety_warning(
 
 def test_expanded_dev_replay_contract_rejects_non_milvus_source(tmp_path: Path):
     records = _write_complete_records(tmp_path)
+    cases_path = _all_reviewed_cases_path(tmp_path)
     payloads = [
         json.loads(line)
         for line in records.read_text(encoding="utf-8").splitlines()
@@ -141,7 +182,7 @@ def test_expanded_dev_replay_contract_rejects_non_milvus_source(tmp_path: Path):
 
     with pytest.raises(ValueError, match="不是由真实 Milvus Provider 产生"):
         validate_expanded_dev_replay(
-            cases_path=DEFAULT_CASES,
+            cases_path=cases_path,
             snapshot_path=DEFAULT_SNAPSHOT,
             records_path=records,
         )
@@ -151,6 +192,7 @@ def test_expanded_dev_replay_contract_rejects_non_recording_provider(
     tmp_path: Path,
 ):
     records = _write_complete_records(tmp_path)
+    cases_path = _all_reviewed_cases_path(tmp_path)
     payloads = [
         json.loads(line)
         for line in records.read_text(encoding="utf-8").splitlines()
@@ -168,7 +210,7 @@ def test_expanded_dev_replay_contract_rejects_non_recording_provider(
 
     with pytest.raises(ValueError, match="不是由 RecordingActionProvider 记录"):
         validate_expanded_dev_replay(
-            cases_path=DEFAULT_CASES,
+            cases_path=cases_path,
             snapshot_path=DEFAULT_SNAPSHOT,
             records_path=records,
         )
@@ -178,6 +220,7 @@ def test_expanded_dev_replay_contract_rejects_observation_score_drift(
     tmp_path: Path,
 ):
     records = _write_complete_records(tmp_path)
+    cases_path = _all_reviewed_cases_path(tmp_path)
     payloads = [
         json.loads(line)
         for line in records.read_text(encoding="utf-8").splitlines()
@@ -195,7 +238,7 @@ def test_expanded_dev_replay_contract_rejects_observation_score_drift(
 
     with pytest.raises(ValueError, match="top_rerank_score 不一致"):
         validate_expanded_dev_replay(
-            cases_path=DEFAULT_CASES,
+            cases_path=cases_path,
             snapshot_path=DEFAULT_SNAPSHOT,
             records_path=records,
         )
@@ -205,6 +248,7 @@ def test_expanded_dev_replay_contract_rejects_truncated_candidates(
     tmp_path: Path,
 ):
     records = _write_complete_records(tmp_path)
+    cases_path = _all_reviewed_cases_path(tmp_path)
     payloads = [
         json.loads(line)
         for line in records.read_text(encoding="utf-8").splitlines()
@@ -222,7 +266,7 @@ def test_expanded_dev_replay_contract_rejects_truncated_candidates(
 
     with pytest.raises(ValueError, match="候选正文被截断"):
         validate_expanded_dev_replay(
-            cases_path=DEFAULT_CASES,
+            cases_path=cases_path,
             snapshot_path=DEFAULT_SNAPSHOT,
             records_path=records,
         )
@@ -249,10 +293,11 @@ def test_expanded_dev_recorder_covers_local_and_hyde_without_terminal_action(
     tmp_path: Path,
 ):
     output = tmp_path / "recorded.jsonl"
+    cases_path = _all_reviewed_cases_path(tmp_path)
     hyde_case = next(case for case in _dev_cases() if _is_strict_hyde(case))
 
     counts = record_expanded_dev_observations(
-        cases_path=DEFAULT_CASES,
+        cases_path=cases_path,
         snapshot_path=DEFAULT_SNAPSHOT,
         output_path=output,
         chunk_status_filter_enabled=False,
@@ -305,7 +350,11 @@ def _write_complete_records(
         hyde_candidate = (
             _local_candidate(
                 case,
-                case.expected_chunks[0],
+                next(
+                    chunk
+                    for chunk in case.expected_chunks
+                    if chunk.relevance.value == "required"
+                ),
                 channel=RetrievalChannel.HYDE,
             )
             if _is_strict_hyde(case)
@@ -398,6 +447,33 @@ def _dev_cases() -> list[PlannerEvalCase]:
         ),
         key=lambda case: case.case_id,
     )
+
+
+def _all_reviewed_cases_path(tmp_path: Path) -> Path:
+    """
+    为回放契约单测生成完整 reviewed（已审核）输入。
+
+    工作区当前有两条 9.3.18 修订 case 正在等待独立审核；生产门禁必须拒绝 23/25
+    状态，但契约本身的正反例测试仍需使用显式构造的 25 条 reviewed fixture（测试夹具）。
+    """
+
+    output = tmp_path / "planner_cases_all_reviewed.jsonl"
+    rows = []
+    for case in load_planner_cases(DEFAULT_CASES):
+        if case.split.value == "dev":
+            case = case.model_copy(
+                update={"human_review_status": HumanReviewStatus.REVIEWED}
+            )
+        rows.append(case.model_dump(mode="json"))
+    output.write_text(
+        "\n".join(
+            json.dumps(row, ensure_ascii=False, sort_keys=True)
+            for row in rows
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return output
 
 
 def _is_strict_hyde(case: PlannerEvalCase) -> bool:

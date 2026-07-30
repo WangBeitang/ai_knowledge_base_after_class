@@ -1,0 +1,4 @@
+interface:
+  display_name: "高效数据处理工作流"
+  short_description: "面向本项目数据、评测与审核任务的最小改动和分层验证工作流"
+  default_prompt: "使用 $efficient-data-workflow 先完成失败归因，再以最小改动处理当前项目数据任务并给出验证结果。"

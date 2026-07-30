@@ -1,0 +1,9 @@
+{
+  "freeze_version": "stage9-balanced-dev-web-evidence-freeze-v1",
+  "source_manifest_version": "stage9-balanced-dev-web-source-manifest-v1",
+  "source_manifest_path": "evaluation/stage9/configs/balanced_dev_web_source_manifest_v1.json",
+  "source_manifest_sha256": "93759fa691922afaa953d08cacd1c61edda447d2d4d85a12ad5d5e056e5fb41d",
+  "captured_at": "2026-07-28T07:33:24+00:00",
+  "source_count": 0,
+  "sources": []
+}

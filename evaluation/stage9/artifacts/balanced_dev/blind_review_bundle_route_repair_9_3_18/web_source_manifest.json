@@ -1,0 +1,5 @@
+{
+  "manifest_version": "stage9-balanced-dev-web-source-manifest-v1",
+  "purpose": "为 balanced dev 的 web_required 回答型 case 冻结官方网页身份和可核验事实。URL 只负责运行时匹配；响应 hash、事实 hash 与抓取时间负责审计页面版本。",
+  "sources": []
+}

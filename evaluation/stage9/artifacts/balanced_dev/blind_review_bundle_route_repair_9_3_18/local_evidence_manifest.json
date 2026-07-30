@@ -1,0 +1,78 @@
+{
+  "import_version": "stage9-balanced-dev-source-import-v1",
+  "source_manifest_version": "stage9-balanced-dev-source-manifest-v1",
+  "imported_at": "2026-07-28T05:30:57.218417+00:00",
+  "source_manifest_sha256": "5d2a285509a69d285ad894d32cadbcc71a50a9284f310ae851ca64a939f6e647",
+  "documents": [
+    {
+      "source_id": "huawei-pixlab-b5-guide-v06",
+      "publisher": "Huawei",
+      "title": "HUAWEI PixLab B5 用户指南",
+      "source_version": "CV81Z,06,zh-cn",
+      "source_url": "https://consumer.huawei.com/cn/support/content/zh-cn15930433/",
+      "source_sha256": "3ead983b773f9180c86e50e164be79a49177db04fac406940787f7d018d3f080",
+      "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_f8a53e9a7b255e96",
+      "standard_subject_name": "华为 PixLab B5",
+      "source_chunk_count": 154,
+      "included_chunk_count": 1,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_dev_huawei_pixlab_b5_guide_v06",
+          "chunk_id": 467551067585611752,
+          "index_version": 1,
+          "chunk_index": 137,
+          "title": "## 操作安全与保养_1",
+          "parent_title": "## 操作安全与保养",
+          "content_chars": 977,
+          "content_sha256": "7d42d289f117e29740aff90b03505b10e8f117c97eb195a3608fad2b0b5d3868"
+        }
+      ]
+    },
+    {
+      "source_id": "huawei-qingyun-p5-guide-v06",
+      "publisher": "Huawei",
+      "title": "华为擎云 P5 激光多功能一体机 CV81Z-LDM 用户指南",
+      "source_version": "CV81Z-LDM,06,zh-cn",
+      "source_url": "https://qingyun.huawei.com/printers/qingyun-p5/specs/",
+      "source_sha256": "9461e82fac7d4b35e27d11e1b78f5c60bdf9346a9974f89636eff02d885d509f",
+      "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+      "dataset_id": "dataset_default_equipment_ops",
+      "owner_user_id": "eval_demo_user",
+      "tenant_id": "tenant_default",
+      "visibility": "public",
+      "index_version": 1,
+      "subject_id": "subject_b98d9b712473166f",
+      "standard_subject_name": "华为擎云 P5 激光多功能一体机 CV81Z-LDM",
+      "source_chunk_count": 85,
+      "included_chunk_count": 2,
+      "chunks": [
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611847,
+          "index_version": 1,
+          "chunk_index": 69,
+          "title": "## 操作安全与保养_3",
+          "parent_title": "## 操作安全与保养",
+          "content_chars": 578,
+          "content_sha256": "d5dc2d52664903309d30657297bd2ff7241b5c75a4c500abe6b0ddb70159c072"
+        },
+        {
+          "document_id": "doc_stage9_dev_huawei_qingyun_p5_guide_v06",
+          "chunk_id": 467551067585611855,
+          "index_version": 1,
+          "chunk_index": 77,
+          "title": "## 清洁打印机_1",
+          "parent_title": "## 清洁打印机",
+          "content_chars": 968,
+          "content_sha256": "d60f5992fcd379753f19d276a9baeece2974c2e0a064e226ca961fd263530862"
+        }
+      ]
+    }
+  ]
+}

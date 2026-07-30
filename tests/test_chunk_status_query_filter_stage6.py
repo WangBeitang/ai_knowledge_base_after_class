@@ -160,19 +160,32 @@ def test_embedding_search_excludes_mongo_disabled_chunk_from_actual_query(monkey
 
 def test_hyde_search_excludes_mongo_disabled_chunk_from_actual_query(monkeypatch):
     fake_gateway = ExcludingFakeMilvusGateway()
+    generated_queries = []
     monkeypatch.setattr(hyde_search_service, "milvus_gateway", fake_gateway)
     monkeypatch.setattr(hyde_search_service, "llm_provider", FakeLLMProvider())
-    monkeypatch.setattr(hyde_search_service, "generate_hyde_answer", lambda query: "检查 E020 报警。")
+    monkeypatch.setattr(
+        hyde_search_service,
+        "generate_hyde_answer",
+        lambda query: generated_queries.append(query) or "检查 E020 报警。",
+    )
     monkeypatch.setattr(
         hyde_search_service,
         "get_disabled_chunk_ids_for_query",
         lambda state: [1001],
     )
 
-    result = hyde_search_service.search_by_hyde(_query_state(chunk_status_filter_enabled=True))
+    result = hyde_search_service.search_by_hyde(
+        _query_state(
+            chunk_status_filter_enabled=True,
+            standard_subject_names=["HAK 180 烫金机"],
+        )
+    )
 
     assert result["hyde_embedding_chunks"] == []
     assert result["disabled_chunk_ids"] == [1001]
+    assert generated_queries == [
+        "已确认设备主体：HAK 180 烫金机。\n用户问题：HAK 180 的 E020 怎么处理？"
+    ]
     assert len(fake_gateway.exprs) == 1
     assert "enabled == true" in fake_gateway.exprs[0]
     assert "chunk_id not in [1001]" in fake_gateway.exprs[0]

@@ -96,8 +96,15 @@ def test_balanced_dev_artifacts_have_five_routes_and_real_chunk_identity():
     balanced_cases = [
         case for case in dev if case.case_id.startswith("planner-dev-balanced-")
     ]
+    # 9.3.18 的真实 Provider 探针证明两条 safe_refuse query 无法稳定召回安全证据。
+    # 修订 query 后旧 fingerprint 审核必须失效，不能为了保持测试全绿而沿用旧批准。
     assert Counter(case.human_review_status.value for case in balanced_cases) == {
-        "reviewed": 21,
+        "reviewed": 19,
+        "pending": 2,
+    }
+    assert pending_case_ids == {
+        "planner-dev-balanced-refuse-b5-force-pull-paper",
+        "planner-dev-balanced-refuse-p5-touch-hot-surface",
     }
     assert {
         case.case_id

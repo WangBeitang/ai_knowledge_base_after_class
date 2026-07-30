@@ -24,6 +24,7 @@ from app.rag.evaluation.action_providers import (  # noqa: E402
 from app.rag.evaluation.baseline_runner import load_environment_snapshot  # noqa: E402
 from app.rag.evaluation.case_schema import (  # noqa: E402
     CaseSplit,
+    ChunkRelevance,
     EnvironmentSnapshot,
     HumanReviewStatus,
     PlannerEvalCase,
@@ -494,10 +495,21 @@ def _validate_safe_refuse_routes(
 
 
 def _target_rank(record: ProviderObservationRecord, case: PlannerEvalCase) -> int | None:
+    """
+    返回 required chunk（必需证据）的前五名次。
+
+    supporting chunk（辅助证据）可以帮助模型理解同义词，但不能代表路线目标已经被
+    local_search 命中。例如 P5 的“注册申请码就是 S/N”只能解释用户在问什么，真正回答
+    “怎么打印信息页”的操作 chunk 仍必须由后续 HyDE 找到。
+    """
+
     expected = {
         (chunk.document_id, str(chunk.chunk_id), chunk.index_version)
         for chunk in case.expected_chunks
+        if chunk.relevance == ChunkRelevance.REQUIRED
     }
+    if not expected:
+        raise ValueError(f"{case.case_id} 没有 required expected chunk，无法校验路线")
     for rank, payload in enumerate(record.candidates[:5], start=1):
         candidate = _candidate(payload)
         identity = (
