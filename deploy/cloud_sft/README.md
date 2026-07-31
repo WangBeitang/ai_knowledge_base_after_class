@@ -73,6 +73,19 @@ CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local \
 bash deploy/cloud_sft/run_expanded_dev_gate.sh
 ```
 
+11. 9.3.17～9.3.19 全部完成且用户明确启动后，先在无卡模式运行 9.3.20
+    `preflight`（运行前检查），再在 GPU（图形处理器）模式运行同一入口：
+
+```bash
+SFT_V1_CORRECTED_REPLAY_PREFLIGHT_ONLY=1 \
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local \
+bash deploy/cloud_sft/run_sft_v1_corrected_replay_eval.sh
+
+SFT_V1_CORRECTED_REPLAY_PREFLIGHT_ONLY=0 \
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local \
+bash deploy/cloud_sft/run_sft_v1_corrected_replay_eval.sh
+```
+
 ## 脚本边界
 
 - `requirements-training.txt`：固定 SFT（监督微调）专用依赖，不包含 `magic-pdf（PDF 解析框架）`
@@ -96,6 +109,10 @@ bash deploy/cloud_sft/run_expanded_dev_gate.sh
 - `run_dev_eval.sh`：用指定 checkpoint（检查点）跑 dev case（开发样本）并生成报告。
 - `run_expanded_dev_gate.sh`：任务 9.3.16 正式入口；模型加载前校验 25 条 reviewed dev、
   checkpoint、snapshot、Reward v1.1 和冻结阈值，运行后生成逐 case 结果与 9.4 准入决定。
+- `run_sft_v1_corrected_replay_eval.sh`：任务 9.3.20 正式入口；旧 9.3.16 评测和准入决定
+  只读，当前 25 条 reviewed dev（已审核开发集）绑定 9.3.19 Reward（奖励函数）回归和
+  9.3.18 Replay Provider（回放动作执行器），新产物进入独立时间戳目录；不运行
+  heldout test（留出测试），也不直接放行 9.4。
 - `scripts/cloud_sft/collect_cloud_run_report.py`：收集 code version（代码版本）、config hash（配置哈希）、
   model profile（模型配置档案）、train manifest（训练清单）、Reward profile（奖励函数配置）、
   snapshot_id（快照身份）和运行命令。

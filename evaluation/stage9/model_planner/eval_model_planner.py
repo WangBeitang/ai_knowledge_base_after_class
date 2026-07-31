@@ -48,6 +48,7 @@ def run_model_planner_eval(
         reward_config: RewardConfig | None = None,
         max_cases: int | None = None,
         run_id: str | None = None,
+        include_trace_evidence: bool = False,
 ) -> BaselineEvalOutput:
     """在固定 snapshot（快照）下执行 SFT（监督微调）Planner 离线评测。"""
 
@@ -97,6 +98,7 @@ def run_model_planner_eval(
             case=case,
             trajectory=trajectory,
             reward=reward,
+            include_trace_evidence=include_trace_evidence,
         ))
         rewards.append(reward)
         print(
@@ -164,7 +166,22 @@ def _result_from_trajectory(
         case: PlannerEvalCase,
         trajectory: OfflineTrajectoryResult,
         reward: TrajectoryReward,
+        include_trace_evidence: bool = False,
 ) -> PlannerEvalResult:
+    usage: dict[str, Any] = {
+        **UsageMetrics().model_dump(mode="json"),
+        "planner_calls": len(trajectory.trace_steps),
+        "duration_ms": sum(step.duration_ms for step in trajectory.trace_steps),
+        "trajectory_status": trajectory.status.value,
+        "config_match_status": trajectory.config_match_status,
+        "corpus_match_status": trajectory.corpus_match_status,
+    }
+    if include_trace_evidence:
+        # 9.3.20 只保存结构化 Decision（决策）与 Observation（观察结果），
+        # 不保存聊天历史、Prompt（提示词）或模型私有思维链。
+        usage["trace_steps"] = [
+            step.model_dump(mode="json") for step in trajectory.trace_steps
+        ]
     return PlannerEvalResult(
         run_id=run_id,
         case_id=case.case_id,
@@ -188,14 +205,7 @@ def _result_from_trajectory(
         ],
         metrics=_metrics_from_reward(reward),
         reward=reward.to_json_dict(),
-        usage={
-            **UsageMetrics().model_dump(mode="json"),
-            "planner_calls": len(trajectory.trace_steps),
-            "duration_ms": sum(step.duration_ms for step in trajectory.trace_steps),
-            "trajectory_status": trajectory.status.value,
-            "config_match_status": trajectory.config_match_status,
-            "corpus_match_status": trajectory.corpus_match_status,
-        },
+        usage=usage,
         errors=[error.model_dump(mode="json") for error in trajectory.errors],
     )
 

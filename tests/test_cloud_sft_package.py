@@ -29,6 +29,7 @@ REQUIRED_DEPLOY_FILES = [
     Path("deploy/cloud_sft/run_gpu_acceptance_gate.sh"),
     Path("deploy/cloud_sft/run_dev_eval.sh"),
     Path("deploy/cloud_sft/run_expanded_dev_gate.sh"),
+    Path("deploy/cloud_sft/run_sft_v1_corrected_replay_eval.sh"),
 ]
 
 REQUIRED_SHELL_SCRIPTS = [
@@ -42,6 +43,7 @@ REQUIRED_SHELL_SCRIPTS = [
     Path("deploy/cloud_sft/run_gpu_acceptance_gate.sh"),
     Path("deploy/cloud_sft/run_dev_eval.sh"),
     Path("deploy/cloud_sft/run_expanded_dev_gate.sh"),
+    Path("deploy/cloud_sft/run_sft_v1_corrected_replay_eval.sh"),
 ]
 
 

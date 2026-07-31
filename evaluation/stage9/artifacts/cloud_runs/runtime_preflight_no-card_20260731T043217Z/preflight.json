@@ -1,0 +1,258 @@
+{
+  "preflight_version": "stage9-cloud-runtime-preflight-v2",
+  "created_at": "2026-07-31T04:32:21+00:00",
+  "mode": "no-card",
+  "ok": true,
+  "failed_check_count": 0,
+  "check_count": 20,
+  "runtime_identity": {
+    "hostname": "autodl-container-31d946800d-1c1e34bb",
+    "boot_id": "20184d53-44b2-4a17-9e72-15fc4574c1d3",
+    "git_revision": "347266ff335bfd3dfa6e79bc992c16dbe5c8e9fa",
+    "project_root": "/root/autodl-tmp/ai_knowledge_base_after_class",
+    "checkpoint_dir": "evaluation/stage9/artifacts/sft/checkpoints/planner-sft-stage9-qwen3-5-4b-lora_20260727T085537Z_94a77563",
+    "adapter_path": "evaluation/stage9/artifacts/sft/checkpoints/planner-sft-stage9-qwen3-5-4b-lora_20260727T085537Z_94a77563/model/adapter",
+    "checkpoint_run_id": "planner-sft-stage9-qwen3-5-4b-lora_20260727T085537Z_94a77563",
+    "model_path": "Qwen/Qwen3.5-4B",
+    "sft_python": "/root/autodl-tmp/ai_knowledge_base_after_class/.venv-sft/bin/python",
+    "expected_sft_python": "/root/autodl-tmp/ai_knowledge_base_after_class/.venv-sft/bin/python",
+    "sft_requirements_lock": "deploy/cloud_sft/requirements-training.lock",
+    "vllm_python": "/root/.venv-vllm/bin/python",
+    "vllm_freeze": "evaluation/stage9/artifacts/cloud_runs/vllm_environment_freeze.txt",
+    "host": "127.0.0.1",
+    "port": 8019
+  },
+  "sft_runtime_metadata": {
+    "python_executable": "/root/autodl-tmp/ai_knowledge_base_after_class/.venv-sft/bin/python",
+    "python_version": "3.12.3",
+    "package_versions": {
+      "loguru": "0.7.3",
+      "torch": "2.10.0",
+      "transformers": "5.9.0",
+      "peft": "0.18.1",
+      "pydantic": "2.10.6"
+    },
+    "imported_modules": [
+      "evaluation.stage9.model_planner.sft_train",
+      "evaluation.stage9.admission.run_sft_expanded_dev_gate"
+    ]
+  },
+  "runtime_metadata": {
+    "python_version": "3.12.3",
+    "vllm_version": "0.25.1",
+    "torch_version": "2.11.0+cu130",
+    "torch_cuda": "13.0",
+    "cuda_available": false,
+    "device_count": 0,
+    "device_name": null
+  },
+  "checks": [
+    {
+      "name": "omp_num_threads",
+      "layer": "environment",
+      "status": "passed",
+      "message": "OMP_NUM_THREADS 是正整数",
+      "details": {
+        "value": 1
+      }
+    },
+    {
+      "name": "require_cuda_mode",
+      "layer": "environment",
+      "status": "passed",
+      "message": "REQUIRE_CUDA 与 preflight 模式一致",
+      "details": {
+        "value": "0",
+        "mode": "no-card"
+      }
+    },
+    {
+      "name": "hf_hub_offline",
+      "layer": "environment",
+      "status": "passed",
+      "message": "HF_HUB_OFFLINE=1，运行时禁止静默联网下载",
+      "details": {}
+    },
+    {
+      "name": "transformers_offline",
+      "layer": "environment",
+      "status": "passed",
+      "message": "TRANSFORMERS_OFFLINE=1，运行时禁止静默联网下载",
+      "details": {}
+    },
+    {
+      "name": "expanded_dev_provider",
+      "layer": "environment",
+      "status": "passed",
+      "message": "expanded dev 使用冻结的 snapshot_expected_chunks Provider",
+      "details": {
+        "value": "snapshot_expected_chunks"
+      }
+    },
+    {
+      "name": "expanded_dev_overwrite",
+      "layer": "environment",
+      "status": "passed",
+      "message": "EXPANDED_DEV_OVERWRITE=0，不覆盖既有正式评测产物",
+      "details": {
+        "value": "0"
+      }
+    },
+    {
+      "name": "system_disk",
+      "layer": "storage",
+      "status": "passed",
+      "message": "磁盘剩余空间达到门槛",
+      "details": {
+        "path": "/",
+        "free_bytes": 6538981376,
+        "free_gb": 6.09,
+        "minimum_free_gb": 2.0
+      }
+    },
+    {
+      "name": "data_disk",
+      "layer": "storage",
+      "status": "passed",
+      "message": "磁盘剩余空间达到门槛",
+      "details": {
+        "path": "/root/autodl-tmp",
+        "free_bytes": 15891382272,
+        "free_gb": 14.8,
+        "minimum_free_gb": 5.0
+      }
+    },
+    {
+      "name": "required_artifacts",
+      "layer": "artifact",
+      "status": "passed",
+      "message": "checkpoint、adapter 与环境冻结清单存在且非空",
+      "details": {
+        "file_count": 6
+      }
+    },
+    {
+      "name": "checkpoint_identity",
+      "layer": "artifact",
+      "status": "passed",
+      "message": "checkpoint 目录、run_id 和 adapter_path 一致",
+      "details": {
+        "directory_run_id": "planner-sft-stage9-qwen3-5-4b-lora_20260727T085537Z_94a77563",
+        "manifest_run_id": "planner-sft-stage9-qwen3-5-4b-lora_20260727T085537Z_94a77563",
+        "manifest_adapter_path": "evaluation/stage9/artifacts/sft/checkpoints/planner-sft-stage9-qwen3-5-4b-lora_20260727T085537Z_94a77563/model/adapter",
+        "expected_adapter_path": "evaluation/stage9/artifacts/sft/checkpoints/planner-sft-stage9-qwen3-5-4b-lora_20260727T085537Z_94a77563/model/adapter",
+        "sample_count": 155
+      }
+    },
+    {
+      "name": "sft_python_identity",
+      "layer": "dependency",
+      "status": "passed",
+      "message": "配置、实际执行和 `.venv-sft` 解释器身份一致",
+      "details": {
+        "actual": "/root/autodl-tmp/ai_knowledge_base_after_class/.venv-sft/bin/python",
+        "configured": "/root/autodl-tmp/ai_knowledge_base_after_class/.venv-sft/bin/python",
+        "expected": "/root/autodl-tmp/ai_knowledge_base_after_class/.venv-sft/bin/python"
+      }
+    },
+    {
+      "name": "sft_entrypoint_imports",
+      "layer": "dependency",
+      "status": "passed",
+      "message": "正式训练与 expanded dev 入口均可导入",
+      "details": {
+        "modules": [
+          "evaluation.stage9.model_planner.sft_train",
+          "evaluation.stage9.admission.run_sft_expanded_dev_gate"
+        ]
+      }
+    },
+    {
+      "name": "sft_lock_versions",
+      "layer": "dependency",
+      "status": "passed",
+      "message": "SFT 关键包版本与训练锁文件一致",
+      "details": {
+        "versions": {
+          "loguru": "0.7.3",
+          "torch": "2.10.0",
+          "transformers": "5.9.0",
+          "peft": "0.18.1",
+          "pydantic": "2.10.6"
+        }
+      }
+    },
+    {
+      "name": "sft_checkpoint_versions",
+      "layer": "dependency",
+      "status": "passed",
+      "message": "SFT runtime 与 checkpoint 记录的框架版本一致",
+      "details": {
+        "versions": {
+          "torch": "2.10.0",
+          "transformers": "5.9.0",
+          "peft": "0.18.1"
+        }
+      }
+    },
+    {
+      "name": "vllm_version",
+      "layer": "dependency",
+      "status": "passed",
+      "message": "vLLM 版本与冻结配置一致",
+      "details": {
+        "actual": "0.25.1",
+        "expected": "0.25.1"
+      }
+    },
+    {
+      "name": "torch_cuda_backend",
+      "layer": "dependency",
+      "status": "passed",
+      "message": "PyTorch CUDA 版本与 VLLM_TORCH_BACKEND 一致",
+      "details": {
+        "actual": "13.0",
+        "expected": "13.0"
+      }
+    },
+    {
+      "name": "torch_cuda_available",
+      "layer": "cuda",
+      "status": "passed",
+      "message": "no-card 模式只校验 CUDA 构建版本，不要求实际 GPU",
+      "details": {
+        "cuda_available": false,
+        "device_count": 0
+      }
+    },
+    {
+      "name": "model_cache",
+      "layer": "model_cache",
+      "status": "passed",
+      "message": "基础模型可以在 local_files_only（仅本地文件）模式解析",
+      "details": {
+        "model_path": "Qwen/Qwen3.5-4B",
+        "resolved_path": "/root/autodl-tmp/cache/huggingface/hub/models--Qwen--Qwen3.5-4B/snapshots/851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a",
+        "source": "huggingface_cache"
+      }
+    },
+    {
+      "name": "planner_port",
+      "layer": "network",
+      "status": "passed",
+      "message": "Planner 端口空闲，可以启动服务",
+      "details": {
+        "host": "127.0.0.1",
+        "port": 8019,
+        "in_use": false
+      }
+    },
+    {
+      "name": "nvidia_smi",
+      "layer": "cuda",
+      "status": "skipped",
+      "message": "no-card 模式不要求 nvidia-smi",
+      "details": {}
+    }
+  ]
+}

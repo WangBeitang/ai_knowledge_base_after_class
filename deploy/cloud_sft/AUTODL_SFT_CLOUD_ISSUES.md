@@ -65,10 +65,15 @@
 ### 本轮仍需整改
 
 - [x] 已把 `loguru==0.7.3`写入训练依赖源文件和锁文件。
-- [x] 无卡 preflight 已增加正式入口 import、解释器身份、锁文件/checkpoint 版本三方一致性硬门禁；
-  本地测试及云端正式 `.venv-sft` 无卡核心门禁均已通过；自动环境 freeze 产物待更新脚本后复跑确认。
-- [ ] 修复 Snapshot Provider 的 HyDE 和安全拒绝 Observation 契约。
-- [ ] 契约修复后重跑 Reward v1.1 回归和 SFT v1 归因复评。
+- [x] 无卡 preflight（运行前检查）已增加正式入口 import（导入）、解释器身份、
+  锁文件/checkpoint（检查点）版本三方一致性硬门禁；2026-07-31 云端使用最新脚本复跑返回
+  `ok=true`（检查通过）、`failed_check_count=0`（失败检查数为零），并用同一正式解释器自动生成
+  SFT environment freeze（监督微调环境冻结）。运行目录与两个证据文件的 SHA256（文件内容哈希）
+  已归档回本地项目，9.3.17 正式完成。
+- [x] 已完成 9.3.18：修复 Snapshot Provider（快照动作执行器）的 HyDE（假设文档嵌入）和
+  安全拒绝 Observation（观察结果）契约，并冻结真实检索 Replay（回放）记录。
+- [x] 已完成 9.3.19：基于冻结 Replay（回放）重跑 Reward v1.1（奖励函数第一点一版）回归，
+  保留原权重和实现。
 - [ ] 只根据修正后仍成立的失败补独立 train-only 数据；不复制 balanced dev 或 heldout。
 
 ## 2026-07-27 首次正式上云复盘
@@ -290,9 +295,13 @@ HF_HUB_OFFLINE=1
 
 ## 下一步
 
-1. 本地先执行 9.3.17：修复 `.venv-sft` 依赖、正式入口 import 和解释器身份门禁。
-2. 执行 9.3.18：修复 HyDE 与安全拒绝的 Provider/Observation 契约，优先冻结真实检索回放。
-3. 契约变化后执行 9.3.19：重跑 Reward v1.1 回归，默认不调整权重。
-4. 只在以上本地工作通过后再次申请 GPU，执行 9.3.20 的 SFT v1 校正复评。
+1. [x] 9.3.17 已完成：`.venv-sft` 依赖、正式入口导入、解释器身份和
+   SFT environment freeze（监督微调环境冻结）均已闭环。
+2. [x] 9.3.18 已完成：HyDE（假设文档嵌入）与安全拒绝的 Provider/Observation
+   （动作执行器/观察结果）回放契约已修复并冻结。
+3. [x] 9.3.19 已完成：Reward v1.1（奖励函数第一点一版）回归通过，原权重和实现保持不变。
+4. [ ] 9.3.20 的 SFT v1（监督微调第一版）独立 Replay（回放）入口已在本地补齐并通过
+   43 项相关测试；待云端先完成无卡 preflight（运行前检查），再由用户开启
+   GPU（图形处理器）执行正式校正复评。
 5. 根据校正后真实失败执行 9.3.21～9.3.23；在准入通过前不运行 heldout、不进入 9.4。
 6. 已完成 SFT v1 checkpoint 和首次 expanded dev 归档；后续运行不得覆盖原始 run_dir 和归档。

@@ -1076,6 +1076,62 @@ evaluation/stage9/artifacts/cloud_runs/expanded_dev_gate_<timestamp>/
 `expanded_dev_gate_<timestamp>`。冻结器会识别 `stage9_3_16_expanded_dev_gate`布局，
 把原始 eval、准入决定、Markdown 报告、日志、命令和 cloud run report 一并收入归档。
 
+## 任务 9.3.20：使用真实回放校正复评 SFT v1（监督微调第一版）
+
+9.3.20 不复用 `run_expanded_dev_gate.sh`，因为该脚本属于 9.3.16 冻结入口并强制使用
+`snapshot_expected_chunks`（按期望文本块构造快照）。本任务必须运行
+`run_sft_v1_corrected_replay_eval.sh`，绑定 9.3.18 的 Replay Provider（回放动作执行器）
+和 9.3.19 的 Reward（奖励函数）回归身份。
+
+先在无卡模式执行 `preflight`（运行前检查）；它只读验证旧评测、旧准入决定、当前 25 条
+reviewed dev（已审核开发集）、checkpoint（检查点）、Replay（回放）记录和全部
+SHA256（文件内容哈希），不加载模型、不写推理结果：
+
+```bash
+cd /root/autodl-tmp/ai_knowledge_base_after_class
+
+sed -i 's/^REQUIRE_CUDA=.*/REQUIRE_CUDA=0/' deploy/cloud_sft/env.local
+
+SFT_V1_CORRECTED_REPLAY_PREFLIGHT_ONLY=1 \
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local \
+bash deploy/cloud_sft/run_sft_v1_corrected_replay_eval.sh
+```
+
+预期输出包含 `ok=true`（检查通过）、`preflight_only=true`（仅运行前检查）、
+`case_count=25`（样本数为 25）、`model_execution_performed=false`（未执行模型）和
+`heldout_inference_result_count=0`（留出集推理数为零）。任一检查失败时不要开启
+GPU（图形处理器）。
+
+无卡检查通过后再恢复 GPU（图形处理器），把 `REQUIRE_CUDA` 改回 `1`，确认
+`nvidia-smi`（英伟达显卡状态工具）没有残留模型进程，然后运行：
+
+```bash
+sed -i 's/^REQUIRE_CUDA=.*/REQUIRE_CUDA=1/' deploy/cloud_sft/env.local
+
+SFT_V1_CORRECTED_REPLAY_PREFLIGHT_ONLY=0 \
+CLOUD_SFT_ENV_FILE=deploy/cloud_sft/env.local \
+bash deploy/cloud_sft/run_sft_v1_corrected_replay_eval.sh
+```
+
+正式入口只运行同一 SFT v1（监督微调第一版）checkpoint（检查点）和 25 条
+dev（开发集）。它会保存结构化 Trace（执行轨迹）中的 Decision（决策）与
+Observation（观察结果），但不保存聊天历史、Prompt（提示词）或模型私有思维链。
+每次运行生成独立目录：
+
+```text
+evaluation/stage9/artifacts/cloud_runs/sft_v1_corrected_replay_<UTC时间>/
+├── command.txt
+├── run.log
+├── sft_v1_corrected_replay_eval.json
+├── sft_v1_corrected_replay_comparison.json
+├── 阶段9-SFT-v1校正复评报告.md
+└── SHA256SUMS
+```
+
+旧 9.3.16 产物不会被覆盖。9.3.20 输出固定
+`eligible_for_stage9_4=false`（不直接允许进入 9.4）；只能在人工确认逐 case（逐样本）
+归因后进入 9.3.21，且 heldout test（留出测试）仍不得运行。
+
 ## 完成后必须下载和备份
 
 训练完成后至少下载：
