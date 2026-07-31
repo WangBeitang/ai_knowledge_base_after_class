@@ -1,9 +1,10 @@
 import shutil
 import time
+import fitz
 import requests
 from app.process.import_.agent.state import ImportGraphState
 from app.rag.import_.config import MINERU_DOWNLOAD_TIMEOUT_SECONDS, MINERU_POLL_INTERVAL_SECONDS, \
-    MINERU_POLL_TIMEOUT_SECONDS
+    MINERU_POLL_TIMEOUT_SECONDS, MINERU_MAX_PAGES_PER_REQUEST
 from app.rag.import_.mineru_status import is_success_code, parse_extract_state, MinerUExtractState, is_running_state
 from app.shared.runtime.logger import logger, PROJECT_ROOT, step_log
 from pathlib import Path
@@ -235,17 +236,94 @@ def parse_pdf_to_markdown(state: ImportGraphState) -> ImportGraphState:
     2. 下载并解压解析结果
     3. 获取 Markdown 路径和正文内容
     4. 回写 md_path / md_content / local_dir
+    当 PDF 页数超过 MinerU 单次限制（200 页）时，自动按限制拆分为多段，
+    分别调用 MinerU 解析后合并 Markdown 与图片。
     """
     # 1.pdf文件的路径校验和完善
     pdf_path_obj, local_dir_obj = _validate_pdf_paths(state)
-    # 2.pdf上传和zip-url地址获取
-    zip_url = _upload_pdf_and_poll(pdf_path_obj)
-    # 3.zip文件下载、解压及md文件重命名
-    md_path_obj, zip_path_obj, extract_dir_obj = download_and_extract_markdown(zip_url, local_dir_obj, pdf_path_obj.stem)
 
-    # 4.md_path  md_content 回写
+    # 2.根据页数决定走单文件流程还是拆分流程
+    page_count = _count_pdf_pages(pdf_path_obj)
+    if page_count <= MINERU_MAX_PAGES_PER_REQUEST:
+        # 2a.单文件流程（原流程）
+        zip_url = _upload_pdf_and_poll(pdf_path_obj)
+        md_path_obj, zip_path_obj, extract_dir_obj = download_and_extract_markdown(
+            zip_url, local_dir_obj, pdf_path_obj.stem
+        )
+    else:
+        # 2b.拆分流程：切分PDF -> 分片上传 -> 合并结果
+        logger.info(f"PDF页数{page_count}超过单次限制{MINERU_MAX_PAGES_PER_REQUEST}页，将拆分为多片处理")
+        chunk_paths = _split_pdf(pdf_path_obj, MINERU_MAX_PAGES_PER_REQUEST, local_dir_obj)
+        chunk_results = []
+        for idx, chunk_path in enumerate(chunk_paths):
+            logger.info(f"处理第{idx + 1}/{len(chunk_paths)}片：{chunk_path.name}")
+            chunk_zip_url = _upload_pdf_and_poll(chunk_path)
+            chunk_stem = f"{pdf_path_obj.stem}_chunk_{idx}"
+            chunk_result = download_and_extract_markdown(chunk_zip_url, local_dir_obj, chunk_stem)
+            chunk_results.append(chunk_result)
+        md_path_obj, zip_path_obj, extract_dir_obj = _merge_chunks(
+            pdf_path_obj.stem, local_dir_obj, chunk_results
+        )
+
+    # 3.md_path  md_content 回写
     state["md_path"] = str(md_path_obj)
     state["md_content"] = md_path_obj.read_text(encoding="utf-8")
     state["parse_result_zip_path"] = str(zip_path_obj)
     state["parse_result_dir"] = str(extract_dir_obj)
     return state
+
+
+def _count_pdf_pages(pdf_path_obj: Path) -> int:
+    """统计 PDF 总页数。"""
+    doc = fitz.open(pdf_path_obj)
+    try:
+        return doc.page_count
+    finally:
+        doc.close()
+
+
+def _split_pdf(pdf_path_obj: Path, max_pages: int, local_dir_obj: Path) -> list:
+    """将 PDF 按 max_pages 页一片拆分为多个临时文件，返回分片路径列表。"""
+    doc = fitz.open(pdf_path_obj)
+    chunk_paths = []
+    try:
+        for i in range(0, doc.page_count, max_pages):
+            chunk_doc = fitz.open()
+            chunk_doc.insert_pdf(doc, from_page=i, to_page=min(i + max_pages - 1, doc.page_count - 1))
+            chunk_path = local_dir_obj / f"{pdf_path_obj.stem}_chunk_{i // max_pages}.pdf"
+            chunk_doc.save(chunk_path)
+            chunk_doc.close()
+            chunk_paths.append(chunk_path)
+    finally:
+        doc.close()
+    return chunk_paths
+
+
+def _merge_chunks(stem: str, local_dir_obj: Path, chunk_results: list):
+    """
+    合并多片解析结果：将各片 Markdown 拼接，并把各片 images/ 中的图片
+    加片索引前缀后汇集到统一的 images/ 目录，避免跨片文件名冲突。
+    返回 (final_md_path, first_zip_path, local_dir_obj)，与单文件流程保持相同契约。
+    """
+    final_images_dir = local_dir_obj / "images"
+    final_images_dir.mkdir(parents=True, exist_ok=True)
+
+    combined_parts = []
+    for i, (md_path_obj, _zip_path, _extract_dir) in enumerate(chunk_results):
+        md_content = md_path_obj.read_text(encoding="utf-8")
+        chunk_images_dir = md_path_obj.parent / "images"
+        if chunk_images_dir.exists():
+            for img_file in list(chunk_images_dir.iterdir()):
+                if not img_file.is_file():
+                    continue
+                new_name = f"chunk{i}_{img_file.name}"
+                # 替换 Markdown 中对原图片名的引用
+                md_content = md_content.replace(img_file.name, new_name)
+                shutil.move(str(img_file), str(final_images_dir / new_name))
+        combined_parts.append(md_content)
+
+    final_md_path = local_dir_obj / f"{stem}.md"
+    final_md_path.write_text("\n\n".join(combined_parts), encoding="utf-8")
+
+    # zip_path / extract_dir 仅作为下游引用，取首片占位即可
+    return final_md_path, chunk_results[0][1], local_dir_obj

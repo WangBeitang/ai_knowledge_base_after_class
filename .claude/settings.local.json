@@ -16,7 +16,12 @@
       "Bash(curl -sSL --max-time 20 -A \"Mozilla/5.0\" \"https://consumer.huawei.com/cn/support/content/zh-cn15914710/\")",
       "Bash(curl -sSL --max-time 20 -A \"Mozilla/5.0\" \"https://consumer.huawei.com/cn/support/content/zh-cn15843389/\")",
       "Bash(curl -sSL --max-time 20 -A \"Mozilla/5.0\" \"https://qingyun.huawei.com/printers/qingyun-p5/\")",
-      "Bash(curl -sSL --max-time 20 -A \"Mozilla/5.0\" \"https://qingyun.huawei.com/printers/qingyun-p5/specs/\")"
+      "Bash(curl -sSL --max-time 20 -A \"Mozilla/5.0\" \"https://qingyun.huawei.com/printers/qingyun-p5/specs/\")",
+      "Bash(python *)",
+      "Bash(.venv/bin/python -c \"import ast; ast.parse\\(open\\('app/rag/import_/pdf_parse_service.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
+      "Bash(.venv/bin/python -c \"import ast; ast.parse\\(open\\('app/rag/import_/config.py'\\).read\\(\\)\\); print\\('config OK'\\)\")",
+      "Bash(.venv/bin/python *)",
+      "WebSearch"
     ]
   }
 }

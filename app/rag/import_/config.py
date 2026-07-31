@@ -1,5 +1,8 @@
 
 
+# MinerU 单次请求最大页数限制（MinerU 服务端硬性约束，超过会返回 failed）
+MINERU_MAX_PAGES_PER_REQUEST = 200
+
 # pdf_parse_service
 # MinerU 模型版本配置（vlm = 视觉语言模型，适合PDF/图片高精度解析）
 MINERU_MODEL_VERSION = "vlm"
