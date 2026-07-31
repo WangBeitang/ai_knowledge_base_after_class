@@ -1081,11 +1081,13 @@ evaluation/stage9/artifacts/cloud_runs/expanded_dev_gate_<timestamp>/
 9.3.20 不复用 `run_expanded_dev_gate.sh`，因为该脚本属于 9.3.16 冻结入口并强制使用
 `snapshot_expected_chunks`（按期望文本块构造快照）。本任务必须运行
 `run_sft_v1_corrected_replay_eval.sh`，绑定 9.3.18 的 Replay Provider（回放动作执行器）
-和 9.3.19 的 Reward（奖励函数）回归身份。
+和当前 Reward v1.1（奖励函数第一点一版）配置。9.3.19 已完成是阶段前置事实，但其报告
+和输入哈希链不再作为 9.3.20 的运行依赖。
 
-先在无卡模式执行 `preflight`（运行前检查）；它只读验证旧评测、旧准入决定、当前 25 条
-reviewed dev（已审核开发集）、checkpoint（检查点）、Replay（回放）记录和全部
-SHA256（文件内容哈希），不加载模型、不写推理结果：
+先在无卡模式执行 `preflight`（运行前检查）；它校验当前 25 条 reviewed dev
+（已审核开发集）、checkpoint（检查点）、Replay（回放）记录与合同、Reward（奖励函数）
+配置，并最小激活明确用于新旧对比的旧评测。旧准入决定、旧脚本和更早阶段哈希不会进入
+当前门禁；不加载模型、不写推理结果：
 
 ```bash
 cd /root/autodl-tmp/ai_knowledge_base_after_class
@@ -1128,7 +1130,7 @@ evaluation/stage9/artifacts/cloud_runs/sft_v1_corrected_replay_<UTC时间>/
 └── SHA256SUMS
 ```
 
-旧 9.3.16 产物不会被覆盖。9.3.20 输出固定
+旧 9.3.16 评测不会被覆盖，其余历史产物继续封存且不参与运行。9.3.20 输出固定
 `eligible_for_stage9_4=false`（不直接允许进入 9.4）；只能在人工确认逐 case（逐样本）
 归因后进入 9.3.21，且 heldout test（留出测试）仍不得运行。
 

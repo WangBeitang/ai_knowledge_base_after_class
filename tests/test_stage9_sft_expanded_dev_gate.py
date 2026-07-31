@@ -17,7 +17,6 @@ from evaluation.stage9.admission.run_sft_expanded_dev_gate import (
     main,
     render_report,
     write_admission_outputs,
-    _case_admission,
 )
 from evaluation.stage9.admission.run_sft_v1_corrected_replay_eval import (
     AttributionCategory,
@@ -206,17 +205,12 @@ def test_expanded_dev_gate_rejects_non_dev_result_and_silent_overwrite(tmp_path)
         )
 
 
-def test_corrected_replay_preflight_binds_old_eval_and_writes_nothing(
+def test_corrected_replay_preflight_minimally_activates_old_eval_and_writes_nothing(
     tmp_path,
     capsys,
 ):
     checkpoint_dir = _write_checkpoint(tmp_path)
     old_eval = _write_eval(tmp_path, checkpoint_dir=checkpoint_dir)
-    old_decision = _write_legacy_decision(
-        tmp_path,
-        eval_path=old_eval,
-        checkpoint_dir=checkpoint_dir,
-    )
     corrected_eval = tmp_path / "outputs/corrected_eval.json"
     comparison = tmp_path / "outputs/comparison.json"
     report = tmp_path / "outputs/report.md"
@@ -227,8 +221,6 @@ def test_corrected_replay_preflight_binds_old_eval_and_writes_nothing(
             str(checkpoint_dir),
             "--old-eval",
             str(old_eval),
-            "--old-decision",
-            str(old_decision),
             "--corrected-eval-output",
             str(corrected_eval),
             "--comparison-output",
@@ -264,11 +256,6 @@ def test_corrected_replay_comparison_marks_old_false_negative_as_corrected(
         unsafe_false_release=True,
         filename="old_eval.json",
     )
-    old_decision = _write_legacy_decision(
-        tmp_path,
-        eval_path=old_eval,
-        checkpoint_dir=checkpoint_dir,
-    )
     new_eval_path = _write_eval(
         tmp_path,
         checkpoint_dir=checkpoint_dir,
@@ -278,7 +265,6 @@ def test_corrected_replay_comparison_marks_old_false_negative_as_corrected(
     preflight = load_corrected_replay_preflight(
         checkpoint_dir=checkpoint_dir,
         old_eval_path=old_eval,
-        old_decision_path=old_decision,
     )
     new_eval = BaselineEvalOutput.model_validate_json(
         new_eval_path.read_text(encoding="utf-8")
@@ -290,8 +276,6 @@ def test_corrected_replay_comparison_marks_old_false_negative_as_corrected(
         old_eval_path=old_eval,
         corrected_eval_path=tmp_path / "final/corrected_eval.json",
         corrected_eval_content_path=new_eval_path,
-        provider_records_path=DEFAULT_RECORDS,
-        replay_contract_path=DEFAULT_CONTRACT_OUTPUT,
     )
 
     assert comparison.summary.eligible_for_stage9_4 is False
@@ -315,11 +299,6 @@ def test_corrected_replay_comparison_marks_old_false_negative_as_corrected(
 def test_corrected_replay_preflight_rejects_frozen_record_hash_drift(tmp_path):
     checkpoint_dir = _write_checkpoint(tmp_path)
     old_eval = _write_eval(tmp_path, checkpoint_dir=checkpoint_dir)
-    old_decision = _write_legacy_decision(
-        tmp_path,
-        eval_path=old_eval,
-        checkpoint_dir=checkpoint_dir,
-    )
     replay_contract = json.loads(
         DEFAULT_CONTRACT_OUTPUT.read_text(encoding="utf-8")
     )
@@ -330,11 +309,10 @@ def test_corrected_replay_preflight_rejects_frozen_record_hash_drift(tmp_path):
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="输入已偏离 9.3.19"):
+    with pytest.raises(ValueError, match="冻结字段漂移：records_sha256"):
         load_corrected_replay_preflight(
             checkpoint_dir=checkpoint_dir,
             old_eval_path=old_eval,
-            old_decision_path=old_decision,
             replay_contract_path=bad_contract,
         )
 
@@ -615,55 +593,6 @@ def _rewrite_as_replay_eval(path: Path) -> None:
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-
-
-def _write_legacy_decision(
-    tmp_path: Path,
-    *,
-    eval_path: Path,
-    checkpoint_dir: Path,
-) -> Path:
-    eval_output = BaselineEvalOutput.model_validate_json(
-        eval_path.read_text(encoding="utf-8")
-    )
-    case_by_id = {
-        case.case_id: case
-        for case in load_planner_cases(DEFAULT_CASES)
-        if case.split.value == "dev"
-    }
-    cases = [
-        _case_admission(case_by_id[result.case_id], result)
-        for result in eval_output.results
-    ]
-    manifest = json.loads(
-        (checkpoint_dir / "checkpoint_manifest.json").read_text(encoding="utf-8")
-    )
-    payload = {
-        "eval_run_id": eval_output.run_id,
-        "action_provider": "snapshot_expected_chunks",
-        "heldout_inference_result_count": 0,
-        "checkpoint": {
-            "run_id": manifest["run_id"],
-            "checkpoint_dir": str(checkpoint_dir),
-            "policy_version": manifest["policy_version"],
-            "training_backend": manifest["training_backend"],
-            "tuning_method": manifest["tuning_method"],
-            "base_model_id": manifest["base_model_id"],
-            "adapter_id": manifest["adapter_id"],
-            "adapter_path": manifest["adapter_path"],
-            "training_snapshot_id": manifest["snapshot_id"],
-            "training_code_version": manifest["code_version"],
-            "evaluation_code_version": "test-revision",
-            "sample_count": manifest["sample_count"],
-        },
-        "cases": [case.model_dump(mode="json") for case in cases],
-    }
-    path = tmp_path / "old_decision.json"
-    path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    return path
 
 
 def _write_legacy_contract_inputs(tmp_path: Path) -> dict[str, Path]:

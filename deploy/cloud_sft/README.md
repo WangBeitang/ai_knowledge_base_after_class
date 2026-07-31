@@ -109,10 +109,11 @@ bash deploy/cloud_sft/run_sft_v1_corrected_replay_eval.sh
 - `run_dev_eval.sh`：用指定 checkpoint（检查点）跑 dev case（开发样本）并生成报告。
 - `run_expanded_dev_gate.sh`：任务 9.3.16 正式入口；模型加载前校验 25 条 reviewed dev、
   checkpoint、snapshot、Reward v1.1 和冻结阈值，运行后生成逐 case 结果与 9.4 准入决定。
-- `run_sft_v1_corrected_replay_eval.sh`：任务 9.3.20 正式入口；旧 9.3.16 评测和准入决定
-  只读，当前 25 条 reviewed dev（已审核开发集）绑定 9.3.19 Reward（奖励函数）回归和
-  9.3.18 Replay Provider（回放动作执行器），新产物进入独立时间戳目录；不运行
-  heldout test（留出测试），也不直接放行 9.4。
+- `run_sft_v1_corrected_replay_eval.sh`：任务 9.3.20 正式入口；当前 25 条 reviewed
+  dev（已审核开发集）、Replay Provider（回放动作执行器）、Reward（奖励函数）配置和
+  checkpoint（检查点）构成当前门禁。旧 9.3.16 评测只作为明确引用的对比基线；旧决定、
+  旧脚本和递归历史哈希链不进入当前门禁。新产物进入独立时间戳目录；不运行 heldout
+  test（留出测试），也不直接放行 9.4。
 - `scripts/cloud_sft/collect_cloud_run_report.py`：收集 code version（代码版本）、config hash（配置哈希）、
   model profile（模型配置档案）、train manifest（训练清单）、Reward profile（奖励函数配置）、
   snapshot_id（快照身份）和运行命令。

@@ -3,7 +3,8 @@ set -euo pipefail
 
 # 任务 9.3.20：同一 SFT v1（监督微调第一版）checkpoint（检查点）只替换为
 # 9.3.18 冻结 Replay Provider（回放动作执行器），运行 25 条 reviewed dev（已审核开发集）。
-# 旧 9.3.16 产物只读；新产物进入独立时间戳目录；绝不运行 heldout test（留出测试）。
+# 旧 9.3.16 评测只作为明确引用的对比基线；不加载旧决定或递归历史哈希链。
+# 新产物进入独立时间戳目录；绝不运行 heldout test（留出测试）。
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -34,7 +35,6 @@ PYTHON_BIN="${PYTHON_BIN:-$SFT_VENV_PATH/bin/python}"
 CLOUD_RUN_ROOT="${CLOUD_RUN_ROOT:-evaluation/stage9/artifacts/cloud_runs}"
 SFT_V1_CORRECTED_REPLAY_PREFLIGHT_ONLY="${SFT_V1_CORRECTED_REPLAY_PREFLIGHT_ONLY:-0}"
 SFT_V1_CORRECTED_REPLAY_OLD_EVAL="${SFT_V1_CORRECTED_REPLAY_OLD_EVAL:-evaluation/stage9/artifacts/sft/sft_expanded_dev_eval.json}"
-SFT_V1_CORRECTED_REPLAY_OLD_DECISION="${SFT_V1_CORRECTED_REPLAY_OLD_DECISION:-evaluation/stage9/artifacts/sft/sft_9_4_admission_decision.json}"
 SFT_V1_CORRECTED_REPLAY_RECORDS="${SFT_V1_CORRECTED_REPLAY_RECORDS:-evaluation/stage9/artifacts/provider_records/expanded_dev_provider_observations.jsonl}"
 SFT_V1_CORRECTED_REPLAY_CONTRACT="${SFT_V1_CORRECTED_REPLAY_CONTRACT:-evaluation/stage9/artifacts/provider_records/expanded_dev_replay_contract.json}"
 
@@ -67,7 +67,6 @@ args=(
   -m evaluation.stage9.admission.run_sft_v1_corrected_replay_eval
   --checkpoint "$SFT_CHECKPOINT_DIR"
   --old-eval "$SFT_V1_CORRECTED_REPLAY_OLD_EVAL"
-  --old-decision "$SFT_V1_CORRECTED_REPLAY_OLD_DECISION"
   --provider-records "$SFT_V1_CORRECTED_REPLAY_RECORDS"
   --replay-contract "$SFT_V1_CORRECTED_REPLAY_CONTRACT"
   --corrected-eval-output "$RUN_DIR/sft_v1_corrected_replay_eval.json"

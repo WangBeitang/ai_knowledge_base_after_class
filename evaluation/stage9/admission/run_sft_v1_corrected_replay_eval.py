@@ -28,7 +28,6 @@ from app.rag.evaluation.action_providers import (
     read_provider_observation_records,
 )
 from app.rag.evaluation.baseline_runner import (
-    SNAPSHOT_EXPECTED_PROVIDER_NAME,
     BaselineEvalOutput,
     load_environment_snapshot,
 )
@@ -69,7 +68,6 @@ from evaluation.stage9.admission.run_sft_expanded_dev_gate import (
     _reward_config_from_profile,
     _route_bucket,
     _same_path,
-    _sha256 as _admission_sha256,
     _thresholds_from_matrix,
     _validate_checkpoint,
 )
@@ -93,14 +91,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 CORRECTED_REPLAY_VERSION = "stage9-sft-v1-corrected-replay-eval-v1"
 DEFAULT_OLD_EVAL = (
     PROJECT_ROOT / "evaluation/stage9/artifacts/sft/sft_expanded_dev_eval.json"
-)
-DEFAULT_OLD_DECISION = (
-    PROJECT_ROOT
-    / "evaluation/stage9/artifacts/sft/sft_9_4_admission_decision.json"
-)
-DEFAULT_REWARD_REGRESSION = (
-    PROJECT_ROOT
-    / "evaluation/stage9/artifacts/reward/reward_v1_1_replay_regression.json"
 )
 DEFAULT_CORRECTED_EVAL = (
     PROJECT_ROOT
@@ -256,25 +246,9 @@ class CorrectedReplayEvaluation(CorrectedReplayModel):
     summary: CorrectedReplaySummary
 
 
-class LegacyAdmissionEvidence(CorrectedReplayModel):
-    """9.3.16 冻结决定中 9.3.20 需要的最小只读证据。"""
-
-    model_config = ConfigDict(
-        extra="ignore",
-        str_strip_whitespace=True,
-        validate_assignment=True,
-    )
-
-    eval_run_id: str = Field(min_length=1)
-    action_provider: str = Field(min_length=1)
-    heldout_inference_result_count: int = 0
-    checkpoint: CheckpointIdentity
-    cases: list[CaseAdmission] = Field(min_length=1)
-
-
 @dataclass(frozen=True)
 class CorrectedInputContract:
-    """9.3.19 回归通过后可用于 9.3.20 的当前输入合同。"""
+    """9.3.20 当前运行输入合同；不递归依赖历史阶段产物。"""
 
     all_case_count: int
     selected_cases: tuple[PlannerEvalCase, ...]
@@ -304,18 +278,16 @@ def load_corrected_replay_preflight(
     *,
     checkpoint_dir: Path,
     old_eval_path: Path = DEFAULT_OLD_EVAL,
-    old_decision_path: Path = DEFAULT_OLD_DECISION,
     cases_path: Path = DEFAULT_CASES,
     split_manifest_path: Path = DEFAULT_SPLIT_MANIFEST,
     snapshot_path: Path = DEFAULT_SNAPSHOT,
     route_matrix_path: Path = DEFAULT_ROUTE_MATRIX,
     reward_profile_path: Path = DEFAULT_REWARD_PROFILE,
-    reward_regression_path: Path = DEFAULT_REWARD_REGRESSION,
     reward_implementation_path: Path = DEFAULT_REWARD_IMPLEMENTATION,
     provider_records_path: Path = DEFAULT_RECORDS,
     replay_contract_path: Path = DEFAULT_CONTRACT_OUTPUT,
 ) -> CorrectedReplayPreflight:
-    """只读校验旧评测、检查点、开发集和 9.3.18 回放身份。"""
+    """校验当前运行输入，并最小激活明确用于对比的旧评测。"""
 
     contract = load_corrected_input_contract(
         checkpoint_dir=checkpoint_dir,
@@ -324,7 +296,6 @@ def load_corrected_replay_preflight(
         snapshot_path=snapshot_path,
         route_matrix_path=route_matrix_path,
         reward_profile_path=reward_profile_path,
-        reward_regression_path=reward_regression_path,
         reward_implementation_path=reward_implementation_path,
         provider_records_path=provider_records_path,
         replay_contract_path=replay_contract_path,
@@ -334,16 +305,7 @@ def load_corrected_replay_preflight(
     old_eval = BaselineEvalOutput.model_validate_json(
         old_eval_path.read_text(encoding="utf-8")
     )
-    if not old_decision_path.is_file():
-        raise FileNotFoundError(f"9.3.16 原始准入决定不存在：{old_decision_path}")
-    old_admission = LegacyAdmissionEvidence.model_validate_json(
-        old_decision_path.read_text(encoding="utf-8")
-    )
-    _validate_legacy_evidence(
-        old_eval=old_eval,
-        old_admission=old_admission,
-        contract=contract,
-    )
+    old_cases = _legacy_case_admissions(old_eval=old_eval, contract=contract)
 
     if not replay_contract_path.is_file():
         raise FileNotFoundError(f"9.3.18 回放契约不存在：{replay_contract_path}")
@@ -363,10 +325,10 @@ def load_corrected_replay_preflight(
     return CorrectedReplayPreflight(
         contract=contract,
         old_eval=old_eval,
-        old_cases=tuple(old_admission.cases),
+        old_cases=old_cases,
         old_buckets=tuple(
             _bucket_admissions(
-                old_admission.cases,
+                old_cases,
                 threshold=float(
                     contract.thresholds["per_route_bucket_accuracy_min"]
                 ),
@@ -385,12 +347,11 @@ def load_corrected_input_contract(
     snapshot_path: Path = DEFAULT_SNAPSHOT,
     route_matrix_path: Path = DEFAULT_ROUTE_MATRIX,
     reward_profile_path: Path = DEFAULT_REWARD_PROFILE,
-    reward_regression_path: Path = DEFAULT_REWARD_REGRESSION,
     reward_implementation_path: Path = DEFAULT_REWARD_IMPLEMENTATION,
     provider_records_path: Path = DEFAULT_RECORDS,
     replay_contract_path: Path = DEFAULT_CONTRACT_OUTPUT,
 ) -> CorrectedInputContract:
-    """使用 9.3.19 回归产物绑定当前 25 条开发样本和回放输入。"""
+    """直接校验本轮实际使用的开发集、回放、Reward 和检查点。"""
 
     checkpoint_dir = checkpoint_dir.resolve()
     paths = {
@@ -399,7 +360,6 @@ def load_corrected_input_contract(
         "environment_snapshot": snapshot_path,
         "route_matrix": route_matrix_path,
         "reward_profile_v1_1": reward_profile_path,
-        "reward_regression_9_3_19": reward_regression_path,
         "reward_implementation": reward_implementation_path,
         "provider_records_9_3_18": provider_records_path,
         "replay_contract_9_3_18": replay_contract_path,
@@ -408,25 +368,6 @@ def load_corrected_input_contract(
     for name, path in paths.items():
         if not path.is_file():
             raise FileNotFoundError(f"9.3.20 输入不存在：{name}={path}")
-
-    regression = _read_json(reward_regression_path)
-    summary = regression.get("summary") or {}
-    if summary.get("decision") != "pass_keep_v1_1":
-        raise ValueError("9.3.19 未通过，禁止执行 9.3.20")
-    if regression.get("reward_mutation_performed") is not False:
-        raise ValueError("9.3.19 修改了 Reward（奖励函数），不符合 9.3.20 边界")
-    if regression.get("profile_mutation_performed") is not False:
-        raise ValueError("9.3.19 修改了 Reward profile（奖励函数配置），不符合 9.3.20 边界")
-    if regression.get("model_execution_performed") is not False:
-        raise ValueError("9.3.19 回归产物意外包含模型执行")
-    if regression.get("heldout_inference_result_count") != 0:
-        raise ValueError("9.3.19 回归产物包含 heldout（留出集）推理")
-    if regression.get("selected_split") != "dev":
-        raise ValueError("9.3.19 回归不是 dev（开发集）")
-    if regression.get("reward_version") != REWARD_VERSION:
-        raise ValueError("9.3.19 Reward（奖励函数）版本不一致")
-    if regression.get("action_provider") != "replay_action_provider":
-        raise ValueError("9.3.19 没有绑定 Replay Provider（回放动作执行器）")
 
     all_cases = load_planner_cases(cases_path)
     selected_cases = sorted(
@@ -443,11 +384,7 @@ def load_corrected_input_contract(
     if not_reviewed:
         raise ValueError(f"9.3.20 包含未 reviewed（已审核）样本：{not_reviewed}")
     selected_ids = [case.case_id for case in selected_cases]
-    if selected_ids != sorted(regression.get("balanced_dev_case_ids") or []):
-        raise ValueError("9.3.20 样本 ID 与 9.3.19 不一致")
     canonical_hash = _canonical_cases_sha256(selected_cases)
-    if canonical_hash != regression.get("balanced_dev_canonical_sha256"):
-        raise ValueError("9.3.20 样本内容指纹与 9.3.19 不一致")
     route_counts = Counter(_route_bucket(case) for case in selected_cases)
     if route_counts != {bucket: 5 for bucket in RouteBucket}:
         raise ValueError(f"9.3.20 五路线分布错误：{dict(route_counts)}")
@@ -460,14 +397,11 @@ def load_corrected_input_contract(
     snapshot = load_environment_snapshot(snapshot_path)
     if split_manifest.snapshot_id != snapshot.snapshot_id:
         raise ValueError("9.3.20 split manifest（划分清单）与快照不一致")
-    if regression.get("snapshot_id") != snapshot.snapshot_id:
-        raise ValueError("9.3.20 快照与 9.3.19 不一致")
 
     profile = _read_json(reward_profile_path)
     reward_config = _reward_config_from_profile(profile)
-    if reward_config.model_dump(mode="json") != regression.get("reward_config"):
-        raise ValueError("9.3.20 Reward config（奖励函数配置）与 9.3.19 不一致")
-    _validate_regression_input_hashes(regression=regression, paths=paths)
+    if reward_config.reward_version != REWARD_VERSION:
+        raise ValueError("9.3.20 只允许当前 Reward v1.1（奖励函数第一点一版）")
 
     matrix = _read_json(route_matrix_path)
     thresholds = _thresholds_from_matrix(matrix)
@@ -496,7 +430,6 @@ def run_corrected_replay_eval(
     *,
     checkpoint_dir: Path,
     old_eval_path: Path,
-    old_decision_path: Path,
     corrected_eval_path: Path,
     comparison_output_path: Path,
     report_path: Path,
@@ -505,7 +438,6 @@ def run_corrected_replay_eval(
     snapshot_path: Path = DEFAULT_SNAPSHOT,
     route_matrix_path: Path = DEFAULT_ROUTE_MATRIX,
     reward_profile_path: Path = DEFAULT_REWARD_PROFILE,
-    reward_regression_path: Path = DEFAULT_REWARD_REGRESSION,
     reward_implementation_path: Path = DEFAULT_REWARD_IMPLEMENTATION,
     provider_records_path: Path = DEFAULT_RECORDS,
     replay_contract_path: Path = DEFAULT_CONTRACT_OUTPUT,
@@ -517,13 +449,11 @@ def run_corrected_replay_eval(
     preflight = load_corrected_replay_preflight(
         checkpoint_dir=checkpoint_dir,
         old_eval_path=old_eval_path,
-        old_decision_path=old_decision_path,
         cases_path=cases_path,
         split_manifest_path=split_manifest_path,
         snapshot_path=snapshot_path,
         route_matrix_path=route_matrix_path,
         reward_profile_path=reward_profile_path,
-        reward_regression_path=reward_regression_path,
         reward_implementation_path=reward_implementation_path,
         provider_records_path=provider_records_path,
         replay_contract_path=replay_contract_path,
@@ -551,8 +481,6 @@ def run_corrected_replay_eval(
             old_eval_path=old_eval_path,
             corrected_eval_path=corrected_eval_path,
             corrected_eval_content_path=temp_paths[0],
-            provider_records_path=provider_records_path,
-            replay_contract_path=replay_contract_path,
         )
         temp_paths[1].write_text(
             json.dumps(
@@ -579,8 +507,6 @@ def build_corrected_replay_evaluation(
     old_eval_path: Path,
     corrected_eval_path: Path,
     corrected_eval_content_path: Path,
-    provider_records_path: Path,
-    replay_contract_path: Path,
 ) -> CorrectedReplayEvaluation:
     """把已经完成的新评测投影成逐样本新旧对比，不再次运行模型。"""
 
@@ -632,8 +558,6 @@ def build_corrected_replay_evaluation(
     inputs.update(
         {
             "old_9_3_16_eval": _file_record(old_eval_path),
-            "provider_records_9_3_18": _file_record(provider_records_path),
-            "replay_contract_9_3_18": _file_record(replay_contract_path),
             "corrected_replay_eval": _file_record_as(
                 corrected_eval_path,
                 content_path=corrected_eval_content_path,
@@ -850,7 +774,7 @@ def _validate_new_eval_identity(
         Path(str(summary.config.get("checkpoint") or "")),
         contract.checkpoint_dir,
     ):
-        raise ValueError("9.3.20 checkpoint（检查点）与 9.3.16 不一致")
+        raise ValueError("9.3.20 结果使用的 checkpoint（检查点）不是当前指定检查点")
     for result in output.results:
         if result.run_id != output.run_id:
             raise ValueError(f"case={result.case_id} run_id（运行标识）不一致")
@@ -897,37 +821,13 @@ def _validate_replay_binding(
         raise ValueError("9.3.18 Replay（回放）记录路径不一致")
 
 
-def _validate_regression_input_hashes(
-    *,
-    regression: dict[str, Any],
-    paths: dict[str, Path],
-) -> None:
-    bindings = {
-        "planner_cases": "planner_cases",
-        "environment_snapshot": "environment_snapshot",
-        "route_matrix": "route_matrix",
-        "reward_profile_v1_1": "reward_profile_v1_1",
-        "reward_implementation": "reward_implementation",
-        "provider_records_9_3_18": "provider_records_9_3_18",
-        "replay_contract_9_3_18": "replay_contract_9_3_18",
-    }
-    regression_inputs = regression.get("inputs") or {}
-    for path_name, input_name in bindings.items():
-        expected_hash = str(
-            (regression_inputs.get(input_name) or {}).get("sha256") or ""
-        )
-        if _admission_sha256(paths[path_name]) != expected_hash:
-            raise ValueError(
-                f"9.3.20 输入已偏离 9.3.19：{path_name}"
-            )
-
-
-def _validate_legacy_evidence(
+def _legacy_case_admissions(
     *,
     old_eval: BaselineEvalOutput,
-    old_admission: LegacyAdmissionEvidence,
     contract: CorrectedInputContract,
-) -> None:
+) -> tuple[CaseAdmission, ...]:
+    """最小激活旧评测：只确认当前对比实际依赖的模型、样本和环境身份。"""
+
     if len(old_eval.planner_summaries) != 1:
         raise ValueError(
             "9.3.16 原始评测必须且只能包含一个 Planner（规划器）汇总，"
@@ -940,38 +840,31 @@ def _validate_legacy_evidence(
         )
     expected_ids = {case.case_id for case in contract.selected_cases}
     eval_ids = [result.case_id for result in old_eval.results]
-    admission_ids = [case.case_id for case in old_admission.cases]
-    if old_eval.run_id != old_admission.eval_run_id:
-        raise ValueError("9.3.16 原始评测与准入决定 run_id（运行标识）不一致")
     if old_eval.action_provider != "SnapshotExpectedChunkActionProvider":
         raise ValueError("9.3.16 原始评测 Provider（动作执行器）身份错误")
-    if old_admission.action_provider != SNAPSHOT_EXPECTED_PROVIDER_NAME:
-        raise ValueError("9.3.16 原始准入决定 Provider（动作执行器）身份错误")
-    if old_admission.heldout_inference_result_count != 0:
-        raise ValueError("9.3.16 原始准入决定包含 heldout（留出集）推理")
     if old_eval.split != CaseSplit.DEV or old_eval.case_count != 25:
         raise ValueError("9.3.16 原始评测不是完整 25 条 dev（开发集）")
-    if len(eval_ids) != 25 or set(eval_ids) != expected_ids:
+    if (
+        len(eval_ids) != 25
+        or len(set(eval_ids)) != 25
+        or set(eval_ids) != expected_ids
+    ):
         raise ValueError("9.3.16 原始评测样本 ID 与当前开发集不一致")
-    if len(admission_ids) != 25 or set(admission_ids) != expected_ids:
-        raise ValueError("9.3.16 原始准入决定样本 ID 与当前开发集不一致")
     if old_eval.snapshot_id != contract.snapshot_id:
         raise ValueError("9.3.16 原始评测快照与 9.3.20 不一致")
     if old_eval.reward_version != contract.reward_config.reward_version:
         raise ValueError("9.3.16 原始评测 Reward（奖励函数）版本不一致")
-    if old_admission.checkpoint.run_id != contract.checkpoint_manifest.run_id:
-        raise ValueError("9.3.16 原始准入决定 checkpoint（检查点）身份不一致")
-    if not _same_path(
-        Path(old_admission.checkpoint.checkpoint_dir),
-        contract.checkpoint_dir,
-    ):
-        raise ValueError("9.3.16 原始准入决定 checkpoint（检查点）路径不一致")
     summary = old_eval.planner_summaries[0]
     if not _same_path(
         Path(str(summary.config.get("checkpoint") or "")),
         contract.checkpoint_dir,
     ):
         raise ValueError("9.3.16 原始评测 checkpoint（检查点）路径不一致")
+    case_by_id = {case.case_id: case for case in contract.selected_cases}
+    return tuple(
+        _case_admission(case_by_id[result.case_id], result)
+        for result in sorted(old_eval.results, key=lambda item: item.case_id)
+    )
 
 
 def _checkpoint_identity(
@@ -1111,21 +1004,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", required=True, type=Path)
     parser.add_argument("--old-eval", type=Path, default=DEFAULT_OLD_EVAL)
-    parser.add_argument(
-        "--old-decision",
-        type=Path,
-        default=DEFAULT_OLD_DECISION,
-    )
     parser.add_argument("--cases", type=Path, default=DEFAULT_CASES)
     parser.add_argument("--split-manifest", type=Path, default=DEFAULT_SPLIT_MANIFEST)
     parser.add_argument("--snapshot", type=Path, default=DEFAULT_SNAPSHOT)
     parser.add_argument("--route-matrix", type=Path, default=DEFAULT_ROUTE_MATRIX)
     parser.add_argument("--reward-profile", type=Path, default=DEFAULT_REWARD_PROFILE)
-    parser.add_argument(
-        "--reward-regression",
-        type=Path,
-        default=DEFAULT_REWARD_REGRESSION,
-    )
     parser.add_argument(
         "--reward-implementation",
         type=Path,
@@ -1151,7 +1034,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--preflight-only",
         action="store_true",
-        help="只校验旧评测、检查点和回放身份，不加载模型、不写输出。",
+        help="校验当前输入和明确引用的旧评测，不加载模型、不写输出。",
     )
     return parser
 
@@ -1168,13 +1051,11 @@ def main(argv: list[str] | None = None) -> int:
         preflight = load_corrected_replay_preflight(
             checkpoint_dir=args.checkpoint,
             old_eval_path=args.old_eval,
-            old_decision_path=args.old_decision,
             cases_path=args.cases,
             split_manifest_path=args.split_manifest,
             snapshot_path=args.snapshot,
             route_matrix_path=args.route_matrix,
             reward_profile_path=args.reward_profile,
-            reward_regression_path=args.reward_regression,
             reward_implementation_path=args.reward_implementation,
             provider_records_path=args.provider_records,
             replay_contract_path=args.replay_contract,
@@ -1210,7 +1091,6 @@ def main(argv: list[str] | None = None) -> int:
     evaluation = run_corrected_replay_eval(
         checkpoint_dir=args.checkpoint,
         old_eval_path=args.old_eval,
-        old_decision_path=args.old_decision,
         corrected_eval_path=args.corrected_eval_output,
         comparison_output_path=args.comparison_output,
         report_path=args.report,
@@ -1219,7 +1099,6 @@ def main(argv: list[str] | None = None) -> int:
         snapshot_path=args.snapshot,
         route_matrix_path=args.route_matrix,
         reward_profile_path=args.reward_profile,
-        reward_regression_path=args.reward_regression,
         reward_implementation_path=args.reward_implementation,
         provider_records_path=args.provider_records,
         replay_contract_path=args.replay_contract,
