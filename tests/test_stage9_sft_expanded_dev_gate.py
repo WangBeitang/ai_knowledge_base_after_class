@@ -20,6 +20,7 @@ from evaluation.stage9.admission.run_sft_expanded_dev_gate import (
 )
 from evaluation.stage9.admission.run_sft_v1_corrected_replay_eval import (
     AttributionCategory,
+    _classify_attribution,
     build_corrected_replay_evaluation,
     load_corrected_replay_preflight,
     main as corrected_replay_main,
@@ -315,6 +316,33 @@ def test_corrected_replay_preflight_rejects_frozen_record_hash_drift(tmp_path):
             old_eval_path=old_eval,
             replay_contract_path=bad_contract,
         )
+
+
+def test_corrected_replay_attribution_separates_wrong_route_from_replay_gap():
+    wrong_route_category, wrong_route_explanation = _classify_attribution(
+        old_case_gate_passed=False,
+        new_case_gate_passed=False,
+        new_execution_failed=True,
+        new_action_path=["local_search"],
+        expected_action_paths=[["web_search", "answer"]],
+    )
+    valid_prefix_category, _ = _classify_attribution(
+        old_case_gate_passed=False,
+        new_case_gate_passed=False,
+        new_execution_failed=True,
+        new_action_path=["local_search"],
+        expected_action_paths=[["local_search", "answer"]],
+    )
+
+    assert (
+        wrong_route_category
+        == AttributionCategory.PERSISTENT_MODEL_FAILURE
+    )
+    assert "回放缺口不改变" in wrong_route_explanation
+    assert (
+        valid_prefix_category
+        == AttributionCategory.REPLAY_EXECUTION_FAILURE
+    )
 
 
 def test_corrected_replay_eval_persists_structured_trace_evidence(

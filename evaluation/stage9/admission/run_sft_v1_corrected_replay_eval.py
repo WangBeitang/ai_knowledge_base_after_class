@@ -88,7 +88,7 @@ from evaluation.stage9.providers.validate_expanded_dev_replay import (
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-CORRECTED_REPLAY_VERSION = "stage9-sft-v1-corrected-replay-eval-v1"
+CORRECTED_REPLAY_VERSION = "stage9-sft-v1-corrected-replay-eval-v2"
 DEFAULT_OLD_EVAL = (
     PROJECT_ROOT / "evaluation/stage9/artifacts/sft/sft_expanded_dev_eval.json"
 )
@@ -721,26 +721,124 @@ def _attribution(
     old_case: CaseAdmission,
     new_case: CaseAdmission,
 ) -> tuple[AttributionCategory, str]:
-    if new_case.execution_failed:
+    return _classify_attribution(
+        old_case_gate_passed=old_case.case_gate_passed,
+        new_case_gate_passed=new_case.case_gate_passed,
+        new_execution_failed=new_case.execution_failed,
+        new_action_path=new_case.actual_action_path,
+        expected_action_paths=new_case.expected_action_paths,
+    )
+
+
+def _classify_attribution(
+    *,
+    old_case_gate_passed: bool,
+    new_case_gate_passed: bool,
+    new_execution_failed: bool,
+    new_action_path: list[str],
+    expected_action_paths: list[list[str]],
+) -> tuple[AttributionCategory, str]:
+    """先判断模型路线是否已偏离，再判断回放中断是否阻塞责任归因。"""
+
+    still_on_accepted_path = any(
+        new_action_path == expected_path[: len(new_action_path)]
+        for expected_path in expected_action_paths
+    )
+    if new_execution_failed and still_on_accepted_path:
         return (
             AttributionCategory.REPLAY_EXECUTION_FAILURE,
-            "新回放轨迹发生执行失败，当前不能归因给模型训练覆盖。",
+            "回放在模型仍沿接受路径执行时中断，当前不能继续归因给模型路线。",
         )
-    if old_case.case_gate_passed and new_case.case_gate_passed:
+    if old_case_gate_passed and new_case_gate_passed:
         return AttributionCategory.UNCHANGED_PASS, "新旧环境下均通过。"
-    if not old_case.case_gate_passed and new_case.case_gate_passed:
+    if not old_case_gate_passed and new_case_gate_passed:
         return (
             AttributionCategory.PROVIDER_FALSE_NEGATIVE_CORRECTED,
             "旧环境失败而真实回放环境通过，旧失败属于 Provider 契约误判。",
         )
-    if old_case.case_gate_passed and not new_case.case_gate_passed:
+    if old_case_gate_passed and not new_case_gate_passed:
+        if new_execution_failed:
+            return (
+                AttributionCategory.REPLAY_EXPOSED_FAILURE,
+                "新路线在回放缺口前已偏离接受路径；回放缺口不改变模型路线失败归因。",
+            )
         return (
             AttributionCategory.REPLAY_EXPOSED_FAILURE,
             "旧标签派生环境通过而真实回放失败，真实环境暴露了新的模型路线问题。",
         )
+    if new_execution_failed:
+        return (
+            AttributionCategory.PERSISTENT_MODEL_FAILURE,
+            "新路线在回放缺口前已偏离接受路径；回放缺口不改变新旧均失败的模型路线归因。",
+        )
     return (
         AttributionCategory.PERSISTENT_MODEL_FAILURE,
         "新旧环境下均失败；在回放执行正常的前提下保留为模型路线失败。",
+    )
+
+
+def reattribute_existing_evaluation(
+    evaluation: CorrectedReplayEvaluation,
+) -> CorrectedReplayEvaluation:
+    """复用既有模型结果修正责任分类，不重新执行模型或 Provider（动作执行器）。"""
+
+    cases: list[CaseComparison] = []
+    for case in evaluation.cases:
+        category, explanation = _classify_attribution(
+            old_case_gate_passed=case.old_case_gate_passed,
+            new_case_gate_passed=case.new_case_gate_passed,
+            new_execution_failed=(
+                "execution_failure" in case.new_failure_categories
+            ),
+            new_action_path=case.new_action_path,
+            expected_action_paths=case.expected_action_paths,
+        )
+        cases.append(
+            case.model_copy(
+                update={
+                    "attribution": category,
+                    "attribution_explanation": explanation,
+                }
+            )
+        )
+
+    attribution_counts = Counter(case.attribution.value for case in cases)
+    summary = evaluation.summary.model_copy(
+        update={
+            "attribution_counts": dict(sorted(attribution_counts.items())),
+            "provider_false_negative_corrected_case_ids": (
+                _ids_for_attribution(
+                    cases,
+                    AttributionCategory.PROVIDER_FALSE_NEGATIVE_CORRECTED,
+                )
+            ),
+            "persistent_model_failure_case_ids": _ids_for_attribution(
+                cases,
+                AttributionCategory.PERSISTENT_MODEL_FAILURE,
+            ),
+            "replay_exposed_failure_case_ids": _ids_for_attribution(
+                cases,
+                AttributionCategory.REPLAY_EXPOSED_FAILURE,
+            ),
+            "replay_execution_failure_case_ids": _ids_for_attribution(
+                cases,
+                AttributionCategory.REPLAY_EXECUTION_FAILURE,
+            ),
+            "next_step": (
+                "仅在用户明确启动 9.3.21 后，按修正后成立的模型路线失败补独立 "
+                "train-only（仅训练）数据；不得把回放缺口单独当成训练样本依据。"
+            ),
+        }
+    )
+    corrected = evaluation.model_copy(
+        update={
+            "evaluation_version": CORRECTED_REPLAY_VERSION,
+            "cases": cases,
+            "summary": summary,
+        }
+    )
+    return CorrectedReplayEvaluation.model_validate(
+        corrected.model_dump(mode="json")
     )
 
 
@@ -941,6 +1039,8 @@ def render_report(evaluation: CorrectedReplayEvaluation) -> str:
         "没有连接 Milvus（向量数据库）或 Web（网页检索）重新录制。",
         "- 9.3.16 旧结果没有保存完整逐步 Observation（观察结果）；旧侧只展示可验证的"
         "检索文本块与引用投影，新侧保存本次结构化 Trace（执行轨迹）中的完整观察摘要。",
+        "- 路线责任与回放状态分别判断：模型在回放缺口前已经偏离接受路径时，仍归为"
+        "模型路线失败，同时保留 execution failure（执行失败）计数。",
         "- heldout test（留出测试）推理结果数固定为 `0`。",
         f"- 是否允许进入 9.4：`{str(summary.eligible_for_stage9_4).lower()}`。",
         "",
