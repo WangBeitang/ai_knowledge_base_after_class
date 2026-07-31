@@ -96,21 +96,12 @@ def test_balanced_dev_artifacts_have_five_routes_and_real_chunk_identity():
     balanced_cases = [
         case for case in dev if case.case_id.startswith("planner-dev-balanced-")
     ]
-    # 9.3.18 的真实 Provider 探针证明两条 safe_refuse query 无法稳定召回安全证据。
-    # 修订 query 后旧 fingerprint 审核必须失效，不能为了保持测试全绿而沿用旧批准。
+    # 9.3.18 修订后的两条 safe_refuse query 已按新 fingerprint 独立审核通过；
+    # 旧 fingerprint 的批准只保留在 superseded 历史文件中。
     assert Counter(case.human_review_status.value for case in balanced_cases) == {
-        "reviewed": 19,
-        "pending": 2,
+        "reviewed": 21,
     }
-    assert pending_case_ids == {
-        "planner-dev-balanced-refuse-b5-force-pull-paper",
-        "planner-dev-balanced-refuse-p5-touch-hot-surface",
-    }
-    assert {
-        case.case_id
-        for case in balanced_cases
-        if case.human_review_status.value == "pending"
-    } == pending_case_ids
+    assert pending_case_ids == set()
 
     for case in dev:
         if not case.case_id.startswith("planner-dev-balanced-"):
@@ -256,6 +247,9 @@ def test_only_explicit_independent_approvals_can_mark_new_cases_reviewed(tmp_pat
     assert all(
         count == 5 for count in result["inventory"]["reviewed_counts"].values()
     )
+    report = paths["report_path"].read_text(encoding="utf-8")
+    assert "独立二审门禁已满足" in report
+    assert "当前不允许进入 9.3.15" not in report
 
 
 def test_builder_rejects_stale_review_fingerprint(tmp_path):

@@ -1249,6 +1249,13 @@ def _render_report(
         if inventory["review_gate_passed"]
         else "未通过：候选集已补齐，但独立二审尚未完成"
     )
+    lifecycle_boundary = (
+        "- 本任务未导出 SFT、未重训、未运行 SFT v1；独立二审通过只证明 "
+        "balanced dev 数据门禁成立，不代表模型质量或 Provider 运行结果。"
+        if inventory["review_gate_passed"]
+        else "- 本任务未导出 SFT、未重训、未运行 SFT v1；数据只能在独立二审和"
+        "新 snapshot 冻结后进入 9.3.15。"
+    )
     lines = [
         "# 阶段 9 balanced dev 审核报告",
         "",
@@ -1274,8 +1281,7 @@ def _render_report(
         "- 新候选已通过 primary source review（主构建者来源核验），但这不等于独立二审。",
         "- 未提供 `second_review_decisions.jsonl` 时，新增 case 保持 `pending`，"
         "不会为了凑数自动改成 `reviewed`。",
-        "- 本任务未导出 SFT、未重训、未运行 SFT v1；数据只能在独立二审和新 snapshot "
-        "冻结后进入 9.3.15。",
+        lifecycle_boundary,
         "",
         "## 路线分布与审核状态",
         "",
@@ -1324,18 +1330,32 @@ def _render_report(
             "- `case_id`、标准化 query、query variant、leakage group 及保守近重复规则"
             "均未发现 train/dev 交叉；独立二审仍需做语义检查。"
         )
-    lines.extend(
-        [
-            "",
-            "## 尚未满足的门禁",
-            "",
-            "- 修订后仍为 pending 的候选需要由非主构建者逐条完成 evidence、route 和 leakage 二审。",
-            "- 二审通过后重新运行本脚本，只有有明确 approved 决定的 case 才会改为 reviewed。",
-            "- balanced dev 执行前必须生成包含三份新文档的 EnvironmentSnapshot（环境快照），"
-            "不能继续复用 stage8 旧 snapshot。",
-            "- 当前不允许进入 9.3.15，更不允许根据这些 pending case 的模型结果改标签。",
-        ]
-    )
+    if inventory["review_gate_passed"]:
+        lines.extend(
+            [
+                "",
+                "## 后续边界",
+                "",
+                "- 25 条 case 均绑定明确的 approved 决定和当前 fingerprint，"
+                "独立二审门禁已满足。",
+                "- 后续若修改 query、证据、答案要点或接受路线，旧审核自动失效，"
+                "必须保留历史决定并重新独立审核。",
+                "- 本报告不证明真实 Provider Observation、模型路线质量或 heldout 泛化。",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "",
+                "## 尚未满足的门禁",
+                "",
+                "- 修订后仍为 pending 的候选需要由非主构建者逐条完成 evidence、route 和 leakage 二审。",
+                "- 二审通过后重新运行本脚本，只有有明确 approved 决定的 case 才会改为 reviewed。",
+                "- balanced dev 执行前必须生成包含三份新文档的 EnvironmentSnapshot（环境快照），"
+                "不能继续复用 stage8 旧 snapshot。",
+                "- 当前不允许进入 9.3.15，更不允许根据这些 pending case 的模型结果改标签。",
+            ]
+        )
     return "\n".join(lines) + "\n"
 
 

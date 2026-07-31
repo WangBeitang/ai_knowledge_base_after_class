@@ -22,11 +22,10 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_reward_v1_1_balanced_dev_validation_passes_without_mutation():
-    profile_before = _sha256(DEFAULT_PROFILE)
-    reward_before = _sha256(DEFAULT_REWARD_IMPLEMENTATION)
-
-    output = run_validation()
+def test_historical_validation_remains_readable_and_reward_immutable():
+    output = RewardV11BalancedDevValidation.model_validate_json(
+        DEFAULT_OUTPUT.read_text(encoding="utf-8")
+    )
 
     assert output.summary.decision == "pass_keep_v1_1"
     assert output.summary.case_count == 25
@@ -50,22 +49,20 @@ def test_reward_v1_1_balanced_dev_validation_passes_without_mutation():
     assert output.reward_mutation_performed is False
     assert output.model_execution_performed is False
     assert output.heldout_inference_result_count == 0
-    assert _sha256(DEFAULT_PROFILE) == profile_before == EXPECTED_PROFILE_SHA256
+    assert _sha256(DEFAULT_PROFILE) == EXPECTED_PROFILE_SHA256
     assert (
         _sha256(DEFAULT_REWARD_IMPLEMENTATION)
-        == reward_before
         == EXPECTED_REWARD_IMPLEMENTATION_SHA256
     )
+    assert render_report(output) == DEFAULT_REPORT.read_text(encoding="utf-8")
 
 
-def test_checked_in_validation_and_report_are_reproducible():
-    checked_in = RewardV11BalancedDevValidation.model_validate_json(
-        DEFAULT_OUTPUT.read_text(encoding="utf-8")
-    )
-    regenerated = run_validation()
-
-    assert regenerated == checked_in
-    assert render_report(regenerated) == DEFAULT_REPORT.read_text(encoding="utf-8")
+def test_historical_validation_rejects_current_case_registry_drift():
+    with pytest.raises(
+        ValueError,
+        match="EnvironmentSnapshot 未绑定当前 planner_cases SHA256",
+    ):
+        run_validation()
 
 
 def test_validation_rejects_silently_modified_v1_1_profile(tmp_path: Path):
@@ -82,7 +79,9 @@ def test_validation_rejects_silently_modified_v1_1_profile(tmp_path: Path):
 
 
 def test_validation_outputs_refuse_silent_overwrite(tmp_path: Path):
-    output = run_validation()
+    output = RewardV11BalancedDevValidation.model_validate_json(
+        DEFAULT_OUTPUT.read_text(encoding="utf-8")
+    )
     output_path = tmp_path / "validation.json"
     report_path = tmp_path / "report.md"
     write_outputs(output, output_path=output_path, report_path=report_path)

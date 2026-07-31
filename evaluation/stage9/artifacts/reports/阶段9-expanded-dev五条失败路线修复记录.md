@@ -6,13 +6,17 @@
 和本地真实检索探针。5 条在修复后的单条探针中均满足路线前提，但两条安全拒绝 case
 （评测样本）修改了 query（查询文本），其旧独立审核 fingerprint（内容指纹）已经失效。
 
-因此当前状态是：
+2026-07-30 两条修订 case 已按新 fingerprint 通过独立审核并安全合并，随后完成正式全集
+重录和回放契约冻结。因此当前状态是：
 
 - 代码与候选 query 修复完成；
 - 5 条真实单条探针通过；
-- 两条 safe_refuse（安全拒绝）case 为 `pending`（待审核）；
-- 25 条全集尚未重新录制，9.3.18 仍未最终验收；
-- 禁止进入 9.3.19、模型复评或 heldout test（留出测试集）。
+- 两条 safe_refuse（安全拒绝）case 已恢复为 `reviewed`（已审核），balanced dev 为 25/25 reviewed；
+- 25 条全集已重新录制，共 32 条真实动作，Provider error 为 0；
+- 最终契约 `ok=true`：HyDE 5/5、safe_refuse 5/5；
+- 正式记录 SHA256 为
+  `3513e5e550dbe182ce55b9d7c3e461b280a9bc2ad64ed51aa5cc2747d0a1e1e7`；
+- 9.3.18 已完成；本次未运行 9.3.19、模型复评或 heldout test（留出测试集）。
 
 ## 逐条归因与处理
 
@@ -63,9 +67,8 @@ evaluation/stage9/artifacts/balanced_dev/blind_review_bundle_route_repair_9_3_18
 
 ## 下一步
 
-1. 由未读取历史审核决定的独立 Agent 对上述两条完成 evidence、route 和 leakage 审核。
-2. 合并与新 fingerprint 完全一致的决定，重新构建 balanced dev，恢复 25/25 reviewed。
-3. 使用修复后的代码和 query 覆盖重录完整 32 条真实 Provider Observation。
-4. 重新运行回放契约；只有 10/10 路线通过并冻结新 SHA256，才完成 9.3.18。
+由用户确认后进入 9.3.19，使用本次冻结的 Provider Observation 重跑 evaluator 与
+Reward v1.1 回归；默认不调整 Reward 权重。
 
-本文件记录的是修复过程和单条真实探针，不替代最终不可变回放契约。
+本文件记录修复过程和单条真实探针；最终不可变回放契约以
+`evaluation/stage9/artifacts/provider_records/expanded_dev_replay_contract.json` 为准。

@@ -1,7 +1,7 @@
 {
   "build_version": "stage9-balanced-dev-build-v2",
   "built_at": "2026-07-28T07:40:00+00:00",
-  "status": "candidate_complete_second_review_pending",
+  "status": "reviewed_gate_passed",
   "source_import_manifest": "evaluation/stage9/artifacts/balanced_dev/source_import_manifest.json",
   "source_import_manifest_sha256": "9674ee1580f8960d47d3d9ac0459f5486e8324fe1e51e3397e2c5e3089ceec33",
   "web_evidence_manifest": "evaluation/stage9/artifacts/balanced_dev/web_evidence_manifest.json",
@@ -12,7 +12,7 @@
   "retired_pending_dev_count": 3,
   "superseded_round3_rejected_count": 7,
   "new_candidate_count": 21,
-  "pending_second_review_count": 2,
+  "pending_second_review_count": 0,
   "inventory": {
     "dev_case_count": 25,
     "route_counts": {
@@ -27,7 +27,7 @@
       "hyde_fallback": 5,
       "web_required": 5,
       "ask_clarification": 5,
-      "safe_refuse": 3
+      "safe_refuse": 5
     },
     "unique_leakage_group_counts": {
       "local_answer": 5,
@@ -36,25 +36,25 @@
       "ask_clarification": 5,
       "safe_refuse": 5
     },
-    "review_gate_passed": false
+    "review_gate_passed": true
   },
   "train_dev_leakage_finding_count": 0,
   "outputs": {
     "evaluation/stage8/cases/planner_cases.jsonl": {
-      "sha256": "18ffc1d733ce9d8ad4ce44468b1f626d1e2781c13226487c92d80e0e168edfb6",
-      "bytes": 170141
+      "sha256": "1ab1c169ce1a4bd9cdb4be9a868494755012c008e432c2aa03c2b4ff198dc19b",
+      "bytes": 170377
     },
     "evaluation/stage8/cases/split_manifest.json": {
       "sha256": "5451424b5cbd5b520a9779fcc4bb208eb5d5868e7d313e82850d46f81a7215d0",
       "bytes": 13867
     },
     "evaluation/stage9/artifacts/balanced_dev/balanced_dev_case_evidence.jsonl": {
-      "sha256": "7bcdbb5d90ea83e98fc07c0567fba12bc15a39f613ec65bf946253bba93c06f5",
-      "bytes": 53527
+      "sha256": "a630c3a0fa58fcacedd707b2e24badb6dd978cf37f2aeda65ba6b1be518755d7",
+      "bytes": 56721
     },
     "evaluation/stage9/artifacts/balanced_dev/second_review_queue.jsonl": {
-      "sha256": "002ef20c3e7e8c1cfdf7809993f6dc6817499f655ba677a26491670d6c8fb4e1",
-      "bytes": 4897
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
     },
     "evaluation/stage9/artifacts/balanced_dev/retired_pending_dev_cases.jsonl": {
       "sha256": "9257e592b4c1fedece91ad8246046536c2143d91b351e8276f144e182e5ec938",
@@ -65,8 +65,8 @@
       "bytes": 13005
     },
     "evaluation/stage9/artifacts/reports/阶段9-balanced-dev审核报告.md": {
-      "sha256": "0d5d9adde99609f78b5e2c685d351e9a1fa7b0ba2a773aa99e8ca3412602ec0e",
-      "bytes": 3455
+      "sha256": "c0c68a63ecbec195b993fda276729c4efa8e92fadebd1c0e955f251adcdfd340",
+      "bytes": 3340
     }
   }
 }

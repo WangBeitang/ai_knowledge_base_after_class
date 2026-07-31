@@ -453,8 +453,8 @@ def _all_reviewed_cases_path(tmp_path: Path) -> Path:
     """
     为回放契约单测生成完整 reviewed（已审核）输入。
 
-    工作区当前有两条 9.3.18 修订 case 正在等待独立审核；生产门禁必须拒绝 23/25
-    状态，但契约本身的正反例测试仍需使用显式构造的 25 条 reviewed fixture（测试夹具）。
+    工作区已经恢复 25/25 reviewed；这里仍显式复制并规范化状态，避免测试夹具依赖
+    后续任务对正式 case 文件的原地修改。
     """
 
     output = tmp_path / "planner_cases_all_reviewed.jsonl"
