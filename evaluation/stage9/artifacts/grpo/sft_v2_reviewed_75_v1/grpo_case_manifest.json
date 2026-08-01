@@ -1,0 +1,96 @@
+{
+  "all_cases_reviewed": true,
+  "all_cases_train_only": true,
+  "all_reference_routes_accepted": true,
+  "case_count": 75,
+  "created_at": "2026-08-01T07:39:03+00:00",
+  "dataset_version": "grpo-cases-from-sft-v2-reviewed-75-v1",
+  "environment_snapshot_path": "evaluation/stage9/artifacts/sft_v2/frozen_reviewed_75_v1/sft_v2_environment_snapshot.json",
+  "environment_snapshot_sha256": "75fb8a6fd6ddde8c23e03eb9f0f8990a6254b88441742502e634dc51d1d47250",
+  "export_version": "planner-grpo-case-export-v1",
+  "input_file_sha256": {
+    "evaluation/stage8_5/artifacts/intermediate/sft_seed/curated_seed_train_cases.jsonl": "8da9b1fb1650e90c088e7ee486a984363623a0a8ea51df120543ec4d7d7d7a4f",
+    "evaluation/stage9/artifacts/route_seed/route_seed_cases.jsonl": "d15b5e90e425bb741b3cde98d1544a11bb653a0d1130f89c8daae6b532989a2c",
+    "evaluation/stage9/artifacts/sft_v2/frozen_reviewed_75_v1/sft_v2_approved_new_trajectories.jsonl": "35c866f6f11273bdcb47fa73efbc941faf15154f5f1a140ebd6d172ade5bb674",
+    "evaluation/stage9/artifacts/sft_v2/frozen_reviewed_75_v1/sft_v2_environment_snapshot.json": "75fb8a6fd6ddde8c23e03eb9f0f8990a6254b88441742502e634dc51d1d47250",
+    "evaluation/stage9/artifacts/sft_v2/frozen_reviewed_75_v1/sft_v2_freeze_manifest.json": "3690e464b43f8c33d6c63f2c74845d35f6782072e2466250f935ed5304d89b15",
+    "evaluation/stage9/artifacts/sft_v2/frozen_reviewed_75_v1/sft_v2_trajectory_index.jsonl": "a811003c4dda84a5ffe426ca1cd7b9aa324e97be0250faf4a162e6988659f028",
+    "evaluation/stage9/configs/reward_v1_1_training_profile.json": "2d4fc0f92c51beaf655fed57d2f5d3b43abaa50eeb4117ddb66b694f901ccf4e"
+  },
+  "leakage_group_count": 65,
+  "origin_counts": {
+    "old_retained_reviewed": 37,
+    "round3_approved": 38
+  },
+  "output_file_sha256": {
+    "grpo_case_report.md": "a2277114cb9e95d9913220a7a58d630411633e28c54e1286cbb789798f643a3f",
+    "grpo_train_cases.jsonl": "4496c7edbe5c9c1b0b77760d20e3aa86762aa53405d6331cd82dd51dde3784d9"
+  },
+  "reward_profile_path": "evaluation/stage9/configs/reward_v1_1_training_profile.json",
+  "reward_profile_sha256": "2d4fc0f92c51beaf655fed57d2f5d3b43abaa50eeb4117ddb66b694f901ccf4e",
+  "rollout_generated": false,
+  "rollout_source": "training_time_policy_sampling",
+  "route_counts": {
+    "ask_clarification": 6,
+    "local_search -> answer": 32,
+    "local_search -> ask_clarification": 1,
+    "local_search -> hyde_search -> answer": 10,
+    "local_search -> hyde_search -> refuse": 1,
+    "local_search -> hyde_search -> web_search -> answer": 4,
+    "local_search -> refuse": 1,
+    "local_search -> web_search -> answer": 3,
+    "local_search -> web_search -> refuse": 1,
+    "refuse": 4,
+    "web_search -> answer": 11,
+    "web_search -> refuse": 1
+  },
+  "source_dataset_fingerprint": "92e8146962d6fddc44a8fc1c001ff5306bc01cb6d2c3c7f0866db8d15aeae0e6",
+  "source_sft_freeze_status": "frozen_with_legacy_exceptions",
+  "source_sft_legacy_exceptions": {
+    "exact_duplicate_count": 0,
+    "legacy_meta_query_count": 1,
+    "legacy_meta_query_ids": [
+      "stage9-route-multi-fallback-001"
+    ],
+    "legacy_near_duplicate_count": 3,
+    "legacy_near_duplicates": [
+      {
+        "case_ids": [
+          "stage85-gold-ai4i-osf-rule-002",
+          "stage9-route-hyde-answer-008"
+        ],
+        "jaccard_score": 0.6786,
+        "score": 0.8305,
+        "sequence_score": 0.8305
+      },
+      {
+        "case_ids": [
+          "stage85-gold-ai4i-rnf-rule-002",
+          "stage9-route-hyde-answer-010"
+        ],
+        "jaccard_score": 0.6949,
+        "score": 0.8438,
+        "sequence_score": 0.8438
+      },
+      {
+        "case_ids": [
+          "stage85-gold-hydraulic-cooler-profile-002",
+          "stage85-gold-hydraulic-valve-profile-002"
+        ],
+        "jaccard_score": 0.4561,
+        "score": 0.8381,
+        "sequence_score": 0.8381
+      }
+    ],
+    "new_or_cross_generation_near_duplicate_count": 0,
+    "split_chunk_leak_count": 0,
+    "split_query_leak_count": 0
+  },
+  "terminal_counts": {
+    "answer": 60,
+    "ask_clarification": 7,
+    "refuse": 8
+  },
+  "training_performed": false,
+  "unique_query_count": 75
+}

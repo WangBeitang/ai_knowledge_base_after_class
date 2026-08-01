@@ -102,6 +102,18 @@ from app.rag.evaluation.sft_exporter import (
     write_sft_manifest,
     write_sft_samples,
 )
+from app.rag.evaluation.grpo_case_exporter import (
+    # GRPO 数据预处理只导出已审核 case 和参考轨迹；训练期 rollout 由策略实时采样。
+    GRPO_CASE_EXPORT_VERSION,
+    GrpoCaseArtifactStatus,
+    GrpoCaseExportManifest,
+    GrpoReferenceTrajectory,
+    GrpoTrainingCase,
+    build_grpo_training_cases,
+    load_grpo_training_cases,
+    validate_grpo_training_cases,
+    write_grpo_training_cases,
+)
 
 
 __all__ = [
@@ -173,6 +185,16 @@ __all__ = [
     "parse_allowed_splits",
     "write_sft_manifest",
     "write_sft_samples",
+    # GRPO train-only case 导出。
+    "GRPO_CASE_EXPORT_VERSION",
+    "GrpoCaseArtifactStatus",
+    "GrpoCaseExportManifest",
+    "GrpoReferenceTrajectory",
+    "GrpoTrainingCase",
+    "build_grpo_training_cases",
+    "load_grpo_training_cases",
+    "validate_grpo_training_cases",
+    "write_grpo_training_cases",
     # 训练导出前必须调用的边界校验函数。
     "validate_case_collection",
     "validate_cases_for_sft_export",
