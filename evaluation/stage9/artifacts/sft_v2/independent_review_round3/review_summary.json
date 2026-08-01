@@ -1,0 +1,1561 @@
+{
+  "bundle_content_sha256": "d068ffd375099ea8fc0b779c409fb23556f49f05f5b66abe504e83fa7b3e89b7",
+  "bundle_id": "sft-v2-clean-2d55a91841d2fa87",
+  "case_count": 125,
+  "completeness_check": {
+    "actual": 125,
+    "all_blind_fingerprints_recomputed": true,
+    "all_content_fingerprints_bound": true,
+    "content_fingerprint_recomputable_from_blind_bundle": false,
+    "duplicate_case_ids": [],
+    "expected": 125,
+    "missing_case_ids": [],
+    "unique_case_ids": 125
+  },
+  "decision_counts": {
+    "approve": 38,
+    "needs_manual_verification": 0,
+    "reject": 87
+  },
+  "device_family_distribution": {
+    "cnc_systems": {
+      "approve": 2,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 3
+    },
+    "cnc_turning": {
+      "approve": 8,
+      "input": 22,
+      "needs_manual_verification": 0,
+      "reject": 14
+    },
+    "drive_software": {
+      "approve": 1,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "hak180_equipment": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "hak180_safety": {
+      "approve": 1,
+      "input": 2,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "industrial_control_security": {
+      "approve": 1,
+      "input": 11,
+      "needs_manual_verification": 0,
+      "reject": 10
+    },
+    "industrial_drives": {
+      "approve": 1,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "industrial_firmware": {
+      "approve": 1,
+      "input": 7,
+      "needs_manual_verification": 0,
+      "reject": 6
+    },
+    "industrial_machine_safety": {
+      "approve": 6,
+      "input": 17,
+      "needs_manual_verification": 0,
+      "reject": 11
+    },
+    "lenovo_lj2268_printer": {
+      "approve": 0,
+      "input": 3,
+      "needs_manual_verification": 0,
+      "reject": 3
+    },
+    "lenovo_m7208w_printer": {
+      "approve": 1,
+      "input": 3,
+      "needs_manual_verification": 0,
+      "reject": 2
+    },
+    "lenovo_m7268_printer": {
+      "approve": 1,
+      "input": 2,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "lenovo_z26_printer": {
+      "approve": 2,
+      "input": 2,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "lenovo_z35_printer": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "machine_guarding": {
+      "approve": 1,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "machine_guarding_regulation": {
+      "approve": 1,
+      "input": 6,
+      "needs_manual_verification": 0,
+      "reject": 5
+    },
+    "manufacturing_cybersecurity": {
+      "approve": 2,
+      "input": 6,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "operational_technology_security": {
+      "approve": 0,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 5
+    },
+    "panda_pro_printer": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "pantum_p3000_printer": {
+      "approve": 1,
+      "input": 2,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "pantum_p3030_printer": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "pantum_p3500_printer": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "semiconductor_manufacturing": {
+      "approve": 3,
+      "input": 6,
+      "needs_manual_verification": 0,
+      "reject": 3
+    },
+    "servo_drives": {
+      "approve": 2,
+      "input": 4,
+      "needs_manual_verification": 0,
+      "reject": 2
+    },
+    "z26_generic_printer": {
+      "approve": 0,
+      "input": 2,
+      "needs_manual_verification": 0,
+      "reject": 2
+    }
+  },
+  "formal_dataset_frozen": false,
+  "global_checks": {
+    "evidence_binding_failure_case_ids": [
+      "sft-v2-new-002",
+      "sft-v2-new-024",
+      "sft-v2-new-041",
+      "sft-v2-new-043",
+      "sft-v2-new-049",
+      "sft-v2-new-088",
+      "sft-v2-new-089",
+      "sft-v2-new-092",
+      "sft-v2-new-106",
+      "sft-v2-new-111"
+    ],
+    "evidence_binding_failure_count": 10,
+    "exact_duplicate_case_count": 0,
+    "fixed_17_route_input_counts_match_manifest": true,
+    "leakage_group_conflict_count": 0,
+    "near_semantic_template_duplicate_case_count": 39,
+    "near_semantic_template_duplicate_case_ids": [
+      "sft-v2-new-037",
+      "sft-v2-new-039",
+      "sft-v2-new-040",
+      "sft-v2-new-046",
+      "sft-v2-new-050",
+      "sft-v2-new-052",
+      "sft-v2-new-053",
+      "sft-v2-new-054",
+      "sft-v2-new-055",
+      "sft-v2-new-057",
+      "sft-v2-new-058",
+      "sft-v2-new-059",
+      "sft-v2-new-060",
+      "sft-v2-new-061",
+      "sft-v2-new-062",
+      "sft-v2-new-082",
+      "sft-v2-new-083",
+      "sft-v2-new-084",
+      "sft-v2-new-085",
+      "sft-v2-new-091",
+      "sft-v2-new-094",
+      "sft-v2-new-095",
+      "sft-v2-new-096",
+      "sft-v2-new-097",
+      "sft-v2-new-098",
+      "sft-v2-new-100",
+      "sft-v2-new-101",
+      "sft-v2-new-102",
+      "sft-v2-new-113",
+      "sft-v2-new-114",
+      "sft-v2-new-117",
+      "sft-v2-new-118",
+      "sft-v2-new-119",
+      "sft-v2-new-120",
+      "sft-v2-new-121",
+      "sft-v2-new-122",
+      "sft-v2-new-123",
+      "sft-v2-new-124",
+      "sft-v2-new-125"
+    ],
+    "near_semantic_template_duplicate_group_count": 15,
+    "provider_binding_failure_count": 0,
+    "query_contamination_case_ids": [
+      "sft-v2-new-046",
+      "sft-v2-new-089",
+      "sft-v2-new-091",
+      "sft-v2-new-092"
+    ],
+    "query_contamination_count": 4,
+    "split_chunk_leak_count": 0,
+    "split_query_leak_count": 0
+  },
+  "limitations": [
+    "原始 content_fingerprint 依赖盲审包刻意移除的生命周期字段，无法仅凭盲审包独立重建；本轮决定同时记录 content_fingerprint，并独立复算 blind_case_fingerprint。",
+    "OSHA 两个当前页面抓取受限；使用 2026-07-31 已冻结的官方页面事实、HTTP 200、URL 和响应 SHA256。"
+  ],
+  "needs_manual_verification_cases": [],
+  "question_family_distribution": {
+    "cnc_programming_and_operation": {
+      "approve": 8,
+      "input": 22,
+      "needs_manual_verification": 0,
+      "reject": 14
+    },
+    "cnc_system_capability_and_support": {
+      "approve": 2,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 3
+    },
+    "drive_lifecycle_and_maintenance": {
+      "approve": 1,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "drive_software_lifecycle": {
+      "approve": 1,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "firmware_lifecycle_and_security": {
+      "approve": 1,
+      "input": 7,
+      "needs_manual_verification": 0,
+      "reject": 6
+    },
+    "generic_z26_document_operation": {
+      "approve": 0,
+      "input": 2,
+      "needs_manual_verification": 0,
+      "reject": 2
+    },
+    "hot_stamping_equipment_operation": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "hot_stamping_safety_boundary": {
+      "approve": 1,
+      "input": 2,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "ics_advisory_and_response": {
+      "approve": 1,
+      "input": 11,
+      "needs_manual_verification": 0,
+      "reject": 10
+    },
+    "lj2268_connectivity_and_printing": {
+      "approve": 0,
+      "input": 3,
+      "needs_manual_verification": 0,
+      "reject": 3
+    },
+    "m7208w_document_handling": {
+      "approve": 1,
+      "input": 3,
+      "needs_manual_verification": 0,
+      "reject": 2
+    },
+    "m7268_connectivity_and_operation": {
+      "approve": 1,
+      "input": 2,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "machine_guarding_compliance": {
+      "approve": 1,
+      "input": 6,
+      "needs_manual_verification": 0,
+      "reject": 5
+    },
+    "machine_guarding_methods": {
+      "approve": 1,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "manufacturing_cybersecurity_resources": {
+      "approve": 2,
+      "input": 6,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "ot_security_guidance": {
+      "approve": 0,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 5
+    },
+    "p3000_setup_and_maintenance": {
+      "approve": 1,
+      "input": 2,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "p3030_installation_and_safety": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "p3500_network_and_operation": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "panda_pro_features_and_maintenance": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "risk_assessment_and_safeguarding": {
+      "approve": 6,
+      "input": 17,
+      "needs_manual_verification": 0,
+      "reject": 11
+    },
+    "semiconductor_security_profile": {
+      "approve": 3,
+      "input": 6,
+      "needs_manual_verification": 0,
+      "reject": 3
+    },
+    "servo_lifecycle_and_replacement": {
+      "approve": 2,
+      "input": 4,
+      "needs_manual_verification": 0,
+      "reject": 2
+    },
+    "z26_print_scan_operation": {
+      "approve": 2,
+      "input": 2,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "z35_print_scan_operation": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    }
+  },
+  "reject_cases": [
+    {
+      "case_id": "sft-v2-new-002",
+      "direct_reason": "本地证据是用户自定义按键说明，不能支持告警危险等级判断或该追问条件。",
+      "reason_codes": [
+        "LOCAL_EVIDENCE_NOT_SUPPORTING_QUERY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-006",
+      "direct_reason": "证据已经足以给出条件式安全答复：始终双手托底、保持平稳，并在靠近边缘时不要打开出纸盒；无需先追问位置。",
+      "reason_codes": [
+        "CLARIFICATION_NOT_REQUIRED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-023",
+      "direct_reason": "缺失字段已在原始问题中明确出现，追问不是由 local_search 的 Observation 新暴露，路线应直接追问或给条件式答复。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-024",
+      "direct_reason": "缺失字段已在原始问题中明确出现，追问不是由 local_search 的 Observation 新暴露，路线应直接追问或给条件式答复。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "EVIDENCE_BINDING_FAILED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-025",
+      "direct_reason": "缺失字段已在原始问题中明确出现，追问不是由 local_search 的 Observation 新暴露，路线应直接追问或给条件式答复。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-026",
+      "direct_reason": "缺失字段已在原始问题中明确出现，追问不是由 local_search 的 Observation 新暴露，路线应直接追问或给条件式答复。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-027",
+      "direct_reason": "缺失字段已在原始问题中明确出现，追问不是由 local_search 的 Observation 新暴露，路线应直接追问或给条件式答复。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-028",
+      "direct_reason": "缺失字段已在原始问题中明确出现，追问不是由 local_search 的 Observation 新暴露，路线应直接追问或给条件式答复。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-029",
+      "direct_reason": "缺失字段已在原始问题中明确出现，追问不是由 local_search 的 Observation 新暴露，路线应直接追问或给条件式答复。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-030",
+      "direct_reason": "缺失字段已在原始问题中明确出现，追问不是由 local_search 的 Observation 新暴露，路线应直接追问或给条件式答复。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-031",
+      "direct_reason": "缺失字段已在原始问题中明确出现，追问不是由 local_search 的 Observation 新暴露，路线应直接追问或给条件式答复。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-032",
+      "direct_reason": "问题已明确要求绕过安全、权限或法律边界，不应先执行 local_search。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-033",
+      "direct_reason": "问题已明确要求绕过安全、权限或法律边界，不应先执行 local_search。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-034",
+      "direct_reason": "问题已明确要求绕过安全、权限或法律边界，不应先执行 local_search。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-035",
+      "direct_reason": "问题已明确要求绕过安全、权限或法律边界，不应先执行 local_search。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-036",
+      "direct_reason": "问题已明确要求绕过安全、权限或法律边界，不应先执行 local_search。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-040",
+      "direct_reason": "与同来源、同答案目标的候选构成跨路线近义重复；全局去重后保留信息更完整且路线更自然的代表项。",
+      "reason_codes": [
+        "NEAR_SEMANTIC_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-041",
+      "direct_reason": "网页事实只列出生命周期状态字段，没有给出 ACS550 的实际生命周期状态。",
+      "reason_codes": [
+        "EVIDENCE_BINDING_FAILED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-043",
+      "direct_reason": "网页事实截断在“consistent and”，不足以完整支持生命周期公告的主要目的。",
+      "reason_codes": [
+        "EVIDENCE_BINDING_FAILED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-046",
+      "direct_reason": "把 NIST 页面勘误提示改造成“是否包含官方变更”的元问题，不是自然制造业任务。",
+      "reason_codes": [
+        "QUERY_POLLUTION",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-049",
+      "direct_reason": "问题询问多项具体产品，但绑定事实仅出现 Siemens TIA Project-Server/TIA Portal，证据覆盖不完整。",
+      "reason_codes": [
+        "EVIDENCE_BINDING_FAILED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-053",
+      "direct_reason": "缺失型号、目录号或风险点已在问题中明确出现，web_search 没有暴露新的歧义，应该直接追问。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-054",
+      "direct_reason": "缺失型号、目录号或风险点已在问题中明确出现，web_search 没有暴露新的歧义，应该直接追问。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-055",
+      "direct_reason": "缺失型号、目录号或风险点已在问题中明确出现，web_search 没有暴露新的歧义，应该直接追问。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-056",
+      "direct_reason": "缺失型号、目录号或风险点已在问题中明确出现，web_search 没有暴露新的歧义，应该直接追问。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-057",
+      "direct_reason": "缺失型号、目录号或风险点已在问题中明确出现，web_search 没有暴露新的歧义，应该直接追问。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-058",
+      "direct_reason": "缺失型号、目录号或风险点已在问题中明确出现，web_search 没有暴露新的歧义，应该直接追问。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-059",
+      "direct_reason": "问题已明确要求攻击或绕过安全防护，不应先执行 web_search。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-060",
+      "direct_reason": "问题已明确要求攻击或绕过安全防护，不应先执行 web_search。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-061",
+      "direct_reason": "问题已明确要求攻击或绕过安全防护，不应先执行 web_search。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-062",
+      "direct_reason": "问题已明确要求攻击或绕过安全防护，不应先执行 web_search。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-063",
+      "direct_reason": "首次 local_search 已召回目标 chunk（多数位于前1至2名），HyDE 没有形成必要的检索升级。",
+      "reason_codes": [
+        "HYDE_INITIAL_RETRIEVAL_ALREADY_SUFFICIENT"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-064",
+      "direct_reason": "首次 local_search 已召回目标 chunk（多数位于前1至2名），HyDE 没有形成必要的检索升级。",
+      "reason_codes": [
+        "HYDE_INITIAL_RETRIEVAL_ALREADY_SUFFICIENT"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-065",
+      "direct_reason": "首次 local_search 已召回目标 chunk（多数位于前1至2名），HyDE 没有形成必要的检索升级。",
+      "reason_codes": [
+        "HYDE_INITIAL_RETRIEVAL_ALREADY_SUFFICIENT"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-066",
+      "direct_reason": "HyDE 仅使目标 chunk 提升一个名次且目标分数未形成实质改善，不能证明有效改写。",
+      "reason_codes": [
+        "HYDE_NO_EFFECTIVE_IMPROVEMENT"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-067",
+      "direct_reason": "首次 local_search 已召回目标 chunk（多数位于前1至2名），HyDE 没有形成必要的检索升级。",
+      "reason_codes": [
+        "HYDE_INITIAL_RETRIEVAL_ALREADY_SUFFICIENT"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-068",
+      "direct_reason": "首次 local_search 已召回目标 chunk（多数位于前1至2名），HyDE 没有形成必要的检索升级。",
+      "reason_codes": [
+        "HYDE_INITIAL_RETRIEVAL_ALREADY_SUFFICIENT"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-069",
+      "direct_reason": "HyDE 仅使目标 chunk 提升一个名次且目标分数未形成实质改善，不能证明有效改写。",
+      "reason_codes": [
+        "HYDE_NO_EFFECTIVE_IMPROVEMENT"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-070",
+      "direct_reason": "首次 local_search 已召回目标 chunk（多数位于前1至2名），HyDE 没有形成必要的检索升级。",
+      "reason_codes": [
+        "HYDE_INITIAL_RETRIEVAL_ALREADY_SUFFICIENT"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-071",
+      "direct_reason": "首次 local_search 已召回目标 chunk（多数位于前1至2名），HyDE 没有形成必要的检索升级。",
+      "reason_codes": [
+        "HYDE_INITIAL_RETRIEVAL_ALREADY_SUFFICIENT"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-072",
+      "direct_reason": "缺失配置、几何、硬件通道或网络状态已在原始问题中明确，最终追问不是由 Observation 新暴露。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-073",
+      "direct_reason": "缺失配置、几何、硬件通道或网络状态已在原始问题中明确，最终追问不是由 Observation 新暴露。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-074",
+      "direct_reason": "缺失配置、几何、硬件通道或网络状态已在原始问题中明确，最终追问不是由 Observation 新暴露。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-075",
+      "direct_reason": "缺失配置、几何、硬件通道或网络状态已在原始问题中明确，最终追问不是由 Observation 新暴露。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-076",
+      "direct_reason": "缺失配置、几何、硬件通道或网络状态已在原始问题中明确，最终追问不是由 Observation 新暴露。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-077",
+      "direct_reason": "缺失配置、几何、硬件通道或网络状态已在原始问题中明确，最终追问不是由 Observation 新暴露。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-078",
+      "direct_reason": "问题已明确要求危险操作或规避法律限制，不应执行 local_search 和 HyDE 后才拒答。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-079",
+      "direct_reason": "问题已明确要求危险操作或规避法律限制，不应执行 local_search 和 HyDE 后才拒答。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-080",
+      "direct_reason": "问题已明确要求危险操作或规避法律限制，不应执行 local_search 和 HyDE 后才拒答。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-081",
+      "direct_reason": "问题已明确要求危险操作或规避法律限制，不应执行 local_search 和 HyDE 后才拒答。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-082",
+      "direct_reason": "与同来源、同答案目标的候选构成跨路线近义重复；全局去重后保留信息更完整且路线更自然的代表项。",
+      "reason_codes": [
+        "NEAR_SEMANTIC_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-083",
+      "direct_reason": "与同来源、同答案目标的候选构成跨路线近义重复；全局去重后保留信息更完整且路线更自然的代表项。",
+      "reason_codes": [
+        "NEAR_SEMANTIC_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-084",
+      "direct_reason": "与同来源、同答案目标的候选构成跨路线近义重复；全局去重后保留信息更完整且路线更自然的代表项。",
+      "reason_codes": [
+        "NEAR_SEMANTIC_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-085",
+      "direct_reason": "与同来源、同答案目标的候选构成跨路线近义重复；全局去重后保留信息更完整且路线更自然的代表项。",
+      "reason_codes": [
+        "NEAR_SEMANTIC_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-088",
+      "direct_reason": "网页事实截断在“consistent and”，不足以完整回答生命周期模型的目的。",
+      "reason_codes": [
+        "EVIDENCE_BINDING_FAILED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-089",
+      "direct_reason": "绑定内容只是 OSHA 页面 HTTPS 传输提示，与机器防护业务事实无关。",
+      "reason_codes": [
+        "EVIDENCE_BINDING_FAILED",
+        "QUERY_POLLUTION"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-090",
+      "direct_reason": "与同来源、同答案目标的候选构成跨路线近义重复；全局去重后保留信息更完整且路线更自然的代表项。",
+      "reason_codes": [
+        "NEAR_SEMANTIC_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-091",
+      "direct_reason": "把 NIST 页面勘误提示改造成“变更状态”元问题，不是自然 OT 安全任务。",
+      "reason_codes": [
+        "QUERY_POLLUTION",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-092",
+      "direct_reason": "问题询问网络安全教育与劳动力页面更新时间，但绑定 URL 是制造业行业资源页，页面身份与问题对象不一致。",
+      "reason_codes": [
+        "EVIDENCE_BINDING_FAILED",
+        "QUERY_POLLUTION"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-094",
+      "direct_reason": "与同来源、同答案目标的候选构成跨路线近义重复；全局去重后保留信息更完整且路线更自然的代表项。",
+      "reason_codes": [
+        "NEAR_SEMANTIC_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-095",
+      "direct_reason": "与同来源、同答案目标的候选构成跨路线近义重复；全局去重后保留信息更完整且路线更自然的代表项。",
+      "reason_codes": [
+        "NEAR_SEMANTIC_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-096",
+      "direct_reason": "与同来源、同答案目标的候选构成跨路线近义重复；全局去重后保留信息更完整且路线更自然的代表项。",
+      "reason_codes": [
+        "NEAR_SEMANTIC_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-097",
+      "direct_reason": "缺失机器型号、拓扑、固件或产品身份已在问题中明确，local_search/web_search 没有暴露新的歧义。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-098",
+      "direct_reason": "缺失机器型号、拓扑、固件或产品身份已在问题中明确，local_search/web_search 没有暴露新的歧义。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-099",
+      "direct_reason": "缺失机器型号、拓扑、固件或产品身份已在问题中明确，local_search/web_search 没有暴露新的歧义。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-100",
+      "direct_reason": "缺失机器型号、拓扑、固件或产品身份已在问题中明确，local_search/web_search 没有暴露新的歧义。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-101",
+      "direct_reason": "缺失机器型号、拓扑、固件或产品身份已在问题中明确，local_search/web_search 没有暴露新的歧义。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-102",
+      "direct_reason": "问题已明确要求绕过安全框架或官方验证，不应检索后才拒答。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-103",
+      "direct_reason": "问题已明确要求绕过安全框架或官方验证，不应检索后才拒答。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-104",
+      "direct_reason": "问题已明确要求绕过安全框架或官方验证，不应检索后才拒答。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-106",
+      "direct_reason": "网页事实只有 OSHA 官方站点安全连接提示，不能支持通用设备防护要求。",
+      "reason_codes": [
+        "EVIDENCE_BINDING_FAILED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-107",
+      "direct_reason": "首次 local_search 已返回直接包含 OSHA 1910.212 防护要求与替代防护方法的本地 chunk，继续 HyDE/web_search 属于不必要升级。",
+      "reason_codes": [
+        "LOCAL_EVIDENCE_ALREADY_SUFFICIENT"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-108",
+      "direct_reason": "问题已明确指定 NIST/ABB 当前官方信息目标，local_search 与 HyDE 没有增加判定价值，应直接 web_search。",
+      "reason_codes": [
+        "UNNECESSARY_LOCAL_HYDE_BEFORE_WEB"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-111",
+      "direct_reason": "绑定事实未包含“十三项”数量，不能支持“具体有多少个”的回答。",
+      "reason_codes": [
+        "EVIDENCE_BINDING_FAILED"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-113",
+      "direct_reason": "与同来源、同答案目标的候选构成跨路线近义重复；全局去重后保留信息更完整且路线更自然的代表项。",
+      "reason_codes": [
+        "NEAR_SEMANTIC_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-114",
+      "direct_reason": "与同来源、同答案目标的候选构成跨路线近义重复；全局去重后保留信息更完整且路线更自然的代表项。",
+      "reason_codes": [
+        "NEAR_SEMANTIC_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-115",
+      "direct_reason": "问题已明确指定 NIST/ABB 当前官方信息目标，local_search 与 HyDE 没有增加判定价值，应直接 web_search。",
+      "reason_codes": [
+        "UNNECESSARY_LOCAL_HYDE_BEFORE_WEB"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-116",
+      "direct_reason": "问题未给出伺服品牌或型号，却直接绑定 ABB 生命周期政策并泛化回答；应先追问产品身份。",
+      "reason_codes": [
+        "MISSING_PRODUCT_IDENTITY_REQUIRES_CLARIFICATION"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-117",
+      "direct_reason": "缺失版本、危害点、拓扑、设备型号或目录号已在问题中明确，不需要完整三段检索后才追问。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-118",
+      "direct_reason": "缺失版本、危害点、拓扑、设备型号或目录号已在问题中明确，不需要完整三段检索后才追问。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-119",
+      "direct_reason": "缺失版本、危害点、拓扑、设备型号或目录号已在问题中明确，不需要完整三段检索后才追问。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-120",
+      "direct_reason": "缺失版本、危害点、拓扑、设备型号或目录号已在问题中明确，不需要完整三段检索后才追问。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-121",
+      "direct_reason": "缺失版本、危害点、拓扑、设备型号或目录号已在问题中明确，不需要完整三段检索后才追问。",
+      "reason_codes": [
+        "CLARIFICATION_PREDECLARED_NOT_OBSERVATION_TRIGGERED",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-122",
+      "direct_reason": "问题已明确要求绕过或瘫痪安全系统，应直接拒答，不应执行三段检索。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-123",
+      "direct_reason": "问题已明确要求绕过或瘫痪安全系统，应直接拒答，不应执行三段检索。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-124",
+      "direct_reason": "问题已明确要求绕过或瘫痪安全系统，应直接拒答，不应执行三段检索。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    },
+    {
+      "case_id": "sft-v2-new-125",
+      "direct_reason": "问题已明确要求绕过或瘫痪安全系统，应直接拒答，不应执行三段检索。",
+      "reason_codes": [
+        "UNSAFE_REQUEST_SHOULD_REFUSE_DIRECTLY",
+        "NEAR_TEMPLATE_DUPLICATE"
+      ]
+    }
+  ],
+  "review_ended_at": "2026-07-31T16:58:39+00:00",
+  "review_round": "round3",
+  "review_started_at": "2026-07-31T16:58:39+00:00",
+  "reviewer_id": "reviewer_c",
+  "route_distribution": {
+    "ask_clarification": {
+      "approve": 5,
+      "input": 7,
+      "needs_manual_verification": 0,
+      "reject": 2
+    },
+    "local_search -> answer": {
+      "approve": 12,
+      "input": 12,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "local_search -> ask_clarification": {
+      "approve": 0,
+      "input": 9,
+      "needs_manual_verification": 0,
+      "reject": 9
+    },
+    "local_search -> hyde_search -> answer": {
+      "approve": 0,
+      "input": 9,
+      "needs_manual_verification": 0,
+      "reject": 9
+    },
+    "local_search -> hyde_search -> ask_clarification": {
+      "approve": 0,
+      "input": 6,
+      "needs_manual_verification": 0,
+      "reject": 6
+    },
+    "local_search -> hyde_search -> refuse": {
+      "approve": 0,
+      "input": 4,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "local_search -> hyde_search -> web_search -> answer": {
+      "approve": 4,
+      "input": 12,
+      "needs_manual_verification": 0,
+      "reject": 8
+    },
+    "local_search -> hyde_search -> web_search -> ask_clarification": {
+      "approve": 0,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 5
+    },
+    "local_search -> hyde_search -> web_search -> refuse": {
+      "approve": 0,
+      "input": 4,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "local_search -> refuse": {
+      "approve": 0,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 5
+    },
+    "local_search -> web_search -> answer": {
+      "approve": 3,
+      "input": 15,
+      "needs_manual_verification": 0,
+      "reject": 12
+    },
+    "local_search -> web_search -> ask_clarification": {
+      "approve": 0,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 5
+    },
+    "local_search -> web_search -> refuse": {
+      "approve": 0,
+      "input": 3,
+      "needs_manual_verification": 0,
+      "reject": 3
+    },
+    "refuse": {
+      "approve": 3,
+      "input": 3,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "web_search -> answer": {
+      "approve": 11,
+      "input": 16,
+      "needs_manual_verification": 0,
+      "reject": 5
+    },
+    "web_search -> ask_clarification": {
+      "approve": 0,
+      "input": 6,
+      "needs_manual_verification": 0,
+      "reject": 6
+    },
+    "web_search -> refuse": {
+      "approve": 0,
+      "input": 4,
+      "needs_manual_verification": 0,
+      "reject": 4
+    }
+  },
+  "source_distribution": {
+    "abb-driveloader-lifecycle-2026": {
+      "approve": 1,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "abb-legacy-servo-current": {
+      "approve": 2,
+      "input": 4,
+      "needs_manual_verification": 0,
+      "reject": 2
+    },
+    "abb-powertrain-lifecycle-current": {
+      "approve": 1,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "cisa-ics-advisories-2025-07-10": {
+      "approve": 1,
+      "input": 11,
+      "needs_manual_verification": 0,
+      "reject": 10
+    },
+    "doc_0ec3f4068dfa44bb916a2ca1d68d98e7:467551067585610585:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_0ec3f4068dfa44bb916a2ca1d68d98e7:467551067585610636:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_1e32d6f9029448c7bd71046a211c8205:467551067585611281:2": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_1e32d6f9029448c7bd71046a211c8205:467551067585611341:2": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_2646f50becbc4c179f48c2ebc4275dd4:467551067585611486:2": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_51d0e1c6b6eb4f9c97fc3a6a58ebfb3c:467551067585609647:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_51d0e1c6b6eb4f9c97fc3a6a58ebfb3c:467551067585609652:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_6a534dd285ae437ea5becd1d18039909:467551067585609736:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613577:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613580:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613594:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613623:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613631:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613636:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613646:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613659:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613670:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613704:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613737:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613745:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613760:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613776:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613779:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613797:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_85776854260946abb2eaa0d7c506bb58:467551067585613829:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_885b223c4bef450ba0b15752c395a448:467551067585610722:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_8bd9c0a26a9a493fbceeba5791114078:467551067585611146:2": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_8e04887560224cfa9332b7ab2247f93c:467551067585610868:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_8e04887560224cfa9332b7ab2247f93c:467551067585610887:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585612859:1": {
+      "approve": 1,
+      "input": 2,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585612860:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585612869:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613060:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613092:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613112:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613147:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613194:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613265:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613299:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613340:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613372:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613377:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613459:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613502:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613562:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_9b578874499d4650a2fc46acb271e527:467551067585610012:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_9b578874499d4650a2fc46acb271e527:467551067585610016:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_9b578874499d4650a2fc46acb271e527:467551067585610162:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_cd73a1e7a9374773989382dcbe5898da:467551067585610246:1": {
+      "approve": 1,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 0
+    },
+    "doc_cd73a1e7a9374773989382dcbe5898da:467551067585610389:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_da6e9fbf7cc241eba67db68bbc5e16f7:467551067585609800:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_da6e9fbf7cc241eba67db68bbc5e16f7:467551067585609804:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_da6e9fbf7cc241eba67db68bbc5e16f7:467551067585609934:1": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "doc_e76c338cd1604701812131e947685ef4:467551067585610964:3": {
+      "approve": 0,
+      "input": 1,
+      "needs_manual_verification": 0,
+      "reject": 1
+    },
+    "nist-ir8546-semiconductor-profile": {
+      "approve": 3,
+      "input": 6,
+      "needs_manual_verification": 0,
+      "reject": 3
+    },
+    "nist-manufacturing-cybersecurity-current": {
+      "approve": 2,
+      "input": 6,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "nist-sp800-82r3-current": {
+      "approve": 0,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 5
+    },
+    "osha-1910-212-current": {
+      "approve": 1,
+      "input": 6,
+      "needs_manual_verification": 0,
+      "reject": 5
+    },
+    "osha-machine-guarding-current": {
+      "approve": 1,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 4
+    },
+    "rockwell-firmware-lifecycle-current": {
+      "approve": 1,
+      "input": 7,
+      "needs_manual_verification": 0,
+      "reject": 6
+    },
+    "siemens-sinumerik-808-current": {
+      "approve": 3,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 2
+    },
+    "siemens-sinumerik-systems-current": {
+      "approve": 2,
+      "input": 5,
+      "needs_manual_verification": 0,
+      "reject": 3
+    }
+  },
+  "training_performed": false,
+  "web_source_verification": {
+    "abb-driveloader-lifecycle-2026": "current_response_sha256_exact",
+    "abb-legacy-servo-current": "current_response_sha256_exact",
+    "abb-powertrain-lifecycle-current": "current_response_sha256_exact",
+    "cisa-ics-advisories-2025-07-10": "current_response_sha256_exact",
+    "nist-ir8546-semiconductor-profile": "current_official_body_fact_reverified_response_changed",
+    "nist-manufacturing-cybersecurity-current": "current_official_body_fact_reverified_response_changed",
+    "nist-sp800-82r3-current": "current_official_body_fact_reverified_response_changed",
+    "osha-1910-212-current": "current_fetch_restricted_frozen_2026-07-31_capture_used",
+    "osha-machine-guarding-current": "current_fetch_restricted_frozen_2026-07-31_capture_used",
+    "rockwell-firmware-lifecycle-current": "current_official_body_fact_reverified_response_changed",
+    "siemens-sinumerik-808-current": "current_response_sha256_exact",
+    "siemens-sinumerik-systems-current": "current_response_sha256_exact"
+  }
+}

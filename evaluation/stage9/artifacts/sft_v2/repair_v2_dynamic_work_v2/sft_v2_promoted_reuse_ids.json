@@ -1,0 +1,11 @@
+{
+  "candidate_ids": [
+    "sft-v2-new-024",
+    "sft-v2-new-055",
+    "sft-v2-new-056",
+    "sft-v2-new-082",
+    "sft-v2-new-099",
+    "sft-v2-new-104"
+  ],
+  "promotion_reason": "pre_provider_semantic_or_profile_gate_failed"
+}

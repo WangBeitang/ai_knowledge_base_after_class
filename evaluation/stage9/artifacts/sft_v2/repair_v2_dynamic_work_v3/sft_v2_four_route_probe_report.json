@@ -1,0 +1,189 @@
+{
+  "all_passed": false,
+  "created_at": "2026-08-01T03:15:34+00:00",
+  "probe_version": "sft-v2-four-route-probes-v1",
+  "provider_records_file": "sft_v2_four_route_probe_observations_01.jsonl",
+  "results": {
+    "clarification": {
+      "actual_route": [
+        "web_search",
+        "ask_clarification"
+      ],
+      "candidate_id": "sft-v2-new-056",
+      "failed_checks": [],
+      "gate_details": {
+        "clarification_observation_grounded": {
+          "bound_source_id": "siemens-sinumerik-808-current",
+          "evidence_newly_ambiguous": true,
+          "final_action": "web_search",
+          "final_identifier_status": "not_applicable",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "identifier_newly_ambiguous": false
+        },
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "a28db1439f2a6506a5fcee0cbfe70136adb38f9c0b564065ba1e87cf7f2a4418",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_39a0d091e3504a209b234aaac7e94a6f",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "siemens-sinumerik-808-current"
+          }
+        ]
+      },
+      "passed": true,
+      "required_checks": [
+        "clarification_observation_grounded",
+        "clarification_branch_profile_valid"
+      ]
+    },
+    "hyde": {
+      "actual_route": [
+        "local_search",
+        "hyde_search",
+        "refuse"
+      ],
+      "candidate_id": "sft-v2-new-066",
+      "failed_checks": [
+        "hyde_target_improved",
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "hyde_target_improved": {
+          "gate_version": "observation-grounded-route-gates-v2",
+          "targets": [
+            {
+              "chunk_id": "467551067585613340",
+              "document_id": "doc_98c9f8c5ee7f47808ea511de1416c744",
+              "hyde_rank": null,
+              "hyde_score": null,
+              "improved": false,
+              "index_version": 1,
+              "local_rank": 3,
+              "local_score": 0.016393441706895828
+            }
+          ]
+        },
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "c24dc3513f88aca5dddaa0357e51300dd6ef54d31479f99c21465a88253a7dd6",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_3c31912638c949a5863e48e90633a25a",
+            "rerank_score": null,
+            "retrieval_rank": 3,
+            "retrieval_score": 0.016393441706895828,
+            "source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613340:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "reason": "final_observation_missing_bound_evidence"
+        }
+      },
+      "passed": false,
+      "required_checks": [
+        "hyde_target_improved"
+      ]
+    },
+    "refusal": {
+      "actual_route": [
+        "local_search",
+        "web_search",
+        "refuse"
+      ],
+      "candidate_id": "sft-v2-new-098",
+      "failed_checks": [
+        "refusal_observation_grounded"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "9e6a5a66f593e24c2e0cdcfc338da2f2fed6b81ed561a46d3742597488402b52",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_11025edd53464f2eabaf5f0cae0aef6b",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "abb-powertrain-lifecycle-current"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "abb-powertrain-lifecycle-current",
+          "evidence_newly_observed": true,
+          "final_action": "web_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "required_checks": [
+        "refusal_observation_grounded",
+        "refusal_boundary_profile_valid"
+      ]
+    },
+    "web": {
+      "actual_route": [
+        "web_search",
+        "answer"
+      ],
+      "candidate_id": "sft-v2-new-040",
+      "failed_checks": [
+        "web_answer_coverage"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "892c7290305b6e0001565696751893b4d0c0271105a38d7038268aca4a30cb1e",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_ea78058fe5ec403481f1fbc4a5705909",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "nist-sp800-82r3-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [
+              {
+                "binding_present": true,
+                "claim": "NIST SP 800-82 Rev. 3 概述了典型的 OT 系统拓扑，包括工业控制系统、楼宇自动化系统、交通系统、物理访问控制系统、物理环境监测系统和物理环境测量系统。",
+                "entity_and_number_consistent": false,
+                "normative_strength_consistent": true,
+                "passed": false,
+                "relation": "entailed",
+                "span_in_fact": true
+              },
+              {
+                "binding_present": true,
+                "claim": "该文档提供了缓解相关风险的建议安全对策，旨在在确保 OT 系统独特性能、可靠性和安全要求的同时实现安全防护。",
+                "entity_and_number_consistent": true,
+                "normative_strength_consistent": true,
+                "passed": true,
+                "relation": "entailed",
+                "span_in_fact": true
+              }
+            ],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 594,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "required_checks": [
+        "web_evidence_bound",
+        "web_fact_complete",
+        "web_answer_coverage"
+      ]
+    }
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "bundle_content_sha256": "d068ffd375099ea8fc0b779c409fb23556f49f05f5b66abe504e83fa7b3e89b7",
+  "bundle_id": "sft-v2-clean-2d55a91841d2fa87",
+  "bundle_version": "sft-v2-clean-blind-review-bundle-v1",
+  "case_count": 125,
+  "contamination_scan": "passed",
+  "formal_dataset_frozen": false,
+  "generated_at": "2026-07-31T16:35:44+00:00",
+  "historical_review_decision_count": 0,
+  "input_files": [
+    {
+      "logical_path": "evaluation/stage9/artifacts/sft_v2/sft_v2_new_candidate_cases.jsonl",
+      "name": "candidate_cases",
+      "sha256": "a2595cc6ea84b39b6a32fce287a0ba50dedea4eccd8101a1c843d70d5d9b00e9"
+    },
+    {
+      "logical_path": "evaluation/stage9/artifacts/sft_v2/sft_v2_new_candidate_trajectories.jsonl",
+      "name": "candidate_trajectories",
+      "sha256": "f4027a3a37761b23c23917c85e6b2f4bdd99d71b8b8e2775f5acc17f1325a40d"
+    },
+    {
+      "logical_path": "evaluation/stage9/artifacts/sft_v2/sft_v2_environment_snapshot.json",
+      "name": "environment_snapshot",
+      "sha256": "75fb8a6fd6ddde8c23e03eb9f0f8990a6254b88441742502e634dc51d1d47250"
+    },
+    {
+      "logical_path": "evaluation/stage9/artifacts/sft_v2/sft_v2_provider_observations.jsonl",
+      "name": "provider_observations",
+      "sha256": "51b2d4f8aa30d49c4afc27db04a46ba939773d1990590974d6f8515c0ec21042"
+    },
+    {
+      "logical_path": "evaluation/stage9/artifacts/sft_v2/sft_v2_web_evidence_manifest.json",
+      "name": "web_evidence",
+      "sha256": "11a7cbe4f4139940c180278dea0e7e6f7d03502b54b9a76e506c122f5cdbed5a"
+    },
+    {
+      "logical_path": "evaluation/stage8/cases/demo_regression_cases.jsonl",
+      "name": "leakage_source",
+      "sha256": "b8118d86fec3add4bb3580f8cb1ad14b900eb48cfde8080be37f7f43a43fa9b8"
+    },
+    {
+      "logical_path": "evaluation/stage8/cases/planner_cases.jsonl",
+      "name": "leakage_source",
+      "sha256": "1ab1c169ce1a4bd9cdb4be9a868494755012c008e432c2aa03c2b4ff198dc19b"
+    },
+    {
+      "logical_path": "evaluation/stage8/cases/planner_cases.template.jsonl",
+      "name": "leakage_source",
+      "sha256": "85d9565a18b19de8f2dc1534e378a4c9b6be08fbe9b083aed8f0b8e95c208e77"
+    }
+  ],
+  "leakage_reference_count": 98,
+  "output_files": [
+    {
+      "bytes": 860,
+      "file": "REVIEW_INSTRUCTIONS.md",
+      "sha256": "0a2aa2ff516de6c71b41ab79c001cce18d2c34f1b2ae203795e9dc8883ccb337"
+    },
+    {
+      "bytes": 111141,
+      "file": "environment_snapshot.json",
+      "sha256": "f08454cd3de145c36e6247e9cd446c504795fbd9f1c91a2cbe43f394a16449ee"
+    },
+    {
+      "bytes": 44810,
+      "file": "leakage_reference.jsonl",
+      "sha256": "1bc35326aeeb8e493dd3530ab3929969946eef9344bda4a5e2e567d0591068e0"
+    },
+    {
+      "bytes": 2289238,
+      "file": "provider_observations.jsonl",
+      "sha256": "51b2d4f8aa30d49c4afc27db04a46ba939773d1990590974d6f8515c0ec21042"
+    },
+    {
+      "bytes": 2081421,
+      "file": "review_cases.jsonl",
+      "sha256": "9d7dc150c6d63e21288ec462a7daaeed679c48d69d561bc8d55ce942f4e20430"
+    },
+    {
+      "bytes": 104745,
+      "file": "web_evidence_manifest.json",
+      "sha256": "11a7cbe4f4139940c180278dea0e7e6f7d03502b54b9a76e506c122f5cdbed5a"
+    }
+  ],
+  "provider_record_count": 199,
+  "reviewer_outputs_must_be_separate": true,
+  "route_counts": {
+    "ask_clarification": 7,
+    "local_search -> answer": 12,
+    "local_search -> ask_clarification": 9,
+    "local_search -> hyde_search -> answer": 9,
+    "local_search -> hyde_search -> ask_clarification": 6,
+    "local_search -> hyde_search -> refuse": 4,
+    "local_search -> hyde_search -> web_search -> answer": 12,
+    "local_search -> hyde_search -> web_search -> ask_clarification": 5,
+    "local_search -> hyde_search -> web_search -> refuse": 4,
+    "local_search -> refuse": 5,
+    "local_search -> web_search -> answer": 15,
+    "local_search -> web_search -> ask_clarification": 5,
+    "local_search -> web_search -> refuse": 3,
+    "refuse": 3,
+    "web_search -> answer": 16,
+    "web_search -> ask_clarification": 6,
+    "web_search -> refuse": 4
+  },
+  "training_performed": false
+}

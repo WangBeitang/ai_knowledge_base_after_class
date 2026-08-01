@@ -21,7 +21,13 @@
       "Bash(.venv/bin/python -c \"import ast; ast.parse\\(open\\('app/rag/import_/pdf_parse_service.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
       "Bash(.venv/bin/python -c \"import ast; ast.parse\\(open\\('app/rag/import_/config.py'\\).read\\(\\)\\); print\\('config OK'\\)\")",
       "Bash(.venv/bin/python *)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(/Users/beitang/PycharmProjects/ai_knowledge_base_after_class/.venv/bin/python -c ' *)",
+      "Bash(cat)",
+      "Bash(/Users/beitang/PycharmProjects/ai_knowledge_base_after_class/.venv/bin/python /tmp/bundle_gate_check2.py)",
+      "Bash(/Users/beitang/PycharmProjects/ai_knowledge_base_after_class/.venv/bin/python /tmp/bundle_gate_check3.py)",
+      "Bash(/Users/beitang/PycharmProjects/ai_knowledge_base_after_class/.venv/bin/python /tmp/bundle_gate_check4.py)",
+      "Bash(/Users/beitang/PycharmProjects/ai_knowledge_base_after_class/.venv/bin/python /tmp/bundle_gate_check5.py)"
     ]
   }
 }

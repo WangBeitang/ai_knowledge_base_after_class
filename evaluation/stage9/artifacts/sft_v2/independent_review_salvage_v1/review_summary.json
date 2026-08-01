@@ -1,0 +1,17 @@
+{
+  "reviewed_count": 8,
+  "approve_count": 0,
+  "reject_count": 8,
+  "approved_ids": [],
+  "rejected_ids": [
+    "sft-v2-new-006",
+    "sft-v2-new-034",
+    "sft-v2-new-035",
+    "sft-v2-new-058",
+    "sft-v2-new-059",
+    "sft-v2-new-060",
+    "sft-v2-new-102",
+    "sft-v2-new-123"
+  ],
+  "decision_counts_valid": true
+}

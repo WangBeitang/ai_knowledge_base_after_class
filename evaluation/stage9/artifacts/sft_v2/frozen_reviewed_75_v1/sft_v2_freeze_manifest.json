@@ -1,0 +1,180 @@
+{
+  "action_sample_count": 163,
+  "action_sample_count_new": 79,
+  "action_sample_count_old": 84,
+  "all_samples_approved_training_seed": true,
+  "all_samples_reviewed": true,
+  "created_at": "2026-08-01T06:01:44+00:00",
+  "dataset_fingerprint": "92e8146962d6fddc44a8fc1c001ff5306bc01cb6d2c3c7f0866db8d15aeae0e6",
+  "dataset_scope": "37 old retained + 38 round3 approved",
+  "device_family_counts_new": {
+    "cnc_systems": 2,
+    "cnc_turning": 8,
+    "drive_software": 1,
+    "hak180_equipment": 1,
+    "hak180_safety": 1,
+    "industrial_control_security": 1,
+    "industrial_drives": 1,
+    "industrial_firmware": 1,
+    "industrial_machine_safety": 6,
+    "lenovo_m7208w_printer": 1,
+    "lenovo_m7268_printer": 1,
+    "lenovo_z26_printer": 2,
+    "lenovo_z35_printer": 1,
+    "machine_guarding": 1,
+    "machine_guarding_regulation": 1,
+    "manufacturing_cybersecurity": 2,
+    "panda_pro_printer": 1,
+    "pantum_p3000_printer": 1,
+    "semiconductor_manufacturing": 3,
+    "servo_drives": 2
+  },
+  "excluded": {
+    "round3_rejected_original_candidate_count": 87,
+    "salvage_review_rejected_candidate_count": 8,
+    "salvage_review_rejected_ids": [
+      "sft-v2-new-006",
+      "sft-v2-new-034",
+      "sft-v2-new-035",
+      "sft-v2-new-058",
+      "sft-v2-new-059",
+      "sft-v2-new-060",
+      "sft-v2-new-102",
+      "sft-v2-new-123"
+    ]
+  },
+  "files": {
+    "sft_v2_approved_new_trajectories.jsonl": {
+      "bytes": 479780,
+      "sha256": "35c866f6f11273bdcb47fa73efbc941faf15154f5f1a140ebd6d172ade5bb674"
+    },
+    "sft_v2_environment_snapshot.json": {
+      "bytes": 111141,
+      "sha256": "75fb8a6fd6ddde8c23e03eb9f0f8990a6254b88441742502e634dc51d1d47250"
+    },
+    "sft_v2_freeze_report.md": {
+      "bytes": 1637,
+      "sha256": "babd25bb04386aa5940e5b5154b126c2a9cbc496fce7799db72794a21a918d73"
+    },
+    "sft_v2_provider_observations.jsonl": {
+      "bytes": 404461,
+      "sha256": "9ae5da56a90b08680c4ea51755fb18b5a11944e7a6be813fb1566eea3adda3bf"
+    },
+    "sft_v2_train.jsonl": {
+      "bytes": 284342,
+      "sha256": "06bc714fa309644a10dd908e28f0f47dc8c989a99083b306f499b6f14b0f2e2f"
+    },
+    "sft_v2_trajectory_index.jsonl": {
+      "bytes": 78812,
+      "sha256": "a811003c4dda84a5ffe426ca1cd7b9aa324e97be0250faf4a162e6988659f028"
+    },
+    "sft_v2_web_evidence_manifest.json": {
+      "bytes": 34072,
+      "sha256": "5ed0c657404a36c4821b1259e7ae316005f0f7a88925a010c5b5bbfbc118d2f3"
+    }
+  },
+  "formal_dataset_frozen": true,
+  "freeze_status": "frozen_with_legacy_exceptions",
+  "freeze_version": "sft-v2-reviewed-75-v1",
+  "legacy_target": {
+    "original_route_count": 17,
+    "original_trajectory_target": 150,
+    "status": "superseded_for_this_version_by_user_stop_expansion_decision"
+  },
+  "old_trajectory_count": 37,
+  "provider_observation_count": 41,
+  "question_family_counts_new": {
+    "cnc_programming_and_operation": 8,
+    "cnc_system_capability_and_support": 2,
+    "drive_lifecycle_and_maintenance": 1,
+    "drive_software_lifecycle": 1,
+    "firmware_lifecycle_and_security": 1,
+    "hot_stamping_equipment_operation": 1,
+    "hot_stamping_safety_boundary": 1,
+    "ics_advisory_and_response": 1,
+    "m7208w_document_handling": 1,
+    "m7268_connectivity_and_operation": 1,
+    "machine_guarding_compliance": 1,
+    "machine_guarding_methods": 1,
+    "manufacturing_cybersecurity_resources": 2,
+    "p3000_setup_and_maintenance": 1,
+    "panda_pro_features_and_maintenance": 1,
+    "risk_assessment_and_safeguarding": 6,
+    "semiconductor_security_profile": 3,
+    "servo_lifecycle_and_replacement": 2,
+    "z26_print_scan_operation": 2,
+    "z35_print_scan_operation": 1
+  },
+  "round3_approved_trajectory_count": 38,
+  "route_counts": {
+    "ask_clarification": 6,
+    "local_search -> answer": 32,
+    "local_search -> ask_clarification": 1,
+    "local_search -> hyde_search -> answer": 10,
+    "local_search -> hyde_search -> refuse": 1,
+    "local_search -> hyde_search -> web_search -> answer": 4,
+    "local_search -> refuse": 1,
+    "local_search -> web_search -> answer": 3,
+    "local_search -> web_search -> refuse": 1,
+    "refuse": 4,
+    "web_search -> answer": 11,
+    "web_search -> refuse": 1
+  },
+  "source_file_sha256": {
+    "evaluation/stage9/artifacts/sft_v2/independent_review_round3/review_decisions.jsonl": "b6dab7fc454d2d3ab318580b769c5845d01fb3d577c594acdd3ff2254bb424c7",
+    "evaluation/stage9/artifacts/sft_v2/independent_review_salvage_v1/review_decisions.jsonl": "415d0c50ceb361d9be858badc95f0c812788871a7c6015625f93a50d326b5ffb",
+    "evaluation/stage9/artifacts/sft_v2/sft_v2_environment_snapshot.json": "75fb8a6fd6ddde8c23e03eb9f0f8990a6254b88441742502e634dc51d1d47250",
+    "evaluation/stage9/artifacts/sft_v2/sft_v2_new_candidate_cases.jsonl": "a2595cc6ea84b39b6a32fce287a0ba50dedea4eccd8101a1c843d70d5d9b00e9",
+    "evaluation/stage9/artifacts/sft_v2/sft_v2_new_candidate_trajectories.jsonl": "f4027a3a37761b23c23917c85e6b2f4bdd99d71b8b8e2775f5acc17f1325a40d",
+    "evaluation/stage9/artifacts/sft_v2/sft_v2_provider_observations.jsonl": "51b2d4f8aa30d49c4afc27db04a46ba939773d1990590974d6f8515c0ec21042",
+    "evaluation/stage9/artifacts/sft_v2/sft_v2_train_candidates.jsonl": "36b60eb40e534c9820c403d8dcef45fc8bfe1592727fd78b133d185239050ff6",
+    "evaluation/stage9/artifacts/sft_v2/sft_v2_web_evidence_manifest.json": "11a7cbe4f4139940c180278dea0e7e6f7d03502b54b9a76e506c122f5cdbed5a"
+  },
+  "split_counts": {
+    "train": 75
+  },
+  "training_performed": false,
+  "trajectory_count": 75,
+  "unique_query_count": 75,
+  "validation": {
+    "exact_duplicate_count": 0,
+    "legacy_meta_query_count": 1,
+    "legacy_meta_query_ids": [
+      "stage9-route-multi-fallback-001"
+    ],
+    "legacy_near_duplicate_count": 3,
+    "legacy_near_duplicates": [
+      {
+        "case_ids": [
+          "stage85-gold-ai4i-osf-rule-002",
+          "stage9-route-hyde-answer-008"
+        ],
+        "jaccard_score": 0.6786,
+        "score": 0.8305,
+        "sequence_score": 0.8305
+      },
+      {
+        "case_ids": [
+          "stage85-gold-ai4i-rnf-rule-002",
+          "stage9-route-hyde-answer-010"
+        ],
+        "jaccard_score": 0.6949,
+        "score": 0.8438,
+        "sequence_score": 0.8438
+      },
+      {
+        "case_ids": [
+          "stage85-gold-hydraulic-cooler-profile-002",
+          "stage85-gold-hydraulic-valve-profile-002"
+        ],
+        "jaccard_score": 0.4561,
+        "score": 0.8381,
+        "sequence_score": 0.8381
+      }
+    ],
+    "new_or_cross_generation_near_duplicate_count": 0,
+    "split_chunk_leak_count": 0,
+    "split_query_leak_count": 0
+  },
+  "web_evidence_case_count": 18
+}

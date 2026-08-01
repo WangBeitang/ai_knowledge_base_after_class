@@ -1,0 +1,81 @@
+{
+  "approved_fingerprints_unchanged": true,
+  "base_action_sample_count": 163,
+  "base_old_retained_trajectory_count": 37,
+  "base_reviewed_trajectory_count": 75,
+  "base_round3_approved_trajectory_count": 38,
+  "combined_candidate_pool_action_sample_count": 174,
+  "combined_candidate_pool_trajectory_count": 86,
+  "created_at": "2026-08-01T03:54:23+00:00",
+  "device_family_counts": {
+    "cnc_turning": 1,
+    "hak180_safety": 1,
+    "industrial_machine_safety": 1,
+    "machine_guarding": 1,
+    "machine_guarding_regulation": 1,
+    "manufacturing_cybersecurity": 1,
+    "operational_technology_security": 2,
+    "semiconductor_manufacturing": 1,
+    "servo_drives": 2
+  },
+  "extra_rescue_from_first_failed_count": 18,
+  "files": [
+    "sft_v2_salvage_action_samples.jsonl",
+    "sft_v2_salvage_cases.jsonl",
+    "sft_v2_salvage_environment_snapshot.json",
+    "sft_v2_salvage_gate_report.json",
+    "sft_v2_salvage_provider_observations.accepted.jsonl",
+    "sft_v2_salvage_question_drafts.jsonl",
+    "sft_v2_salvage_trajectories.jsonl",
+    "sft_v2_salvage_web_evidence_manifest.json",
+    "sft_v2_train_candidates.pending_review.jsonl"
+  ],
+  "first_failed_not_selected_count": 25,
+  "first_gate_passed_reuse_count": 44,
+  "formal_dataset_frozen": false,
+  "main_candidate_pool_sha256_unchanged": true,
+  "manifest_version": "sft-v2-salvage-pending-review-v1",
+  "next_step": "independent blind review of salvage_pending_review_v1 only",
+  "pending_review_salvage_action_sample_count": 11,
+  "pending_review_salvage_trajectory_count": 11,
+  "provider_executed_candidate_count": 59,
+  "question_family_counts": {
+    "cnc_programming_and_operation": 1,
+    "hot_stamping_safety_boundary": 1,
+    "machine_guarding_compliance": 1,
+    "machine_guarding_methods": 1,
+    "manufacturing_cybersecurity_resources": 1,
+    "ot_security_guidance": 2,
+    "risk_assessment_and_safeguarding": 1,
+    "semiconductor_security_profile": 1,
+    "servo_lifecycle_and_replacement": 2
+  },
+  "route_counts": {
+    "ask_clarification": 3,
+    "refuse": 8
+  },
+  "selected_salvage_candidate_count": 62,
+  "source_counts": {
+    "user-query:sft-v2-new-006": 1,
+    "user-query:sft-v2-new-034": 1,
+    "user-query:sft-v2-new-035": 1,
+    "user-query:sft-v2-new-058": 1,
+    "user-query:sft-v2-new-059": 1,
+    "user-query:sft-v2-new-060": 1,
+    "user-query:sft-v2-new-097": 1,
+    "user-query:sft-v2-new-102": 1,
+    "user-query:sft-v2-new-122": 1,
+    "user-query:sft-v2-new-123": 1,
+    "user-query:sft-v2-new-125": 1
+  },
+  "source_file_sha256": {
+    "review_decisions.jsonl": "b6dab7fc454d2d3ab318580b769c5845d01fb3d577c594acdd3ff2254bb424c7",
+    "sft_v2_new_candidate_cases.jsonl": "a2595cc6ea84b39b6a32fce287a0ba50dedea4eccd8101a1c843d70d5d9b00e9",
+    "sft_v2_new_candidate_trajectories.jsonl": "f4027a3a37761b23c23917c85e6b2f4bdd99d71b8b8e2775f5acc17f1325a40d",
+    "sft_v2_provider_observations.jsonl": "51b2d4f8aa30d49c4afc27db04a46ba939773d1990590974d6f8515c0ec21042",
+    "sft_v2_train_candidates.jsonl": "36b60eb40e534c9820c403d8dcef45fc8bfe1592727fd78b133d185239050ff6",
+    "sft_v2_web_evidence_manifest.json": "11a7cbe4f4139940c180278dea0e7e6f7d03502b54b9a76e506c122f5cdbed5a"
+  },
+  "source_review_round": "round3",
+  "training_performed": false
+}

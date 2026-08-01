@@ -1,0 +1,54 @@
+{
+  "review_name": "sft_v2_salvage_independent_review_v1",
+  "reviewed_at": "2026-08-01T04:46:28Z",
+  "review_scope": "仅对指定 8 条 SFT V2 抢救候选进行一次独立二审",
+  "input_files": [
+    {
+      "path": "evaluation/stage9/artifacts/sft_v2/salvage_pending_review_v1/sft_v2_salvage_trajectories.jsonl",
+      "sha256": "fed9307277316776f40f1e6fe0a18857ec156f1911d95e7feead4dbeab29b469"
+    },
+    {
+      "path": "evaluation/stage9/artifacts/sft_v2/salvage_pending_review_v1/sft_v2_salvage_action_samples.jsonl",
+      "sha256": "6f6310654b54118e02949f0db287a565a20ffb6aaec5e47f1826e84885e0cbef"
+    },
+    {
+      "path": "evaluation/stage9/artifacts/sft_v2/salvage_pending_review_v1/sft_v2_salvage_cases.jsonl",
+      "sha256": "00f73e3d625dc7a50018dfca4fbb87ac9760c1f708a0bc543fd3c6738f69f74d"
+    }
+  ],
+  "output_files": [
+    {
+      "path": "evaluation/stage9/artifacts/sft_v2/independent_review_salvage_v1/review_decisions.jsonl",
+      "sha256": "415d0c50ceb361d9be858badc95f0c812788871a7c6015625f93a50d326b5ffb"
+    },
+    {
+      "path": "evaluation/stage9/artifacts/sft_v2/independent_review_salvage_v1/review_summary.json",
+      "sha256": "6b93f5d007fe891eee5648c9d01d5e8f8308c663b8967b8359b649399a22d86f"
+    },
+    {
+      "path": "evaluation/stage9/artifacts/sft_v2/independent_review_salvage_v1/review_report.md",
+      "sha256": "7793da5932193475fa96b1cdcc00ad9888078ff71a65a5597a7e763f96110e7c"
+    }
+  ],
+  "manifest_hash_note": "review_manifest.json 不记录自身 SHA256，避免自引用哈希；交付时单独校验。",
+  "candidate_ids": [
+    "sft-v2-new-006",
+    "sft-v2-new-034",
+    "sft-v2-new-035",
+    "sft-v2-new-058",
+    "sft-v2-new-059",
+    "sft-v2-new-060",
+    "sft-v2-new-102",
+    "sft-v2-new-123"
+  ],
+  "reviewed_count": 8,
+  "approve_count": 0,
+  "reject_count": 8,
+  "decision_counts_valid": true,
+  "historical_review_results_read": false,
+  "historical_review_statement": "本轮未读取任何历史审核决定、旧盲审结果或其他候选的审核结论。",
+  "source_candidates_modified": false,
+  "training_set_merged": false,
+  "data_frozen": false,
+  "training_run": false
+}

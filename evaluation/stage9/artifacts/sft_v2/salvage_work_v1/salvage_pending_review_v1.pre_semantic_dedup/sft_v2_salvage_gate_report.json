@@ -1,0 +1,3897 @@
+{
+  "eligible_for_blind_review": [
+    "sft-v2-new-006",
+    "sft-v2-new-034",
+    "sft-v2-new-035",
+    "sft-v2-new-058",
+    "sft-v2-new-059",
+    "sft-v2-new-060",
+    "sft-v2-new-097",
+    "sft-v2-new-102",
+    "sft-v2-new-122",
+    "sft-v2-new-123",
+    "sft-v2-new-125"
+  ],
+  "evaluated_at": "2026-08-01T03:54:23+00:00",
+  "failed_by_check": {
+    "clarification_observation_grounded": [
+      "sft-v2-new-031"
+    ],
+    "direct_clarification_missing_field": [
+      "sft-v2-new-119",
+      "sft-v2-new-120",
+      "sft-v2-new-124"
+    ],
+    "direct_refusal_explicit": [
+      "sft-v2-new-002",
+      "sft-v2-new-032",
+      "sft-v2-new-036",
+      "sft-v2-new-061",
+      "sft-v2-new-062",
+      "sft-v2-new-103",
+      "sft-v2-new-104"
+    ],
+    "exact_and_near_duplicate_free": [
+      "sft-v2-new-092"
+    ],
+    "known_semantic_duplicate_free": [
+      "sft-v2-new-033",
+      "sft-v2-new-071"
+    ],
+    "observed_evidence_bound": [
+      "sft-v2-new-075",
+      "sft-v2-new-077"
+    ],
+    "pre_search_profile_consistent": [
+      "sft-v2-new-002"
+    ],
+    "preflight:claim_span_not_in_authoring_evidence": [
+      "sft-v2-new-107",
+      "sft-v2-new-114"
+    ],
+    "preflight:static_web_answer_not_allowed": [
+      "sft-v2-new-041"
+    ],
+    "refusal_boundary_profile_valid": [
+      "sft-v2-new-024",
+      "sft-v2-new-025",
+      "sft-v2-new-026",
+      "sft-v2-new-027",
+      "sft-v2-new-028",
+      "sft-v2-new-029",
+      "sft-v2-new-030",
+      "sft-v2-new-063",
+      "sft-v2-new-064",
+      "sft-v2-new-065",
+      "sft-v2-new-067",
+      "sft-v2-new-068",
+      "sft-v2-new-070",
+      "sft-v2-new-071",
+      "sft-v2-new-073",
+      "sft-v2-new-074",
+      "sft-v2-new-075",
+      "sft-v2-new-076",
+      "sft-v2-new-077",
+      "sft-v2-new-080",
+      "sft-v2-new-081"
+    ],
+    "refusal_observation_grounded": [
+      "sft-v2-new-026",
+      "sft-v2-new-027",
+      "sft-v2-new-028",
+      "sft-v2-new-030",
+      "sft-v2-new-063",
+      "sft-v2-new-067",
+      "sft-v2-new-068",
+      "sft-v2-new-070",
+      "sft-v2-new-071",
+      "sft-v2-new-075",
+      "sft-v2-new-076",
+      "sft-v2-new-077",
+      "sft-v2-new-098"
+    ],
+    "source_evidence_present": [
+      "sft-v2-new-075",
+      "sft-v2-new-077"
+    ],
+    "terminal_payload_valid": [
+      "sft-v2-new-027",
+      "sft-v2-new-053",
+      "sft-v2-new-054",
+      "sft-v2-new-055",
+      "sft-v2-new-057",
+      "sft-v2-new-063",
+      "sft-v2-new-064",
+      "sft-v2-new-065",
+      "sft-v2-new-067",
+      "sft-v2-new-068",
+      "sft-v2-new-070",
+      "sft-v2-new-071",
+      "sft-v2-new-073",
+      "sft-v2-new-074",
+      "sft-v2-new-076",
+      "sft-v2-new-077",
+      "sft-v2-new-080",
+      "sft-v2-new-081",
+      "sft-v2-new-099",
+      "sft-v2-new-100",
+      "sft-v2-new-101",
+      "sft-v2-new-117",
+      "sft-v2-new-118"
+    ],
+    "web_answer_coverage": [
+      "sft-v2-new-053",
+      "sft-v2-new-054",
+      "sft-v2-new-055",
+      "sft-v2-new-057",
+      "sft-v2-new-082",
+      "sft-v2-new-090",
+      "sft-v2-new-099",
+      "sft-v2-new-100",
+      "sft-v2-new-101",
+      "sft-v2-new-117",
+      "sft-v2-new-118"
+    ],
+    "web_realtime_policy": [
+      "sft-v2-new-055",
+      "sft-v2-new-056",
+      "sft-v2-new-057",
+      "sft-v2-new-082",
+      "sft-v2-new-085",
+      "sft-v2-new-090",
+      "sft-v2-new-092",
+      "sft-v2-new-098",
+      "sft-v2-new-099",
+      "sft-v2-new-100",
+      "sft-v2-new-101",
+      "sft-v2-new-117",
+      "sft-v2-new-118"
+    ]
+  },
+  "failed_candidate_count": 51,
+  "formal_dataset_frozen": false,
+  "gate_version": "sft-v2-salvage-pending-review-v1",
+  "gates": {
+    "sft-v2-new-002": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": false,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": false,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "direct_refusal_explicit",
+        "pre_search_profile_consistent"
+      ],
+      "gate_details": {},
+      "passed": false,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-006": {
+      "actual_route": [
+        "ask_clarification"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_clarification_missing_field": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [],
+      "gate_details": {},
+      "passed": true,
+      "provider_record_ids": [],
+      "sampling_target_hit": true,
+      "sampling_target_route": [
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-024": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "92ebabea6aef27ddd351fecf80d8e7cba2b132867b914d0cafdf39ff8ebbf9a8",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_0816c1e3380045f59a3184940af556d1",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.049180325120687485,
+            "source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613098:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613098:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": true
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_0816c1e3380045f59a3184940af556d1"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-025": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "4096a65ef2b5d5ff06f7b35902388a0f0ec732c56f19ff1bec4991678d4e85ee",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_a83c3fc52c544115ac6d3761714c1ccc",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.049180325120687485,
+            "source_id": "doc_85776854260946abb2eaa0d7c506bb58:467551067585613637:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_85776854260946abb2eaa0d7c506bb58:467551067585613637:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": true
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_a83c3fc52c544115ac6d3761714c1ccc"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-026": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "6d7a9970ed6e72b5da3870b56cb388312bd3cc91a257c27a4b6d16d1379f7274",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_15fb6af98b3a4968a45d0eb91e477377",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.049180325120687485,
+            "source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613216:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613216:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_15fb6af98b3a4968a45d0eb91e477377"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-027": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "100555789a0694a1c94bcd99968f21fca5d73bcdbe9d56961f250173b74d1476",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_d240b40e06874789840f2dcc505a4c55",
+            "rerank_score": null,
+            "retrieval_rank": 4,
+            "retrieval_score": 0.03201844170689583,
+            "source_id": "doc_1e32d6f9029448c7bd71046a211c8205:467551067585611337:2"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_1e32d6f9029448c7bd71046a211c8205:467551067585611337:2",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_d240b40e06874789840f2dcc505a4c55"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-028": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "3f1b6fb18f97177cd3af6bae2da8ebe3d3029aeb98a0831dee86c388b18d7858",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_559eb11c271f4b2ab8a201c84b002b45",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.049180325120687485,
+            "source_id": "doc_9b578874499d4650a2fc46acb271e527:467551067585610180:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_9b578874499d4650a2fc46acb271e527:467551067585610180:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_559eb11c271f4b2ab8a201c84b002b45"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-029": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "59041a1ef13d23178c732f2086522d99ee332da5af0a0d6d8f561b077f88c613",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_0748439394244d60aa3d2a6a98234f05",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.04891591519117355,
+            "source_id": "doc_85776854260946abb2eaa0d7c506bb58:467551067585613673:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_85776854260946abb2eaa0d7c506bb58:467551067585613673:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": true
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_0748439394244d60aa3d2a6a98234f05"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-030": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "0e864849f21607909bb8f75435b24f8734afbda3ba24594e652df733c88fc80d",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_639e025b28294ef083051b0a47dd1ed0",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.049180325120687485,
+            "source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613372:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613372:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_639e025b28294ef083051b0a47dd1ed0"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-031": {
+      "actual_route": [
+        "local_search",
+        "ask_clarification"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": false,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "clarification_observation_grounded"
+      ],
+      "gate_details": {
+        "clarification_observation_grounded": {
+          "bound_source_id": "doc_cd73a1e7a9374773989382dcbe5898da:467551067585610412:1",
+          "evidence_newly_ambiguous": false,
+          "final_action": "local_search",
+          "final_identifier_status": "not_applicable",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "identifier_newly_ambiguous": false
+        },
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "5b71bb97867d2e471da264f0835545ae0485c78dca32201b334f6c36bd36a339",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_5b7af8d8aece44c286b2b86f282e8778",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.048395488411188126,
+            "source_id": "doc_cd73a1e7a9374773989382dcbe5898da:467551067585610412:1"
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_5b7af8d8aece44c286b2b86f282e8778"
+      ],
+      "sampling_target_hit": true,
+      "sampling_target_route": [
+        "local_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-032": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": false,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "direct_refusal_explicit"
+      ],
+      "gate_details": {},
+      "passed": false,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-033": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": false,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "known_semantic_duplicate_free"
+      ],
+      "gate_details": {
+        "known_semantic_duplicate": {
+          "existing_case_id": "sft-v2-new-009"
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-034": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [],
+      "gate_details": {},
+      "passed": true,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-035": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [],
+      "gate_details": {},
+      "passed": true,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-036": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": false,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "direct_refusal_explicit"
+      ],
+      "gate_details": {},
+      "passed": false,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-053": {
+      "actual_route": [
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": false,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "terminal_payload_valid",
+        "web_answer_coverage"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "d06fe4d6d6a6334f0902018ede75b966bdb9ad16ac68a7e3dd41ffb86892f73e",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_75c7e4e95cc64ebe8b5463ac87cfd7ca",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "rockwell-firmware-lifecycle-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 310,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_75c7e4e95cc64ebe8b5463ac87cfd7ca"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-054": {
+      "actual_route": [
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": false,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "terminal_payload_valid",
+        "web_answer_coverage"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "210eef403a297cc3121669384a3fd73eaa1a6d7032ce517d7714479aadfe85a4",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_b2fae7efd41642b2afc9e412fd0de0bc",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "abb-legacy-servo-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 210,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_b2fae7efd41642b2afc9e412fd0de0bc"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-055": {
+      "actual_route": [
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": false,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "terminal_payload_valid",
+        "web_answer_coverage",
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "5db586adbf97515f7778bb3b0dd8be863a25a9789037e06cc0e78e8f66231d25",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_bfb2aa58844d4614b4678b0522aad24c",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "abb-powertrain-lifecycle-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 236,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_bfb2aa58844d4614b4678b0522aad24c"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-056": {
+      "actual_route": [
+        "web_search",
+        "ask_clarification"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "clarification_observation_grounded": {
+          "bound_source_id": "siemens-sinumerik-808-current",
+          "evidence_newly_ambiguous": true,
+          "final_action": "web_search",
+          "final_identifier_status": "not_applicable",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "identifier_newly_ambiguous": false
+        },
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "a28db1439f2a6506a5fcee0cbfe70136adb38f9c0b564065ba1e87cf7f2a4418",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_dc2dd1de51df4a8698704b1d528546dc",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "siemens-sinumerik-808-current"
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_dc2dd1de51df4a8698704b1d528546dc"
+      ],
+      "sampling_target_hit": true,
+      "sampling_target_route": [
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-057": {
+      "actual_route": [
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": false,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "terminal_payload_valid",
+        "web_answer_coverage",
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "5de22ea84b6100790db6c7ed910088927fe3ff0abe6f2dfd8de7bd35956952c8",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_16f5bd58438e40ae986cf447c8df339e",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "rockwell-firmware-lifecycle-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 326,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_16f5bd58438e40ae986cf447c8df339e"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-058": {
+      "actual_route": [
+        "ask_clarification"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_clarification_missing_field": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [],
+      "gate_details": {},
+      "passed": true,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-059": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [],
+      "gate_details": {},
+      "passed": true,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "web_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-060": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [],
+      "gate_details": {},
+      "passed": true,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "web_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-061": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": false,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "direct_refusal_explicit"
+      ],
+      "gate_details": {},
+      "passed": false,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "web_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-062": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": false,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "direct_refusal_explicit"
+      ],
+      "gate_details": {},
+      "passed": false,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "web_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-063": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "0c249dcd66b38bf3eeba3ba56e72589cdd971a6508d94cf71eecc516821af042",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_78916044e05e4d9cacbafc940054f7c7",
+            "rerank_score": null,
+            "retrieval_rank": 3,
+            "retrieval_score": 0.032522473484277725,
+            "source_id": "doc_85776854260946abb2eaa0d7c506bb58:467551067585613745:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_85776854260946abb2eaa0d7c506bb58:467551067585613745:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_78916044e05e4d9cacbafc940054f7c7"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "answer"
+      ]
+    },
+    "sft-v2-new-064": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "d77c2a00adeef8364653f4ca2d93241bfd2b8b31bda2e22d04044909ccf97736",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_87d343b37863494f99217536f2cfdb38",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.04891591519117355,
+            "source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613377:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613377:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": true
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_87d343b37863494f99217536f2cfdb38"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "answer"
+      ]
+    },
+    "sft-v2-new-065": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "ab41cef5a850f0e2872ce57ac7a1b26c880b8e4a177beae47616f4e35344d564",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_66bb259a6b4b4f029f18e2c873adcc93",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.04891591519117355,
+            "source_id": "doc_85776854260946abb2eaa0d7c506bb58:467551067585613760:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_85776854260946abb2eaa0d7c506bb58:467551067585613760:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": true
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_66bb259a6b4b4f029f18e2c873adcc93"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "answer"
+      ]
+    },
+    "sft-v2-new-067": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "716cb4bdc97660c5f77d8b70b5c93775f379161e02d523993e7bceccca0b1f9d",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_2fdf53652fd74943ae6ef68768f2a867",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.049180325120687485,
+            "source_id": "doc_8bd9c0a26a9a493fbceeba5791114078:467551067585611146:2"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_8bd9c0a26a9a493fbceeba5791114078:467551067585611146:2",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_2fdf53652fd74943ae6ef68768f2a867"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "answer"
+      ]
+    },
+    "sft-v2-new-068": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "8e363ac6fe0983d13d9dd6c53c1b76a566995dfc84156c90b9ce70f44b9c95b9",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_352ea0ac40c44ab4aeaa28a204271a6a",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.04891591519117355,
+            "source_id": "doc_8e04887560224cfa9332b7ab2247f93c:467551067585610868:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_8e04887560224cfa9332b7ab2247f93c:467551067585610868:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_352ea0ac40c44ab4aeaa28a204271a6a"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "answer"
+      ]
+    },
+    "sft-v2-new-070": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "f7fc0546776ed0fd027ed9e0165cec489163c66c175d528cedde7dc28bf9405a",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_5c99b828c90146abb3988636f35d88e3",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.04891591519117355,
+            "source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613459:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613459:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_5c99b828c90146abb3988636f35d88e3"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "answer"
+      ]
+    },
+    "sft-v2-new-071": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": false,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "known_semantic_duplicate_free",
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "known_semantic_duplicate": {
+          "existing_case_id": "sft-v2-new-020"
+        },
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "1cabc73b414d02e568ccb70f04a92b821378b9a18775e5bd6da1c45e012f4de8",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_1979ef265c834b1ea0b4b8f5ca032212",
+            "rerank_score": null,
+            "retrieval_rank": 2,
+            "retrieval_score": 0.048395488411188126,
+            "source_id": "doc_da6e9fbf7cc241eba67db68bbc5e16f7:467551067585609800:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_da6e9fbf7cc241eba67db68bbc5e16f7:467551067585609800:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_1979ef265c834b1ea0b4b8f5ca032212"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "answer"
+      ]
+    },
+    "sft-v2-new-073": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "1875d1c2a912f808c23b4e91f31a901ae734f8ddd1b2e1e5a606b89ce616c642",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_ead866a1125143698c4bfee1ed8caf74",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.049180325120687485,
+            "source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613515:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_98c9f8c5ee7f47808ea511de1416c744:467551067585613515:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": true
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_ead866a1125143698c4bfee1ed8caf74"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-074": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "9b76923c1045568b7fbea56aaf040eed1520d261f15f735312fbca1fdad86bbb",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_a8965b2cf00f4445a1fd11ded47ddfc2",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.049180325120687485,
+            "source_id": "doc_85776854260946abb2eaa0d7c506bb58:467551067585613829:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_85776854260946abb2eaa0d7c506bb58:467551067585613829:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": true
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_a8965b2cf00f4445a1fd11ded47ddfc2"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-075": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": false,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": false,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "observed_evidence_bound",
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded",
+        "source_evidence_present"
+      ],
+      "gate_details": {
+        "observed_evidence": [],
+        "refusal_observation_grounded": {
+          "reason": "final_observation_missing_bound_evidence"
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_a92d5d6c21844c81b223f06f91907401"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-076": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "f8b91d5fc4d4af8eba24199f59e7be40fb8d4e320b7a0aa8b93399433eb72f74",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_2cfe3202866e4688b79680f88f7eafa8",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.049180325120687485,
+            "source_id": "doc_8e04887560224cfa9332b7ab2247f93c:467551067585610881:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_8e04887560224cfa9332b7ab2247f93c:467551067585610881:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_2cfe3202866e4688b79680f88f7eafa8"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-077": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": false,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": false,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "observed_evidence_bound",
+        "refusal_boundary_profile_valid",
+        "refusal_observation_grounded",
+        "source_evidence_present",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [],
+        "refusal_observation_grounded": {
+          "reason": "final_observation_missing_bound_evidence"
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_95e7474eed9d4d3c9b17a16fbbadd154"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-080": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "c56bdecb38f0fa17ca6d9a9f299033c5fb6eaf34b3174316487599a53991e64b",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_c38ca3ef49ea475ab5d1e7fe13387f29",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 0.049180325120687485,
+            "source_id": "doc_da6e9fbf7cc241eba67db68bbc5e16f7:467551067585609804:1"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_da6e9fbf7cc241eba67db68bbc5e16f7:467551067585609804:1",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": true
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_c38ca3ef49ea475ab5d1e7fe13387f29"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-081": {
+      "actual_route": [
+        "local_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": false,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "refusal_boundary_profile_valid",
+        "terminal_payload_valid"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "f75be717b7d6971b6bf48373dba7bbc2c43f8d4a41fa6ffa6a430152e5a2a118",
+            "observed_action": "local_search",
+            "provider_record_id": "provider_record_96c3428051864e5bba7ba86326c7f7b9",
+            "rerank_score": null,
+            "retrieval_rank": 4,
+            "retrieval_score": 0.0463942289352417,
+            "source_id": "doc_e76c338cd1604701812131e947685ef4:467551067585610964:3"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "doc_e76c338cd1604701812131e947685ef4:467551067585610964:3",
+          "evidence_newly_observed": true,
+          "final_action": "local_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": true
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_96c3428051864e5bba7ba86326c7f7b9"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-082": {
+      "actual_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": false,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "web_answer_coverage",
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "1f369b8c5108f3326e55f97f19e6a4812584ddf30abb6395cd2e3cd5b3909cd6",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_c4aa4ba9f572446f91944732fe81c16e",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "abb-driveloader-lifecycle-2026"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [
+              {
+                "binding_present": true,
+                "claim": "DriveLoader 1.x 目前处于有限阶段（Limited phase）。",
+                "entity_and_number_consistent": false,
+                "normative_strength_consistent": true,
+                "passed": false,
+                "relation": "entailed",
+                "span_in_fact": true
+              },
+              {
+                "binding_present": true,
+                "claim": "其可用性和支持遵循 ABB Drives 软件生命周期模型中概述的可预测指南。",
+                "entity_and_number_consistent": false,
+                "normative_strength_consistent": true,
+                "passed": false,
+                "relation": "entailed",
+                "span_in_fact": true
+              }
+            ],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 164,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_622d946c78d640fe87a4ac75b03c22ef",
+        "provider_record_c4aa4ba9f572446f91944732fe81c16e"
+      ],
+      "sampling_target_hit": true,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ]
+    },
+    "sft-v2-new-085": {
+      "actual_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "0c10f8af0b8b80913caa22aa88679cce643c89d9179f19b38caf58922fd5407f",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_8e29c38c7e8c4e868d528412768bf47e",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "osha-machine-guarding-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [
+              {
+                "binding_present": true,
+                "claim": "ensures that you are connecting to the official website and that any information you provide is encrypted and transmitted securely.",
+                "entity_and_number_consistent": true,
+                "normative_strength_consistent": true,
+                "passed": true,
+                "relation": "entailed",
+                "span_in_fact": true
+              }
+            ],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 242,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_47b7851b96b24c46a4b812e1afa2cde9",
+        "provider_record_8e29c38c7e8c4e868d528412768bf47e"
+      ],
+      "sampling_target_hit": true,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ]
+    },
+    "sft-v2-new-090": {
+      "actual_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": false,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "web_answer_coverage",
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "a5b0121b866030cb31048a92085a9df4276943b196975af70149dc5aeab7f664",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_fb45f7e9ef1a4a32b8cef2c649f431bc",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "nist-manufacturing-cybersecurity-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [
+              {
+                "binding_present": true,
+                "claim": "NIST Manufacturing Extension Partnership (MEP) 为中小型制造商（SMMs）提供网络安全资源。",
+                "entity_and_number_consistent": false,
+                "normative_strength_consistent": true,
+                "passed": false,
+                "relation": "entailed",
+                "span_in_fact": true
+              },
+              {
+                "binding_present": true,
+                "claim": "相关网络研讨会概述了 MEP 及其为该国中小型制造商提供的网络安全资源。",
+                "entity_and_number_consistent": true,
+                "normative_strength_consistent": true,
+                "passed": true,
+                "relation": "entailed",
+                "span_in_fact": true
+              }
+            ],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 412,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_3dc27c95e4af4825a262f207e12a8fea",
+        "provider_record_fb45f7e9ef1a4a32b8cef2c649f431bc"
+      ],
+      "sampling_target_hit": true,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ]
+    },
+    "sft-v2-new-092": {
+      "actual_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": false,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "exact_and_near_duplicate_free",
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "duplicate": {
+          "other_case_id": "sft-v2-new-112",
+          "other_query": "SINUMERIK 808D ADVANCED 控制系统的PPU有哪些版本可选？配套的PC软件有什么功能？",
+          "score": 1.0
+        },
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "7c5aef7520d53dabbbe6006e5b772aebff2e797925ec2d7a80a45253a26fa7e3",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_dec52ee8dbdb423b88b740a75914bb32",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "siemens-sinumerik-808-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [
+              {
+                "binding_present": true,
+                "claim": "SINUMERIK 808D ADVANCED 提供两个不同性能的 PPU 版本：PPU 15x 和 PPU 16x。",
+                "entity_and_number_consistent": true,
+                "normative_strength_consistent": true,
+                "passed": true,
+                "relation": "entailed",
+                "span_in_fact": true
+              },
+              {
+                "binding_present": true,
+                "claim": "该控件采用基于面板的数控设计，操作面板防护等级为 IP65，适合恶劣环境。",
+                "entity_and_number_consistent": true,
+                "normative_strength_consistent": true,
+                "passed": true,
+                "relation": "entailed",
+                "span_in_fact": true
+              }
+            ],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 153,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_77bcc92a48d94634959a87ad5f23345a",
+        "provider_record_dec52ee8dbdb423b88b740a75914bb32"
+      ],
+      "sampling_target_hit": true,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ]
+    },
+    "sft-v2-new-097": {
+      "actual_route": [
+        "ask_clarification"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_clarification_missing_field": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [],
+      "gate_details": {},
+      "passed": true,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-098": {
+      "actual_route": [
+        "local_search",
+        "web_search",
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": false,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "refusal_observation_grounded",
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "9e6a5a66f593e24c2e0cdcfc338da2f2fed6b81ed561a46d3742597488402b52",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_f8a74f3f04df434d95a485ef544c2ea9",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "abb-powertrain-lifecycle-current"
+          }
+        ],
+        "refusal_observation_grounded": {
+          "bound_source_id": "abb-powertrain-lifecycle-current",
+          "evidence_newly_observed": true,
+          "final_action": "web_search",
+          "gate_version": "observation-grounded-route-gates-v2",
+          "safety_grounded": false
+        }
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_9c0b7b289cc1450da5677861fc4e9df6",
+        "provider_record_f8a74f3f04df434d95a485ef544c2ea9"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-099": {
+      "actual_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": false,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "terminal_payload_valid",
+        "web_answer_coverage",
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "cbb8bcf76b26df561a8d9c37e300bd1d9b43fe8fee895f8f58b607ed2f427307",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_c63d47c489b447948238f2a51bda8e86",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "rockwell-firmware-lifecycle-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 318,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_59386f29f5a646528895c21e622736b3",
+        "provider_record_c63d47c489b447948238f2a51bda8e86"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-100": {
+      "actual_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": false,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "terminal_payload_valid",
+        "web_answer_coverage",
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "9219cb44e58402ae064cdf94ae8b9158d59577145f81a914426ed07b95459bcb",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_d38f6731702a4c578571299d1e1146d9",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "siemens-sinumerik-808-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 223,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_a5ed10c8cf0b43bf9839593a83154bf0",
+        "provider_record_d38f6731702a4c578571299d1e1146d9"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-101": {
+      "actual_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": false,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "terminal_payload_valid",
+        "web_answer_coverage",
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "862027098a35babf483314259dae7ff496a309be9b8866e9f735dc3365dd165b",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_4c5bfeff06ae4a8fb8cae27b2b64929b",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "abb-legacy-servo-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 194,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_505f123ecad049439b64a06eebd47d96",
+        "provider_record_4c5bfeff06ae4a8fb8cae27b2b64929b"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-102": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [],
+      "gate_details": {},
+      "passed": true,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-103": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": false,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "direct_refusal_explicit"
+      ],
+      "gate_details": {},
+      "passed": false,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-104": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": false,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "direct_refusal_explicit"
+      ],
+      "gate_details": {},
+      "passed": false,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "web_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-117": {
+      "actual_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": false,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "terminal_payload_valid",
+        "web_answer_coverage",
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "8aaba14bc83fab899472f9d7be79e39403af724b7b5e3c0170489e43ce646ee3",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_61293ac283fa431697f71392883b77a3",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "abb-powertrain-lifecycle-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 293,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_870f3d53c6434c2786e9653ec8833609",
+        "provider_record_61293ac283fa431697f71392883b77a3"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-118": {
+      "actual_route": [
+        "local_search",
+        "web_search",
+        "answer"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": false,
+        "web_answer_coverage": false,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": false
+      },
+      "failed_checks": [
+        "terminal_payload_valid",
+        "web_answer_coverage",
+        "web_realtime_policy"
+      ],
+      "gate_details": {
+        "observed_evidence": [
+          {
+            "evidence_content_sha256": "b2e3999423655f019c8018d277667bda7c52f8274bc3c29436fb475390d294eb",
+            "observed_action": "web_search",
+            "provider_record_id": "provider_record_5b16e117ef7a49b698075d5c6be15862",
+            "rerank_score": null,
+            "retrieval_rank": 1,
+            "retrieval_score": 1.0,
+            "source_id": "rockwell-firmware-lifecycle-current"
+          }
+        ],
+        "web_answer_coverage": [
+          {
+            "claims": [],
+            "coverage_mode": "atomic-claim-evidence-binding-v1",
+            "gate_version": "observation-grounded-route-gates-v2"
+          }
+        ],
+        "web_fact_complete": [
+          {
+            "fact_length": 274,
+            "gate_version": "observation-grounded-route-gates-v2",
+            "reasons": []
+          }
+        ]
+      },
+      "passed": false,
+      "provider_record_ids": [
+        "provider_record_9ad839fae922452c8b8afd0381ff1d9e",
+        "provider_record_5b16e117ef7a49b698075d5c6be15862"
+      ],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-119": {
+      "actual_route": [
+        "ask_clarification"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_clarification_missing_field": false,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "direct_clarification_missing_field"
+      ],
+      "gate_details": {},
+      "passed": false,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-120": {
+      "actual_route": [
+        "ask_clarification"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_clarification_missing_field": false,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "direct_clarification_missing_field"
+      ],
+      "gate_details": {},
+      "passed": false,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "web_search",
+        "ask_clarification"
+      ]
+    },
+    "sft-v2-new-122": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [],
+      "gate_details": {},
+      "passed": true,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "web_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-123": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [],
+      "gate_details": {},
+      "passed": true,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "web_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-124": {
+      "actual_route": [
+        "ask_clarification"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_clarification_missing_field": false,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [
+        "direct_clarification_missing_field"
+      ],
+      "gate_details": {},
+      "passed": false,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "web_search",
+        "refuse"
+      ]
+    },
+    "sft-v2-new-125": {
+      "actual_route": [
+        "refuse"
+      ],
+      "checks": {
+        "actual_route_complete": true,
+        "clarification_branch_profile_valid": true,
+        "clarification_observation_grounded": true,
+        "clarification_trigger_present": true,
+        "config_match": true,
+        "corpus_match": true,
+        "direct_refusal_explicit": true,
+        "exact_and_near_duplicate_free": true,
+        "hyde_target_improved": true,
+        "hyde_terminology_gap_valid": true,
+        "hyde_trigger_observed": true,
+        "known_semantic_duplicate_free": true,
+        "local_evidence_bound": true,
+        "observed_evidence_bound": true,
+        "pre_search_profile_consistent": true,
+        "provider_errors_zero": true,
+        "query_placeholder_free": true,
+        "refusal_boundary_profile_valid": true,
+        "refusal_observation_grounded": true,
+        "refusal_trigger_present": true,
+        "source_evidence_present": true,
+        "split_chunk_leak_free": true,
+        "split_query_leak_free": true,
+        "terminal_payload_valid": true,
+        "web_answer_coverage": true,
+        "web_evidence_bound": true,
+        "web_fact_complete": true,
+        "web_realtime_policy": true
+      },
+      "failed_checks": [],
+      "gate_details": {},
+      "passed": true,
+      "provider_record_ids": [],
+      "sampling_target_hit": false,
+      "sampling_target_route": [
+        "local_search",
+        "hyde_search",
+        "web_search",
+        "refuse"
+      ]
+    }
+  },
+  "passed_candidate_count": 11,
+  "preflight_failed_candidate_count": 3,
+  "preflight_failures": {
+    "sft-v2-new-041": [
+      "static_web_answer_not_allowed"
+    ],
+    "sft-v2-new-107": [
+      "claim_span_not_in_authoring_evidence"
+    ],
+    "sft-v2-new-114": [
+      "claim_span_not_in_authoring_evidence"
+    ]
+  },
+  "provider_executed_candidate_count": 59,
+  "selected_candidate_count": 62,
+  "training_performed": false
+}
