@@ -194,6 +194,10 @@ class QueryGraphState(TypedDict):
     # 默认空字符串；阶段 9 Planner 节点写入当前冻结的检索配置版本。
     retrieval_config_version: str
 
+    # provider strict errors 的中文含义是“动作执行器严格失败模式”。普通业务查询默认
+    # False；正式 GRPO 训练设为 True，使 Milvus 异常直接中止训练。
+    provider_strict_errors: bool
+
     # retrieval channel results 的中文含义是“各召回通道原始结果”。key 表示 dense、
     # learned_sparse、bm25、hyde 或 web 等通道，value 保存该通道的候选列表。
     # 默认空字典；后续统一召回服务写入。当前旧字段仍暂时维持主链路运行。
@@ -338,6 +342,7 @@ query_graph_default_state: QueryGraphState = {
     "terminal_reason_code": None,
     "answer_runtime_metadata": {},
     "retrieval_config_snapshot": {},
+    "provider_strict_errors": False,
     "chunk_status_filter_enabled": False,
     "disabled_chunk_ids": [],
     "trace_persistence_enabled": False,

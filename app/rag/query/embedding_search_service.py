@@ -110,6 +110,7 @@ def query_chunk_by_milvus(
         *,
         query_vectors: tuple[list[float], dict[int, float]] | None = None,
         retrieval_mode: RetrievalMode | str = RetrievalMode.DENSE_LEARNED_SPARSE,
+        strict_errors: bool = False,
 ) -> list[dict]:
     """
     使用同一检索文本和指定 expr 执行 Milvus 混合搜索。
@@ -136,6 +137,7 @@ def query_chunk_by_milvus(
         rrf_k=RETRIEVAL_RRF_K,
         limit=RETRIEVAL_DEFAULT_LIMIT,
         output_fields=CHUNK_OUTPUT_FIELDS,
+        raise_on_error=strict_errors,
     )
 
     if hybrid_result and hybrid_result[0]:
@@ -276,6 +278,7 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
             base_filter_expr,
             query_vectors=query_vectors,
             retrieval_mode=retrieval_mode,
+            strict_errors=bool(state.get("provider_strict_errors", False)),
         )
         observation = _build_observation(
             chunks=chunks,
@@ -306,6 +309,7 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
             exact_filter_expr,
             query_vectors=query_vectors,
             retrieval_mode=retrieval_mode,
+            strict_errors=bool(state.get("provider_strict_errors", False)),
         )
         guaranteed_chunks = _records_with_structured_filter_guarantee(
             exact_chunks,
@@ -340,6 +344,7 @@ def search_by_embedding(state: QueryGraphState) -> QueryGraphState:
         base_filter_expr,
         query_vectors=query_vectors,
         retrieval_mode=retrieval_mode,
+        strict_errors=bool(state.get("provider_strict_errors", False)),
     )
     exact_evidence, matched_identifiers = filter_records_matching_requested_identifiers(
         broad_chunks,

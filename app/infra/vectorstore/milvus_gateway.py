@@ -60,6 +60,7 @@ class MilvusGateway:
             search_params: dict | None = None,
             ranker_type: str = "weighted",
             rrf_k: int = 60,
+            raise_on_error: bool = False,
     ):
         return hybrid_search(
             client=self.client,
@@ -72,6 +73,7 @@ class MilvusGateway:
             search_params=search_params,
             ranker_type=ranker_type,
             rrf_k=rrf_k,
+            raise_on_error=raise_on_error,
         )
 
     def query_entities(

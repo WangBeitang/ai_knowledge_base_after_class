@@ -136,6 +136,7 @@ def hybrid_search(
         *,
         ranker_type="weighted",
         rrf_k=60,
+        raise_on_error=False,
 ):
     """
     执行Milvus稠密+稀疏向量混合搜索
@@ -182,4 +183,8 @@ def hybrid_search(
         return res
     except Exception as e:
         logger.error(f"Milvus混合搜索执行失败，集合[{collection_name}]：{str(e)}", exc_info=True)
+        # 正式 GRPO（群组相对策略优化）训练会开启 raise_on_error（失败时抛错），
+        # 防止把基础设施异常伪装成“真实空召回”后继续计算 Reward（奖励分数）。
+        if raise_on_error:
+            raise
         return None

@@ -146,6 +146,21 @@ def test_chunk_search_can_select_rrf_without_changing_weighted_subject_search():
     assert captured_rankers == ["WeightedRanker", "RRFRanker"]
 
 
+def test_formal_provider_can_raise_milvus_error_instead_of_returning_empty_result():
+    class FailingClient:
+        def hybrid_search(self, **kwargs):
+            raise RuntimeError("milvus unavailable")
+
+    with pytest.raises(RuntimeError, match="milvus unavailable"):
+        hybrid_search(
+            client=FailingClient(),
+            collection_name="chunks",
+            reqs=["dense", "sparse"],
+            ranker_type="rrf",
+            raise_on_error=True,
+        )
+
+
 def test_retrieval_candidate_enforces_local_and_web_identity_boundaries():
     local = RetrievalCandidate.model_validate(_local_candidate("chunk-a", channels=["original", "dense"]))
     web = RetrievalCandidate.model_validate(_web_candidate("https://example.com/notice"))

@@ -43,6 +43,7 @@ def query_chunk_by_milvus(
         filter_expr,
         *,
         retrieval_mode: RetrievalMode | str = RetrievalMode.DENSE_LEARNED_SPARSE,
+        strict_errors: bool = False,
 ):
     # 1.向量化问题
     hyde_query = rewritten_query + ":" + hyde_answer
@@ -70,6 +71,7 @@ def query_chunk_by_milvus(
         rrf_k=RETRIEVAL_RRF_K,
         limit=RETRIEVAL_DEFAULT_LIMIT,
         output_fields=CHUNK_OUTPUT_FIELDS,
+        raise_on_error=strict_errors,
     )
 
     if hybrid_result and hybrid_result[0]:
@@ -151,6 +153,7 @@ def search_by_hyde(state: QueryGraphState) -> QueryGraphState:
         hyde_answer,
         filter_expr,
         retrieval_mode=retrieval_mode,
+        strict_errors=bool(state.get("provider_strict_errors", False)),
     )
 
     # 4.结果回写

@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import requests
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.process.query.agent.state import QueryGraphState, create_query_default_state
@@ -51,6 +52,7 @@ class MilvusActionProvider:
             hyde_search_fn: QueryNode | None = None,
             web_search_fn: QueryNode | None = None,
             chunk_status_filter_enabled: bool = True,
+            strict_errors: bool = False,
     ) -> None:
         self.local_search_fn = local_search_fn or _default_local_search
         self.hyde_search_fn = hyde_search_fn or _default_hyde_search
@@ -58,6 +60,9 @@ class MilvusActionProvider:
         # chunk_status_filter_enabled（切片启停过滤开关）默认开启，表示真实环境读取 Mongo
         # 中人工禁用 chunk。测试或纯离线 smoke（冒烟）可关闭，避免无意连接外部数据库。
         self.chunk_status_filter_enabled = bool(chunk_status_filter_enabled)
+        # strict_errors（严格失败模式）由正式训练开启；底层检索异常必须上抛，不能被
+        # 解释成空 Observation（观察结果）后继续优化模型。
+        self.strict_errors = bool(strict_errors)
 
     def local_search(self, state: OfflineState, decision: PlannerDecision) -> list[RetrievalCandidate]:
         """执行 local_search（本地检索），返回 Milvus（向量数据库）本地候选。"""
@@ -131,6 +136,7 @@ class MilvusActionProvider:
             retrieval_mode=retrieval_mode.value,
             retrieval_config_version=state.retrieval_config_version,
             retrieval_config_snapshot=copy.deepcopy(state.retrieval_config_snapshot),
+            provider_strict_errors=self.strict_errors,
             chunk_status_filter_enabled=self.chunk_status_filter_enabled,
             disabled_chunk_ids=list(state.disabled_chunk_ids),
             trace_persistence_enabled=False,
@@ -142,6 +148,91 @@ class MilvusActionProvider:
 
 
 RealActionProvider = MilvusActionProvider
+
+
+class RemoteRealActionProvider:
+    """
+    本机 HTTP 真实 ActionProvider（动作执行器）客户端。
+
+    GRPO（群组相对策略优化）训练环境使用 Transformers 5，业务检索环境仍使用
+    Transformers 4。该客户端只跨进程传递 OfflineState（离线状态）和
+    PlannerDecision（规划器决策）；服务端继续执行 MilvusActionProvider，避免复制检索逻辑。
+    """
+
+    provider_name = "remote_real_action_provider"
+
+    def __init__(self, endpoint: str, *, timeout_seconds: float = 600.0) -> None:
+        normalized = str(endpoint or "").strip().rstrip("/")
+        if not normalized.startswith(("http://127.0.0.1:", "http://localhost:")):
+            raise ValueError("正式 GRPO Provider endpoint 必须绑定本机 127.0.0.1/localhost")
+        if timeout_seconds <= 0:
+            raise ValueError("timeout_seconds 必须大于 0")
+        self.endpoint = normalized
+        self.timeout_seconds = float(timeout_seconds)
+
+    def health(
+            self,
+            *,
+            expected_snapshot_id: str,
+            expected_snapshot_sha256: str | None = None,
+    ) -> dict[str, Any]:
+        """确认服务端 snapshot（快照）和真实检索依赖已经就绪。"""
+
+        response = requests.get(f"{self.endpoint}/health", timeout=min(self.timeout_seconds, 60.0))
+        response.raise_for_status()
+        payload = response.json()
+        if payload.get("ready") is not True:
+            raise RuntimeError(f"真实 Provider 未就绪：{payload}")
+        if payload.get("snapshot_id") != expected_snapshot_id:
+            raise RuntimeError(
+                "Provider snapshot_id 不一致："
+                f"expected={expected_snapshot_id}, actual={payload.get('snapshot_id')}"
+            )
+        if (
+            expected_snapshot_sha256 is not None
+            and payload.get("snapshot_sha256") != expected_snapshot_sha256
+        ):
+            raise RuntimeError(
+                "Provider snapshot SHA256 不一致："
+                f"expected={expected_snapshot_sha256}, actual={payload.get('snapshot_sha256')}"
+            )
+        return payload
+
+    def local_search(self, state: OfflineState, decision: PlannerDecision) -> list[RetrievalCandidate]:
+        return self._execute(state, decision, QueryAction.LOCAL_SEARCH)
+
+    def hyde_search(self, state: OfflineState, decision: PlannerDecision) -> list[RetrievalCandidate]:
+        return self._execute(state, decision, QueryAction.HYDE_SEARCH)
+
+    def web_search(self, state: OfflineState, decision: PlannerDecision) -> list[RetrievalCandidate]:
+        return self._execute(state, decision, QueryAction.WEB_SEARCH)
+
+    def _execute(
+            self,
+            state: OfflineState,
+            decision: PlannerDecision,
+            expected_action: QueryAction,
+    ) -> list[RetrievalCandidate]:
+        if decision.action != expected_action:
+            raise ValueError(
+                f"Remote Provider 期望 Action={expected_action.value}，实际={decision.action.value}"
+            )
+        response = requests.post(
+            f"{self.endpoint}/execute",
+            json={
+                "state": state.model_dump(mode="json"),
+                "decision": decision.model_dump(mode="json"),
+            },
+            timeout=self.timeout_seconds,
+        )
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"真实 Provider 执行失败：status={response.status_code}, body={response.text[:500]}"
+            )
+        payload = response.json()
+        if payload.get("ok") is not True:
+            raise RuntimeError(f"真实 Provider 返回失败：{payload}")
+        return [RetrievalCandidate.model_validate(item) for item in payload.get("candidates", [])]
 
 
 class ProviderRecordModel(BaseModel):

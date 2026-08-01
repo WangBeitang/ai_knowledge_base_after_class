@@ -17,6 +17,7 @@ from app.rag.query.contracts import (
 from app.rag.evaluation.action_providers import (
     MilvusActionProvider,
     RecordingActionProvider,
+    RemoteRealActionProvider,
     ReplayActionProvider,
     read_provider_observation_records,
 )
@@ -50,8 +51,73 @@ def test_milvus_action_provider_uses_query_graph_state_adapter():
     assert captured["current_planner_decision"].action is QueryAction.LOCAL_SEARCH
     assert captured["retrieval_mode"] == "dense_learned_sparse_bm25"
     assert captured["chunk_status_filter_enabled"] is False
+    assert captured["provider_strict_errors"] is False
     assert captured["history_persistence_enabled"] is False
     assert trajectory.retrieved_candidates[0].chunk_id == 12345
+
+
+def test_milvus_action_provider_passes_strict_error_mode_to_query_state():
+    captured = {}
+
+    provider = MilvusActionProvider(
+        local_search_fn=lambda graph_state: captured.update(graph_state) or {"embedding_chunks": []},
+        chunk_status_filter_enabled=False,
+        strict_errors=True,
+    )
+    state = OfflineRagEnvironment(snapshot=_snapshot(), action_provider=provider).reset(_answer_case())
+    provider.local_search(
+        state,
+        PlannerDecision(
+            action=QueryAction.LOCAL_SEARCH,
+            query=state.current_query,
+            reason_code=PlannerReasonCode.INITIAL_LOCAL_SEARCH,
+        ),
+    )
+
+    assert captured["provider_strict_errors"] is True
+
+
+def test_remote_real_provider_checks_snapshot_and_executes_actual_decision(monkeypatch):
+    calls = {}
+
+    class Response:
+        status_code = 200
+        text = ""
+
+        def __init__(self, payload):
+            self.payload = payload
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self.payload
+
+    monkeypatch.setattr(
+        "app.rag.evaluation.action_providers.requests.get",
+        lambda url, timeout: Response({"ready": True, "snapshot_id": "stage9-provider-test-v1"}),
+    )
+
+    def fake_post(url, *, json, timeout):
+        calls.update({"url": url, "json": json, "timeout": timeout})
+        return Response({"ok": True, "candidates": [_local_candidate().model_dump(mode="json")]})
+
+    monkeypatch.setattr("app.rag.evaluation.action_providers.requests.post", fake_post)
+    provider = RemoteRealActionProvider("http://127.0.0.1:8021", timeout_seconds=12)
+    assert provider.health(expected_snapshot_id="stage9-provider-test-v1")["ready"] is True
+    state = OfflineRagEnvironment(snapshot=_snapshot(), action_provider=provider).reset(_answer_case())
+    decision = PlannerDecision(
+        action=QueryAction.LOCAL_SEARCH,
+        query="模型实际生成的 E020 查询",
+        reason_code=PlannerReasonCode.INITIAL_LOCAL_SEARCH,
+    )
+
+    candidates = provider.local_search(state, decision)
+
+    assert candidates[0].chunk_id == 12345
+    assert calls["json"]["decision"]["query"] == "模型实际生成的 E020 查询"
+    assert calls["json"]["state"]["snapshot_id"] == "stage9-provider-test-v1"
+    assert "snapshot" not in calls["json"]["state"]
 
 
 def test_milvus_action_provider_rejects_web_when_state_disallows_it():
