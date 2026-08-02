@@ -1,4 +1,4 @@
-from app.rag.evaluation.case_schema import EnvironmentSnapshot, PlannerEvalCase
+from app.rag.evaluation.case_schema import EnvironmentSnapshot, PlannerEvalCase, PrivacyScope
 from app.rag.evaluation.offline_environment import (
     OfflineRagEnvironment,
     OfflineState,
@@ -12,6 +12,7 @@ from app.rag.query.contracts import (
     QueryAction,
     RetrievalCandidate,
     RetrievalChannel,
+    SubjectResolutionStatus,
 )
 from app.rag.query.planner import RuleBasedPlanner, RuleBasedPlannerConfig
 
@@ -199,45 +200,88 @@ def test_offline_environment_marks_illegal_action_path():
     assert result.terminal_action is None
 
 
-def test_offline_environment_does_not_offer_local_retrieval_without_subject_scope():
+def test_offline_environment_keeps_bad_local_action_explorable_without_subject_scope():
+    class ProviderMustNotRun:
+        def local_search(self, state, decision):
+            raise AssertionError("缺少 subject_ids 时不能调用真实 local Provider")
+
+        def hyde_search(self, state, decision):
+            raise AssertionError("缺少 subject_ids 时不能调用真实 HyDE Provider")
+
+        def web_search(self, state, decision):
+            raise AssertionError("本测试不应调用 Web Provider")
+
+    class RecoveringPlanner:
+        policy_version = "pytest-recovering-policy"
+
+        def __init__(self):
+            self.contexts = []
+
+        def plan(self, context):
+            self.contexts.append(context)
+            if len(self.contexts) == 1:
+                return PlannerDecision(
+                    action=QueryAction.LOCAL_SEARCH,
+                    query=context.current_query,
+                    reason_code=PlannerReasonCode.INITIAL_LOCAL_SEARCH,
+                )
+            return PlannerDecision(
+                action=QueryAction.ASK_CLARIFICATION,
+                query=context.current_query,
+                reason_code=PlannerReasonCode.SUBJECT_REQUIRED,
+            )
+
     env = OfflineRagEnvironment(
         snapshot=_snapshot(),
-        action_provider=FakeOfflineActionProvider(),
+        action_provider=ProviderMustNotRun(),
     )
     case = _case().model_copy(update={
         "expected_subject_ids": [],
         "expected_subject_names": [],
     })
-    state = env.reset(case)
+    planner = RecoveringPlanner()
 
-    allowed_actions = env._planner_context(state).allowed_actions
-    result = env.step(
-        state,
-        PlannerDecision(
-            action=QueryAction.LOCAL_SEARCH,
-            query=case.query,
-            reason_code=PlannerReasonCode.INITIAL_LOCAL_SEARCH,
-        ),
-    )
+    result = env.run_planner(case, planner, run_id="recover_subject_scope")
 
-    assert QueryAction.LOCAL_SEARCH not in allowed_actions
-    assert QueryAction.HYDE_SEARCH not in allowed_actions
-    assert QueryAction.ASK_CLARIFICATION in allowed_actions
-    assert result.error is not None
-    assert result.error.code == "action_not_allowed"
+    assert QueryAction.LOCAL_SEARCH in planner.contexts[0].allowed_actions
+    assert QueryAction.HYDE_SEARCH in planner.contexts[0].allowed_actions
+    assert planner.contexts[1].latest_observation.error_code == "subject_scope_required"
+    assert result.action_path == [QueryAction.LOCAL_SEARCH, QueryAction.ASK_CLARIFICATION]
+    assert result.terminal_action == QueryAction.ASK_CLARIFICATION
+    assert result.errors[0].code == "subject_scope_required"
+    assert result.trace_steps[0].output_observation.error_code == "subject_scope_required"
 
 
-def test_offline_environment_keeps_web_available_without_local_subject_scope():
+def test_offline_environment_web_permission_uses_runtime_privacy_not_gold_route():
     env = OfflineRagEnvironment(snapshot=_snapshot())
-    state = env.reset(_case())
-    state.subject_ids = []
-    state.web_search_allowed = True
+    public_case = _case()
+    private_case = public_case.model_copy(update={"privacy_scope": PrivacyScope.PRIVATE_USER})
 
-    allowed_actions = env._planner_context(state).allowed_actions
+    public_state = env.reset(public_case)
+    private_state = env.reset(private_case)
 
-    assert QueryAction.WEB_SEARCH in allowed_actions
-    assert QueryAction.LOCAL_SEARCH not in allowed_actions
-    assert QueryAction.HYDE_SEARCH not in allowed_actions
+    assert public_case.expected_behavior.should_call_web is False
+    assert public_state.web_search_allowed is True
+    assert QueryAction.WEB_SEARCH in env._planner_context(public_state).allowed_actions
+    assert private_state.web_search_allowed is False
+    assert QueryAction.WEB_SEARCH not in env._planner_context(private_state).allowed_actions
+
+
+def test_offline_environment_subject_status_does_not_read_gold_clarification_label():
+    env = OfflineRagEnvironment(snapshot=_snapshot())
+    base_case = _case()
+    clarification_case = base_case.model_copy(update={
+        "expected_subject_ids": [],
+        "expected_subject_names": [],
+        "expected_behavior": base_case.expected_behavior.model_copy(update={
+            "should_answer": False,
+            "should_ask_clarification": True,
+        }),
+    })
+
+    state = env.reset(clarification_case)
+
+    assert state.subject_resolution_status == SubjectResolutionStatus.NO_MENTION
 
 
 def test_offline_environment_rejects_snapshot_disabled_candidate():

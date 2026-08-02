@@ -25,6 +25,7 @@ from app.rag.evaluation.case_schema import (
     EnvironmentSnapshot,
     PlannerEvalCase,
     PlannerMode,
+    PrivacyScope,
 )
 from app.rag.query.config import PLANNER_MAX_STEPS
 from app.rag.query.contracts import (
@@ -58,6 +59,9 @@ RETRIEVAL_ACTIONS = {
     QueryAction.LOCAL_SEARCH,
     QueryAction.HYDE_SEARCH,
     QueryAction.WEB_SEARCH,
+}
+RECOVERABLE_ACTION_ERRORS = {
+    "subject_scope_required",
 }
 FIRST_ACTIONS = {
     QueryAction.LOCAL_SEARCH,
@@ -191,7 +195,7 @@ class OfflineState(OfflineEnvironmentModel):
     retrieval_config_snapshot: dict[str, Any] = Field(default_factory=dict)
     # Planner 策略版本，必须来自 snapshot 或当前 planner。
     policy_version: str = Field(min_length=1)
-    # 是否允许 Web。默认由 snapshot 的 web_fallback_enabled 和 case.expected_behavior 共同约束。
+    # 是否允许 Web。只来自真实系统能力和隐私策略，不能读取 case 的 Gold 行为标签。
     web_search_allowed: bool = False
     # 人工禁用 chunk 快照，只能来自 EnvironmentSnapshot.disabled_chunks。
     disabled_chunk_ids: list[str | int] = Field(default_factory=list)
@@ -372,18 +376,20 @@ class OfflineRagEnvironment:
             field_name="run_id",
         )
         retrieval_config_snapshot = dict(active_snapshot.retrieval_config_snapshot)
+        # web_search_allowed（是否允许网页检索）是运行时权限，不是“这道题是否应该联网”
+        # 的 Gold（标准答案）。公共样本只要系统能力开启就允许模型探索；私有样本禁止把
+        # 查询发送到外部 Web。是否真的应该调用 Web 仍只由 Evaluator/Reward 判定。
         web_search_allowed = bool(
             retrieval_config_snapshot.get("web_fallback_enabled", False)
-            and case.expected_behavior.should_call_web
+            and case.privacy_scope == PrivacyScope.PUBLIC_DEMO
         )
+        # 阶段 8 的 expected_subject_ids（期望主体 ID）在这里承担冻结上游主体解析结果的
+        # 兼容职责；状态只能由 ID 是否存在推导，不能再读取 should_ask_clarification 这类
+        # Gold 行为标签。后续数据版本应把它显式拆为 initial runtime observation。
         subject_resolution_status = (
             SubjectResolutionStatus.CONFIRMED
             if case.expected_subject_ids
-            else (
-                SubjectResolutionStatus.AMBIGUOUS
-                if case.expected_behavior.should_ask_clarification
-                else SubjectResolutionStatus.NO_MENTION
-            )
+            else SubjectResolutionStatus.NO_MENTION
         )
         disabled_chunk_ids = [chunk.chunk_id for chunk in active_snapshot.disabled_chunks]
         corpus_match_status = self._case_corpus_match_status(case, active_snapshot)
@@ -454,7 +460,10 @@ class OfflineRagEnvironment:
                 return self._trajectory_result(state)
             step_result = self.step(state, decision_result)
             state = step_result.state
-            if step_result.error is not None or step_result.terminal:
+            if (
+                step_result.error is not None
+                and step_result.error.code not in RECOVERABLE_ACTION_ERRORS
+            ) or step_result.terminal:
                 break
         if state.terminal_action is None and not state.errors:
             state.errors.append(OfflineError(
@@ -493,7 +502,10 @@ class OfflineRagEnvironment:
                 break
             step_result = self.step(state, decision)
             state = step_result.state
-            if step_result.error is not None:
+            if (
+                step_result.error is not None
+                and step_result.error.code not in RECOVERABLE_ACTION_ERRORS
+            ):
                 break
         if state.terminal_action is None and not state.errors:
             state.errors.append(OfflineError(
@@ -515,26 +527,49 @@ class OfflineRagEnvironment:
             QueryAction.WEB_SEARCH: self.action_provider.web_search,
         }[decision.action]
 
-        try:
-            raw_candidates = provider_method(state.model_copy(deep=True), decision)
-            candidates = [self._normalize_candidate(candidate) for candidate in raw_candidates]
-            observation = self._observation_from_candidates(state, decision, candidates)
-            execution_status = (
-                PlannerExecutionStatus.FAILED
-                if observation.status == ObservationStatus.FAILED
-                else PlannerExecutionStatus.COMPLETED
+        if (
+            decision.action in {QueryAction.LOCAL_SEARCH, QueryAction.HYDE_SEARCH}
+            and not state.subject_ids
+        ):
+            # 模型仍可探索错误的检索动作，但绝不把缺少主体范围的请求发送给 Provider，
+            # 避免退化为全库检索。该业务前置条件失败会进入 Observation/Trace/Reward，
+            # 且允许 Planner 下一步恢复为 ask_clarification/refuse。
+            candidates: list[RetrievalCandidate] = []
+            observation = self._failed_observation(
+                decision,
+                error_code="subject_scope_required",
             )
-            error = self._validate_candidates_against_snapshot(state, candidates, decision)
-        except Exception as exc:
-            observation = self._failed_observation(decision, error_code="action_provider_failed")
             execution_status = PlannerExecutionStatus.FAILED
-            error = OfflineError(
-                code="action_provider_failed",
-                message=f"{decision.action.value} 执行失败：{exc}",
+            error: OfflineError | None = OfflineError(
+                code="subject_scope_required",
+                message=(
+                    f"{decision.action.value} 缺少 subject_ids，"
+                    "已阻止无范围的本地知识库检索"
+                ),
                 step=state.planner_step + 1,
                 action=decision.action,
             )
-            candidates = []
+        else:
+            try:
+                raw_candidates = provider_method(state.model_copy(deep=True), decision)
+                candidates = [self._normalize_candidate(candidate) for candidate in raw_candidates]
+                observation = self._observation_from_candidates(state, decision, candidates)
+                execution_status = (
+                    PlannerExecutionStatus.FAILED
+                    if observation.status == ObservationStatus.FAILED
+                    else PlannerExecutionStatus.COMPLETED
+                )
+                error = self._validate_candidates_against_snapshot(state, candidates, decision)
+            except Exception as exc:
+                observation = self._failed_observation(decision, error_code="action_provider_failed")
+                execution_status = PlannerExecutionStatus.FAILED
+                error = OfflineError(
+                    code="action_provider_failed",
+                    message=f"{decision.action.value} 执行失败：{exc}",
+                    step=state.planner_step + 1,
+                    action=decision.action,
+                )
+                candidates = []
 
         duration_ms = _elapsed_ms(start)
         recording_error = _notify_provider_observation(
@@ -707,12 +742,12 @@ class OfflineRagEnvironment:
         )
 
     def _allowed_actions(self, state: OfflineState) -> list[QueryAction]:
-        actions: list[QueryAction] = []
-        # 真实本地/HyDE Provider（动作执行器）要求 subject_ids（主体 ID）非空，禁止
-        # 无主体时退化为全库检索。Environment（环境）必须只向 Planner（规划器）暴露
-        # Provider 实际可执行的 Action（动作），否则合法 JSON 也会在执行层必然失败。
-        if state.subject_ids:
-            actions.extend((QueryAction.LOCAL_SEARCH, QueryAction.HYDE_SEARCH))
+        # local/HyDE 即使缺少 subject_ids 也保留给 GRPO 探索；执行时会得到结构化的
+        # subject_scope_required，而不是访问全库。只有 Web 外发权限属于硬动作掩码。
+        actions: list[QueryAction] = [
+            QueryAction.LOCAL_SEARCH,
+            QueryAction.HYDE_SEARCH,
+        ]
         if state.web_search_allowed:
             actions.append(QueryAction.WEB_SEARCH)
         actions.extend((

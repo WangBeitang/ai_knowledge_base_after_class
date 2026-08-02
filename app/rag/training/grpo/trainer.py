@@ -37,7 +37,7 @@ from app.rag.training.grpo.objective import (
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
-TRAINER_VERSION = "formal-qwen-planner-grpo-v3-provider-contract-recovery"
+TRAINER_VERSION = "formal-qwen-planner-grpo-v4-exploration-safe-contract"
 FATAL_PROVIDER_ERRORS = {
     "action_provider_failed",
     "provider_recording_failed",

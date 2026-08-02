@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from app.rag.evaluation.case_schema import EnvironmentSnapshot, PlannerEvalCase
+from app.rag.evaluation.case_schema import EnvironmentSnapshot, PlannerEvalCase, PrivacyScope
 from app.rag.evaluation.offline_environment import OfflineRagEnvironment
 from app.rag.query.config import RETRIEVAL_CONFIG_VERSION
 from app.rag.query.contracts import (
@@ -125,7 +125,8 @@ def test_milvus_action_provider_rejects_web_when_state_disallows_it():
         web_search_fn=lambda graph_state: {"web_search_docs": [_web_candidate().model_dump(mode="json")]},
         chunk_status_filter_enabled=False,
     )
-    state = OfflineRagEnvironment(snapshot=_snapshot(), action_provider=provider).reset(_answer_case())
+    private_case = _answer_case().model_copy(update={"privacy_scope": PrivacyScope.PRIVATE_USER})
+    state = OfflineRagEnvironment(snapshot=_snapshot(), action_provider=provider).reset(private_case)
 
     with pytest.raises(ValueError, match="不允许 Web"):
         provider.web_search(
