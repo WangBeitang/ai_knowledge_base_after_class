@@ -38,6 +38,17 @@ from scripts.cloud_grpo.backfill_stage85_gold_subjects import (  # noqa: E402
 FUNCTION_OUTPUT_FIELDS = {"bm25_sparse_vector"}
 
 
+def _json_compatible(value: Any) -> Any:
+    """把 pymilvus/protobuf 返回容器转换为审计日志可序列化值。"""
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, Mapping):
+        return {str(key): _json_compatible(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)) or hasattr(value, "__iter__"):
+        return [_json_compatible(item) for item in value]
+    return str(value)
+
+
 def _query_document_rows(client: Any, collection: str) -> list[dict[str, Any]]:
     return list(client.query(
         collection_name=collection,
@@ -252,7 +263,7 @@ def main() -> int:
         _restore_auto_id_property(client, collection, original_property)
 
     print(json.dumps({
-        "insert_result": insert_result,
+        "insert_result": _json_compatible(insert_result),
         "deleted_temporary_ids": current_ids,
         "backup": str(args.backup),
     }, ensure_ascii=False, sort_keys=True))

@@ -12,6 +12,7 @@ from scripts.cloud_grpo.backfill_stage85_gold_subjects import (
 )
 from scripts.cloud_grpo.recover_stage85_gold_auto_ids import (
     _build_recovery_payloads,
+    _json_compatible,
     _validate_restored_rows,
 )
 
@@ -141,3 +142,13 @@ def test_stage85_auto_id_recovery_rejects_missing_target_before_mutation():
 
     with pytest.raises(ValueError, match="未覆盖全部原 ID"):
         _build_recovery_payloads(targets, [])
+
+
+def test_stage85_auto_id_recovery_serializes_iterable_milvus_ids():
+    class RepeatedScalarContainer:
+        def __iter__(self):
+            return iter((123, 456))
+
+    assert _json_compatible({"ids": RepeatedScalarContainer()}) == {
+        "ids": [123, 456]
+    }
