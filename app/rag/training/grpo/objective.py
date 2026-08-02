@@ -42,10 +42,18 @@ def completion_token_log_probs(
         device=device,
     )
     attention_mask = torch.ones_like(input_ids)
-    outputs = model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
-    start = len(prompt_token_ids) - 1
-    stop = start + len(completion_token_ids)
-    token_logits = outputs.logits[0, start:stop, :].float()
+    # Qwen3.5 支持 logits_to_keep（仅保留指定尾部位置的输出分数）。completion 的第一个
+    # token 由 prompt 最后一个位置预测，因此保留 completion 长度再加一个位置；随后丢弃
+    # 最末尾那个不参与本次目标函数的位置。这样不再为整段 prompt 构造大词表 logits，
+    # 但 old/new/reference log probability（旧/新/参考策略对数概率）的数学口径不变。
+    logits_to_keep = len(completion_token_ids) + 1
+    outputs = model(
+        input_ids=input_ids,
+        attention_mask=attention_mask,
+        use_cache=False,
+        logits_to_keep=logits_to_keep,
+    )
+    token_logits = outputs.logits[0, :len(completion_token_ids), :].float()
     targets = torch.tensor(completion_token_ids, dtype=torch.long, device=device)
     log_probs = torch.log_softmax(token_logits, dim=-1).gather(-1, targets.unsqueeze(-1)).squeeze(-1)
     if log_probs.shape != targets.shape:

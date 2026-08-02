@@ -13,7 +13,12 @@ from app.rag.training.grpo.objective import (
     compute_group_advantages,
     grpo_token_objective,
 )
-from app.rag.training.grpo.trainer import _parameter_sha256, _prepare_resume
+from app.rag.training.grpo.trainer import (
+    _enable_policy_gradient_checkpointing,
+    _parameter_sha256,
+    _prepare_resume,
+    _set_policy_optimization_mode,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -102,13 +107,17 @@ def test_grpo_objective_rejects_non_finite_probabilities():
 
 
 def test_completion_log_probs_use_last_prompt_position_for_first_generated_token():
+    calls = []
+
     class ToyModel(torch.nn.Module):
-        def forward(self, *, input_ids, attention_mask, use_cache):
+        def forward(self, *, input_ids, attention_mask, use_cache, logits_to_keep):
             del attention_mask, use_cache
             batch, sequence = input_ids.shape
-            logits = torch.zeros((batch, sequence, 8), dtype=torch.float32)
-            for position in range(sequence):
-                logits[:, position, position + 1] = 3.0
+            calls.append({"sequence": sequence, "logits_to_keep": logits_to_keep})
+            first_position = sequence - logits_to_keep
+            logits = torch.zeros((batch, logits_to_keep, 8), dtype=torch.float32)
+            for local_position, absolute_position in enumerate(range(first_position, sequence)):
+                logits[:, local_position, absolute_position + 1] = 3.0
             return SimpleNamespace(logits=logits)
 
     result = completion_token_log_probs(
@@ -121,6 +130,28 @@ def test_completion_log_probs_use_last_prompt_position_for_first_generated_token
     expected_second = torch.log_softmax(torch.tensor([0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0]), dim=-1)[3]
 
     assert torch.allclose(result, torch.stack((expected_first, expected_second)))
+    assert calls == [{"sequence": 4, "logits_to_keep": 3}]
+
+
+def test_policy_memory_mode_enables_non_reentrant_checkpointing_and_disables_dropout():
+    class ToyPolicy(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.dropout = torch.nn.Dropout(p=0.5)
+            self.gradient_checkpointing_kwargs = None
+
+        def gradient_checkpointing_enable(self, *, gradient_checkpointing_kwargs):
+            self.gradient_checkpointing_kwargs = gradient_checkpointing_kwargs
+
+    policy = ToyPolicy()
+    policy.eval()
+
+    _enable_policy_gradient_checkpointing(policy)
+    _set_policy_optimization_mode(policy, torch)
+
+    assert policy.training is True
+    assert policy.dropout.training is False
+    assert policy.gradient_checkpointing_kwargs == {"use_reentrant": False}
 
 
 def test_trainable_parameter_hash_changes_after_real_parameter_update():

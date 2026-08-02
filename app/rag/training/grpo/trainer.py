@@ -37,7 +37,7 @@ from app.rag.training.grpo.objective import (
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
-TRAINER_VERSION = "formal-qwen-planner-grpo-v1"
+TRAINER_VERSION = "formal-qwen-planner-grpo-v2-memory-efficient"
 FATAL_PROVIDER_ERRORS = {
     "action_provider_failed",
     "provider_recording_failed",
@@ -133,6 +133,24 @@ class PolicySamplingPlanner:
                 f"{decode_result.error_code} {decode_result.error_message}"
             )
         return decode_result.decision
+
+
+def _enable_policy_gradient_checkpointing(policy_model: Any) -> None:
+    """为可训练 policy model（策略模型）启用非重入式 gradient checkpointing（梯度检查点）。"""
+
+    enable = getattr(policy_model, "gradient_checkpointing_enable", None)
+    if not callable(enable):
+        raise RuntimeError("policy model 不支持 gradient checkpointing，无法安全执行正式 GRPO")
+    enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+
+
+def _set_policy_optimization_mode(policy_model: Any, torch_module: Any) -> None:
+    """开启训练模式以激活梯度检查点，同时关闭 dropout，保持 old/new probability 可比。"""
+
+    policy_model.train()
+    for module in policy_model.modules():
+        if isinstance(module, torch_module.nn.Dropout):
+            module.eval()
 
 
 def run_formal_grpo_training(
@@ -241,6 +259,7 @@ def run_formal_grpo_training(
         policy_adapter_path,
         is_trainable=True,
     )
+    _enable_policy_gradient_checkpointing(policy_model)
     reference_base = AutoModelForCausalLM.from_pretrained(config.base_model_id, **model_kwargs)
     reference_model = PeftModel.from_pretrained(
         reference_base,
@@ -338,6 +357,7 @@ def run_formal_grpo_training(
                 device=device,
             )
             advantages = compute_group_advantages(rewards)
+            _set_policy_optimization_mode(policy_model, torch)
             group_policy_loss = 0.0
             group_kl = 0.0
             group_total_loss = 0.0
