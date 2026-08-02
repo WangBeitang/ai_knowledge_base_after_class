@@ -707,15 +707,19 @@ class OfflineRagEnvironment:
         )
 
     def _allowed_actions(self, state: OfflineState) -> list[QueryAction]:
-        actions = [
-            QueryAction.LOCAL_SEARCH,
-            QueryAction.HYDE_SEARCH,
+        actions: list[QueryAction] = []
+        # 真实本地/HyDE Provider（动作执行器）要求 subject_ids（主体 ID）非空，禁止
+        # 无主体时退化为全库检索。Environment（环境）必须只向 Planner（规划器）暴露
+        # Provider 实际可执行的 Action（动作），否则合法 JSON 也会在执行层必然失败。
+        if state.subject_ids:
+            actions.extend((QueryAction.LOCAL_SEARCH, QueryAction.HYDE_SEARCH))
+        if state.web_search_allowed:
+            actions.append(QueryAction.WEB_SEARCH)
+        actions.extend((
             QueryAction.ANSWER,
             QueryAction.ASK_CLARIFICATION,
             QueryAction.REFUSE,
-        ]
-        if state.web_search_allowed:
-            actions.insert(2, QueryAction.WEB_SEARCH)
+        ))
         return actions
 
     def _observation_from_candidates(

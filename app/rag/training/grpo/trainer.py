@@ -37,7 +37,7 @@ from app.rag.training.grpo.objective import (
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
-TRAINER_VERSION = "formal-qwen-planner-grpo-v2-memory-efficient"
+TRAINER_VERSION = "formal-qwen-planner-grpo-v3-provider-contract-recovery"
 FATAL_PROVIDER_ERRORS = {
     "action_provider_failed",
     "provider_recording_failed",
@@ -151,6 +151,31 @@ def _set_policy_optimization_mode(policy_model: Any, torch_module: Any) -> None:
     for module in policy_model.modules():
         if isinstance(module, torch_module.nn.Dropout):
             module.eval()
+
+
+def _completed_emergency_segments(
+        *,
+        pending_rollouts: list[dict[str, Any]],
+        pending_step_metrics: list[dict[str, Any]],
+        completed_rollout_count: int,
+        completed_metric_count: int,
+        group_size: int,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """只截取已经完成 optimizer step（优化器更新步）的审计段，排除异常组的半成品。"""
+
+    if completed_rollout_count == completed_metric_count == 0:
+        return [], []
+    if (
+        completed_metric_count <= 0
+        or completed_rollout_count != completed_metric_count * group_size
+        or completed_rollout_count > len(pending_rollouts)
+        or completed_metric_count > len(pending_step_metrics)
+    ):
+        raise RuntimeError("紧急 checkpoint 的已完成 rollout/metric 边界不一致")
+    return (
+        list(pending_rollouts[:completed_rollout_count]),
+        list(pending_step_metrics[:completed_metric_count]),
+    )
 
 
 def run_formal_grpo_training(
@@ -323,6 +348,9 @@ def run_formal_grpo_training(
         last_checkpoint = resume_checkpoint
     pending_rollouts: list[dict[str, Any]] = []
     pending_step_metrics: list[dict[str, Any]] = []
+    completed_pending_rollout_count = 0
+    completed_pending_metric_count = 0
+    completed_next_case_index = next_case_index
     optimizer.zero_grad(set_to_none=True)
 
     try:
@@ -473,6 +501,9 @@ def run_formal_grpo_training(
             }
             _assert_finite_metrics(step_metric)
             pending_step_metrics.append(step_metric)
+            completed_pending_rollout_count = len(pending_rollouts)
+            completed_pending_metric_count = len(pending_step_metrics)
+            completed_next_case_index = group_index + 1
             print(
                 f"formal_grpo case={group_index + 1}/75 id={case.case_id} "
                 f"rollouts=4 reward={step_metric['reward_mean']:.4f} "
@@ -504,6 +535,8 @@ def run_formal_grpo_training(
                 )
                 pending_rollouts = []
                 pending_step_metrics = []
+                completed_pending_rollout_count = 0
+                completed_pending_metric_count = 0
 
         if pending_rollouts or pending_step_metrics:
             raise RuntimeError("正式训练结束后仍存在未进入恢复 checkpoint 的审计段")
@@ -569,6 +602,37 @@ def run_formal_grpo_training(
         _write_output_manifest(run_dir)
         return {"run_id": run_id, "run_dir": str(run_dir), **summary}
     except Exception as exc:
+        emergency_checkpoint_error = ""
+        try:
+            completed_rollouts, completed_metrics = _completed_emergency_segments(
+                pending_rollouts=pending_rollouts,
+                pending_step_metrics=pending_step_metrics,
+                completed_rollout_count=completed_pending_rollout_count,
+                completed_metric_count=completed_pending_metric_count,
+                group_size=config.group_size,
+            )
+            if completed_metrics:
+                last_checkpoint = _save_recovery_checkpoint(
+                    run_dir=run_dir,
+                    policy_model=policy_model,
+                    tokenizer=tokenizer,
+                    optimizer=optimizer,
+                    scheduler=scheduler,
+                    optimizer_step=optimizer_step,
+                    next_case_index=completed_next_case_index,
+                    processed_case_ids=processed_case_ids,
+                    case_order=case_order,
+                    rollout_segment=completed_rollouts,
+                    metric_segment=completed_metrics,
+                    previous_checkpoint=last_checkpoint,
+                    elapsed_seconds=elapsed_before_seconds + (time.monotonic() - started),
+                    policy_trainable_sha256=_parameter_sha256(policy_model, trainable_only=True),
+                    torch_module=torch,
+                )
+        except Exception as checkpoint_exc:
+            emergency_checkpoint_error = (
+                f"{checkpoint_exc.__class__.__name__}: {checkpoint_exc}"
+            )
         failure_stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         _write_json(run_dir / f"FAILED_{failure_stamp}.json", {
             "run_id": run_id,
@@ -578,6 +642,7 @@ def run_formal_grpo_training(
             "optimizer_step": optimizer_step,
             "processed_case_count": len(processed_case_ids),
             "last_recovery_checkpoint": str(last_checkpoint or ""),
+            "emergency_checkpoint_error": emergency_checkpoint_error,
         })
         raise
 

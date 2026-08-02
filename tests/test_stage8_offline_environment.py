@@ -199,6 +199,47 @@ def test_offline_environment_marks_illegal_action_path():
     assert result.terminal_action is None
 
 
+def test_offline_environment_does_not_offer_local_retrieval_without_subject_scope():
+    env = OfflineRagEnvironment(
+        snapshot=_snapshot(),
+        action_provider=FakeOfflineActionProvider(),
+    )
+    case = _case().model_copy(update={
+        "expected_subject_ids": [],
+        "expected_subject_names": [],
+    })
+    state = env.reset(case)
+
+    allowed_actions = env._planner_context(state).allowed_actions
+    result = env.step(
+        state,
+        PlannerDecision(
+            action=QueryAction.LOCAL_SEARCH,
+            query=case.query,
+            reason_code=PlannerReasonCode.INITIAL_LOCAL_SEARCH,
+        ),
+    )
+
+    assert QueryAction.LOCAL_SEARCH not in allowed_actions
+    assert QueryAction.HYDE_SEARCH not in allowed_actions
+    assert QueryAction.ASK_CLARIFICATION in allowed_actions
+    assert result.error is not None
+    assert result.error.code == "action_not_allowed"
+
+
+def test_offline_environment_keeps_web_available_without_local_subject_scope():
+    env = OfflineRagEnvironment(snapshot=_snapshot())
+    state = env.reset(_case())
+    state.subject_ids = []
+    state.web_search_allowed = True
+
+    allowed_actions = env._planner_context(state).allowed_actions
+
+    assert QueryAction.WEB_SEARCH in allowed_actions
+    assert QueryAction.LOCAL_SEARCH not in allowed_actions
+    assert QueryAction.HYDE_SEARCH not in allowed_actions
+
+
 def test_offline_environment_rejects_snapshot_disabled_candidate():
     env = OfflineRagEnvironment(
         snapshot=_snapshot(disabled_chunk_id=12345),

@@ -14,6 +14,7 @@ from app.rag.training.grpo.objective import (
     grpo_token_objective,
 )
 from app.rag.training.grpo.trainer import (
+    _completed_emergency_segments,
     _enable_policy_gradient_checkpointing,
     _parameter_sha256,
     _prepare_resume,
@@ -152,6 +153,33 @@ def test_policy_memory_mode_enables_non_reentrant_checkpointing_and_disables_dro
     assert policy.training is True
     assert policy.dropout.training is False
     assert policy.gradient_checkpointing_kwargs == {"use_reentrant": False}
+
+
+def test_emergency_checkpoint_segments_exclude_incomplete_group_rows():
+    pending_rollouts = [{"rollout": index} for index in range(10)]
+    pending_metrics = [{"step": 1}, {"step": 2}]
+
+    rollouts, metrics = _completed_emergency_segments(
+        pending_rollouts=pending_rollouts,
+        pending_step_metrics=pending_metrics,
+        completed_rollout_count=8,
+        completed_metric_count=2,
+        group_size=4,
+    )
+
+    assert rollouts == pending_rollouts[:8]
+    assert metrics == pending_metrics
+
+
+def test_emergency_checkpoint_segments_reject_inconsistent_boundary():
+    with pytest.raises(RuntimeError, match="边界不一致"):
+        _completed_emergency_segments(
+            pending_rollouts=[{"rollout": index} for index in range(7)],
+            pending_step_metrics=[{"step": 1}, {"step": 2}],
+            completed_rollout_count=7,
+            completed_metric_count=2,
+            group_size=4,
+        )
 
 
 def test_trainable_parameter_hash_changes_after_real_parameter_update():
