@@ -10,8 +10,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from collections.abc import Mapping
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +19,9 @@ from dotenv import load_dotenv
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 DEFAULT_ENV_FILE = PROJECT_ROOT / "deploy/cloud_grpo/env.local"
 DEFAULT_MANIFEST = (
     PROJECT_ROOT
@@ -198,7 +201,7 @@ def main() -> int:
         raise RuntimeError(f"目标 collection 主键不是 chunk_id：{description.get('primary_field')}")
 
     rows_before = _query_target_rows(client, collection, sorted(targets))
-    changes, backups = _validate_and_plan(targets, rows_before)
+    changes, _ = _validate_and_plan(targets, rows_before)
     summary = {
         "mode": "apply" if args.apply else "dry_run",
         "collection": collection,
@@ -212,46 +215,10 @@ def main() -> int:
     if not args.apply:
         print("STAGE85_GOLD_SUBJECT_BACKFILL_DRY_RUN=PASS")
         return 0
-    if not changes:
-        print("STAGE85_GOLD_SUBJECT_BACKFILL_ALREADY_APPLIED=PASS")
-        return 0
-    if args.backup is None:
-        raise ValueError("--apply 必须同时提供全新的 --backup 路径")
-
-    backup_payload = {
-        "backup_version": "stage85-gold-subject-backfill-v1",
-        "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
-        "collection": collection,
-        "manifest_path": str(args.manifest),
-        "manifest_sha256": manifest_sha256,
-        "records": backups,
-    }
-    _write_backup(args.backup, backup_payload)
-
-    original_property = _collection_property(description, "allow_insert_auto_id")
-    try:
-        client.alter_collection_properties(
-            collection_name=collection,
-            properties={"allow_insert_auto_id": "true"},
-        )
-        result = client.upsert(
-            collection_name=collection,
-            data=changes,
-            partial_update=True,
-        )
-        client.flush(collection_name=collection)
-    finally:
-        _restore_auto_id_property(client, collection, original_property)
-
-    rows_after = _query_target_rows(client, collection, sorted(targets))
-    remaining, _ = _validate_and_plan(targets, rows_after)
-    if remaining:
-        raise RuntimeError(f"回填后仍有未生效记录：{remaining}")
-    if {int(row["chunk_id"]) for row in rows_after} != set(targets):
-        raise RuntimeError("回填后 chunk_id 集合发生变化")
-    print(json.dumps({"upsert_result": result, "backup": str(args.backup)}, ensure_ascii=False))
-    print("STAGE85_GOLD_SUBJECT_BACKFILL_APPLY=PASS")
-    return 0
+    raise RuntimeError(
+        "已禁用 --apply：auto_id=True 的 partial upsert 会改写 chunk_id。"
+        "本脚本只允许 dry-run；主键恢复必须使用 recover_stage85_gold_auto_ids.py。"
+    )
 
 
 if __name__ == "__main__":
