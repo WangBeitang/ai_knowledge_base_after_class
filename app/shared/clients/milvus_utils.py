@@ -29,7 +29,9 @@ def get_milvus_client() -> MilvusClient | None:
             logger.info("Milvus客户端连接成功")
         return _milvus_client
     except Exception as e:
-        logger.error(f"Milvus客户端连接异常：{str(e)}", exc_info=True)
+        # grpc 异常文本含有 ``{grpc_status: ...}``。Loguru 会再次把字符串中的花括号
+        # 当成 format 占位符，因此异常对象必须作为参数传入，避免掩盖真实鉴权错误。
+        logger.opt(exception=True).error("Milvus客户端连接异常：{}", str(e))
         return None
 
 

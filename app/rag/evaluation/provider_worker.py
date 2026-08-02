@@ -44,6 +44,7 @@ class ProviderWorker:
 
         required_env = (
             "MILVUS_URL",
+            "MILVUS_TOKEN",
             "CHUNKS_COLLECTION",
             "MONGO_URL",
             "MONGO_DB_NAME",
