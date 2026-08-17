@@ -17,17 +17,25 @@ from typing import Any
 
 from app.rag.query.contracts import UsageMetrics
 
+# 模型 Planner 模式（真实 token usage 尚未接入）：整轮不可证明
+_MODEL_PLANNER_MODES = {"local_base", "sft", "grpo", "http_mock"}
+
 
 def extract_usage_metadata(message) -> dict[str, int | bool]:
     """兼容不同 LangChain provider 的 token 用量字段，并区分“缺失”与“真实 0”。
 
     返回 dict 额外携带 ``answer_usage_available``：
-    - provider 明确存在 usage metadata（任一 token 字段非 None，即使真实值为 0）→ True；
-    - provider 完全没有返回 usage → False（数值 0 只是兼容占位，不是真实用量）。
+    - 仅当 input_tokens 与 output_tokens 都能可靠取得 → True（total_tokens 可由
+      provider 明确返回，或在 input/output 都可信时用两者求和）；
+    - 只提供 total_tokens / 只提供 input / 只提供 output / 字段类型非法等
+      partial usage → False（数值 0 只是兼容占位，不是真实用量）；
+    - provider 明确返回 0/0/0 → True（真实 0 ≠ 缺失）。
     """
     usage = getattr(message, "usage_metadata", None) or {}
     response_metadata = getattr(message, "response_metadata", None) or {}
-    token_usage = response_metadata.get("token_usage") or response_metadata.get("usage") or {}
+    token_usage = (
+        response_metadata.get("token_usage") or response_metadata.get("usage") or {}
+    )
 
     def _first(*names: str) -> int | None:
         for source in (usage, token_usage):
@@ -44,9 +52,16 @@ def extract_usage_metadata(message) -> dict[str, int | bool]:
     raw_output = _first("output_tokens", "completion_tokens")
     raw_total = _first("total_tokens")
 
-    available = raw_input is not None or raw_output is not None or raw_total is not None
-    input_tokens = max(0, raw_input) if raw_input is not None else 0
-    output_tokens = max(0, raw_output) if raw_output is not None else 0
+    # 只有 input 与 output 都可信才算可用（partial usage 不能补 0 冒充真实用量）
+    if raw_input is None or raw_output is None:
+        return {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "answer_usage_available": False,
+        }
+    input_tokens = max(0, raw_input)
+    output_tokens = max(0, raw_output)
     if raw_total is not None:
         total_tokens = max(0, raw_total)
     else:
@@ -55,7 +70,7 @@ def extract_usage_metadata(message) -> dict[str, int | bool]:
         "input_tokens": input_tokens,
         "output_tokens": output_tokens,
         "total_tokens": total_tokens,
-        "answer_usage_available": available,
+        "answer_usage_available": True,
     }
 
 
@@ -83,8 +98,20 @@ def aggregate_query_usage(state: dict[str, Any]) -> UsageMetrics:
     - answer：确定性终态（澄清/拒答不调用答案模型）为确定 0（available=true）；
       真实调用时按 answer_runtime_metadata 的 availability。
 
+    Planner 约束（决策五）：
+    - actual planner 为确定性 ``rule``：不产生 LLM Token，可继续聚合；
+    - actual planner 为 model（local_base/sft/grpo/http_mock）：模型 planner 的
+      token usage 尚未接入（runtime metadata 仍为占位 0）→ 整轮 available=false，
+      绝不把占位 0 当成真实 Token。
+
     任一实际调用缺失/不可信 → 整轮 available=false（数值保留 0 仅为兼容占位）。
     """
+    # model planner 未接真实 token usage 前，整轮不可证明
+    planner_type = str(state.get("planner_type") or "")
+    planner_mode = str(state.get("planner_mode") or "")
+    if planner_type == "model" or planner_mode in _MODEL_PLANNER_MODES:
+        return UsageMetrics(available=False)
+
     parts: list[tuple[bool, int, int, int]] = []
 
     # subject rewrite（必执行）

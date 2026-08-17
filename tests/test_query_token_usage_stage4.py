@@ -9,10 +9,6 @@ E. Trace 摘要投影正数 / unavailable；
 F. 确定性终态（不调用答案 LLM）→ available=true + 确定 0。
 """
 
-import copy
-
-import pytest
-
 from app.rag.management.trace_feedback_service import project_trace_summary
 from app.rag.query.answer_service import _extract_usage_metadata
 from app.rag.query.contracts import UsageMetrics
@@ -65,7 +61,13 @@ def test_extract_usage_metadata_legacy_token_usage_response_metadata():
     """兼容 response_metadata.token_usage / usage 的旧形态 provider。"""
     message = _FakeMessage(
         usage_metadata=None,
-        response_metadata={"token_usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}},
+        response_metadata={
+            "token_usage": {
+                "prompt_tokens": 10,
+                "completion_tokens": 5,
+                "total_tokens": 15,
+            }
+        },
     )
     usage = _extract_usage_metadata(message)
     assert usage["input_tokens"] == 10
@@ -75,11 +77,20 @@ def test_extract_usage_metadata_legacy_token_usage_response_metadata():
 
 
 def test_usage_from_metadata_carries_availability():
-    metrics = _usage_from_metadata({"answer_usage_available": True, "input_tokens": 1, "output_tokens": 2, "total_tokens": 3})
+    metrics = _usage_from_metadata(
+        {
+            "answer_usage_available": True,
+            "input_tokens": 1,
+            "output_tokens": 2,
+            "total_tokens": 3,
+        }
+    )
     assert metrics.available is True
     assert metrics.input_tokens == 1
 
-    metrics_missing = _usage_from_metadata({"input_tokens": 1, "output_tokens": 2, "total_tokens": 3})
+    metrics_missing = _usage_from_metadata(
+        {"input_tokens": 1, "output_tokens": 2, "total_tokens": 3}
+    )
     assert metrics_missing.available is False
 
 
@@ -130,7 +141,12 @@ def test_trace_projection_explicit_zero():
 def test_trace_projection_unavailable_is_null():
     trace = {
         "trace_id": "trace-3",
-        "answer_usage": {"available": False, "input_tokens": 0, "output_tokens": 0, "total_tokens": 0},
+        "answer_usage": {
+            "available": False,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+        },
     }
     summary = project_trace_summary(trace)
     assert summary["token_usage"] == {
@@ -165,7 +181,12 @@ def test_trace_projection_available_with_invalid_numbers_is_null():
     """available=true 但数值缺失/类型非法：保守按不可用投影，不伪造。"""
     trace = {
         "trace_id": "trace-5",
-        "answer_usage": {"available": True, "input_tokens": "abc", "output_tokens": None, "total_tokens": -1},
+        "answer_usage": {
+            "available": True,
+            "input_tokens": "abc",
+            "output_tokens": None,
+            "total_tokens": -1,
+        },
     }
     summary = project_trace_summary(trace)
     assert summary["token_usage"] == {
@@ -180,8 +201,16 @@ def test_trace_projection_does_not_expose_runtime_metadata():
     """投影不得暴露 answer_runtime_metadata 全对象 / prompt / 内部配置。"""
     trace = {
         "trace_id": "trace-6",
-        "answer_runtime_metadata": {"provider": "openai-compatible", "prompt": "secret prompt"},
-        "answer_usage": {"available": True, "input_tokens": 1, "output_tokens": 1, "total_tokens": 2},
+        "answer_runtime_metadata": {
+            "provider": "openai-compatible",
+            "prompt": "secret prompt",
+        },
+        "answer_usage": {
+            "available": True,
+            "input_tokens": 1,
+            "output_tokens": 1,
+            "total_tokens": 2,
+        },
     }
     summary = project_trace_summary(trace)
     assert "answer_runtime_metadata" not in summary
@@ -191,13 +220,17 @@ def test_trace_projection_does_not_expose_runtime_metadata():
 
 def test_usage_metrics_serialization_backward_compatible():
     """UsageMetrics 序列化含 available，且不影响既有数字字段。"""
-    metrics = UsageMetrics(input_tokens=5, output_tokens=3, total_tokens=8, available=True)
+    metrics = UsageMetrics(
+        input_tokens=5, output_tokens=3, total_tokens=8, available=True
+    )
     dumped = metrics.model_dump(mode="json")
     assert dumped["input_tokens"] == 5
     assert dumped["total_tokens"] == 8
     assert dumped["available"] is True
     # 旧结构仍可直接解析（缺省 available=False）
-    legacy = UsageMetrics.model_validate({"input_tokens": 5, "output_tokens": 3, "total_tokens": 8})
+    legacy = UsageMetrics.model_validate(
+        {"input_tokens": 5, "output_tokens": 3, "total_tokens": 8}
+    )
     assert legacy.available is False
 
 
@@ -370,7 +403,9 @@ def test_trace_completion_uses_aggregated_usage(monkeypatch):
         def complete_trace(self, trace_id, fields):
             captured["fields"] = fields
 
-    monkeypatch.setattr(trace_service, "get_retrieval_trace_repository", lambda: FakeRepo())
+    monkeypatch.setattr(
+        trace_service, "get_retrieval_trace_repository", lambda: FakeRepo()
+    )
     trace_service.safe_complete_terminal_step_and_trace(
         state, execution_status=PlannerExecutionStatus.COMPLETED
     )
@@ -379,3 +414,125 @@ def test_trace_completion_uses_aggregated_usage(monkeypatch):
     assert answer_usage["input_tokens"] == 150
     assert answer_usage["output_tokens"] == 30
     assert answer_usage["total_tokens"] == 180
+
+
+# ==================== 二次复核：partial usage 完整性 + model planner（决策四/五）====================
+
+from app.rag.query.token_usage_utils import extract_usage_metadata
+
+
+def _msg(usage_metadata=None, response_metadata=None):
+    return _FakeMessage(
+        usage_metadata=usage_metadata, response_metadata=response_metadata
+    )
+
+
+def test_extract_only_total_is_not_available():
+    """只提供 total_tokens → partial usage → available=false。"""
+    usage = extract_usage_metadata(_msg(usage_metadata={"total_tokens": 100}))
+    assert usage["answer_usage_available"] is False
+    assert usage["input_tokens"] == 0
+    assert usage["output_tokens"] == 0
+
+
+def test_extract_only_input_is_not_available():
+    usage = extract_usage_metadata(_msg(usage_metadata={"input_tokens": 100}))
+    assert usage["answer_usage_available"] is False
+
+
+def test_extract_only_output_is_not_available():
+    usage = extract_usage_metadata(_msg(usage_metadata={"output_tokens": 100}))
+    assert usage["answer_usage_available"] is False
+
+
+def test_extract_input_plus_output_no_total_sums():
+    """input + output 可信、无 total → 求和，available=true。"""
+    usage = extract_usage_metadata(
+        _msg(usage_metadata={"input_tokens": 10, "output_tokens": 5})
+    )
+    assert usage["answer_usage_available"] is True
+    assert usage["input_tokens"] == 10
+    assert usage["output_tokens"] == 5
+    assert usage["total_tokens"] == 15
+
+
+def test_extract_invalid_string_mixed_is_not_available():
+    """非法字符串/None 混合 → partial → available=false。"""
+    usage = extract_usage_metadata(
+        _msg(
+            usage_metadata={
+                "input_tokens": "abc",
+                "output_tokens": 5,
+                "total_tokens": 15,
+            }
+        )
+    )
+    assert usage["answer_usage_available"] is False
+    usage2 = extract_usage_metadata(
+        _msg(
+            usage_metadata={
+                "input_tokens": None,
+                "output_tokens": 5,
+                "total_tokens": 15,
+            }
+        )
+    )
+    assert usage2["answer_usage_available"] is False
+
+
+def test_extract_full_explicit_zero_is_available():
+    """完整真实 0 → available=true（0 也是真实用量）。"""
+    usage = extract_usage_metadata(
+        _msg(usage_metadata={"input_tokens": 0, "output_tokens": 0, "total_tokens": 0})
+    )
+    assert usage["answer_usage_available"] is True
+    assert usage["total_tokens"] == 0
+
+
+def test_aggregate_rule_planner_full_sum():
+    """rule planner + subject/hyde/answer 全 usage 完整 → 正确求和。"""
+    state = {
+        "planner_type": "rule",
+        "subject_rewrite_usage_metadata": _usage(100, 20, 120),
+        "hyde_usage_metadata": _usage(30, 8, 38),
+        "answer_runtime_metadata": _usage(50, 10, 60),
+    }
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is True
+    assert metrics.input_tokens == 180
+    assert metrics.output_tokens == 38
+    assert metrics.total_tokens == 218
+
+
+def test_aggregate_model_planner_type_is_not_available():
+    """planner_type=model → 整轮 available=false（模型 planner token 未接入）。"""
+    state = {
+        "planner_type": "model",
+        "subject_rewrite_usage_metadata": _usage(100, 20, 120),
+        "answer_runtime_metadata": _usage(50, 10, 60),
+    }
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is False
+
+
+def test_aggregate_model_planner_mode_is_not_available():
+    """planner_mode=local_base/sft/grpo/http_mock → available=false。"""
+    for mode in ("local_base", "sft", "grpo", "http_mock"):
+        state = {
+            "planner_mode": mode,
+            "subject_rewrite_usage_metadata": _usage(100, 20, 120),
+            "answer_runtime_metadata": _usage(50, 10, 60),
+        }
+        metrics = aggregate_query_usage(state)
+        assert metrics.available is False, mode
+
+
+def test_aggregate_rule_planner_without_planner_fields_still_works():
+    """旧 state 无 planner_type/planner_mode → 按非 model 处理（向后兼容）。"""
+    state = {
+        "subject_rewrite_usage_metadata": _usage(100, 20, 120),
+        "answer_runtime_metadata": _usage(50, 10, 60),
+    }
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is True
+    assert metrics.input_tokens == 150
