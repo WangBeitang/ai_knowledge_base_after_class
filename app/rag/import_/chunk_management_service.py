@@ -169,6 +169,7 @@ class ChunkManagementService:
             tenant_id: str,
             enabled: bool | None,
             limit: int,
+            offset: int | None = None,
             chunk_id: int | str | None = None,
     ) -> list[dict[str, Any]]:
         dataset_id = str(document.get("dataset_id") or "").strip()
@@ -183,19 +184,20 @@ class ChunkManagementService:
             document_id=str(document.get("document_id") or ""),
             index_version=index_version,
             enabled=enabled,
+            # 真分页：把 chunk_index 范围交给 Milvus 在查询阶段裁剪，
+            # Milvus query limit 只需 page limit，不拉全量。
+            # offset=None（如 chunk_id 详情查询）时不拼范围。
+            chunk_index_min=offset if offset is not None else None,
+            chunk_index_max=None if offset is None else offset + limit,
         )
         if chunk_id is not None:
             filter_expr = f"{filter_expr} AND {_chunk_id_filter_clause(chunk_id)}"
 
-        # document.chunk_count 是当前版本 chunk 数的上界。先取够再在 Python 中按
-        # chunk_index 排序和截断，避免 Milvus 无排序 query 先截断导致列表顺序不稳定。
-        query_limit = max(limit, _as_int(document.get("chunk_count", limit), field_name="chunk_count") or limit)
-        query_limit = min(max(query_limit, 1), 2_000)
         chunks = self.vector_gateway.query_entities(
             collection_name=self.vector_gateway.chunk_collection_name,
             filter_expr=filter_expr,
             output_fields=CHUNK_OUTPUT_FIELDS,
-            limit=query_limit,
+            limit=limit,
         )
         chunks = sorted(
             chunks,
@@ -206,7 +208,7 @@ class ChunkManagementService:
                 str(chunk.get("chunk_id") or ""),
             ),
         )
-        return chunks[:limit]
+        return chunks
 
     def _get_current_chunk(
             self,
@@ -319,14 +321,10 @@ class ChunkManagementService:
     ) -> dict[str, Any]:
         """查看当前用户可见 document 的当前版本 chunk 列表。
 
-        分页兼容补丁：offset 基于当前版本内连续稳定的 chunk_index 排序结果做
-        [offset, offset+limit) 切片（不修改导入、检索或 Milvus Schema）。
+        真分页：offset/limit 以 chunk_index 范围（[offset, offset+limit)）拼入 Milvus
+        filter，查询阶段裁剪，不拉全量（不修改导入、检索或 Milvus Schema）。
         """
         document = self._get_visible_document(document_id, user_id, tenant_id)
-        query_limit = min(
-            max(offset + limit, _as_int(document.get("chunk_count", limit), field_name="chunk_count") or limit),
-            2_000,
-        )
         chunks = self._query_chunks(
             document=document,
             user_id=user_id,
@@ -335,9 +333,9 @@ class ChunkManagementService:
             # 如果直接拼 Milvus enabled == false，会漏掉 base enabled=true 但
             # manual_status=disabled 的人工禁用 chunk。
             enabled=None,
-            limit=query_limit,
+            limit=limit,
+            offset=offset,
         )
-        chunks = chunks[offset:]
         index_version = self._document_index_version(document)
         overrides = self.status_repository.get_overrides(
             document_id=document_id,

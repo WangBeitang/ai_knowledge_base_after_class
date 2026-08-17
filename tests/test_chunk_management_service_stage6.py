@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from app.infra.persistence.chunk_status_repository import (
@@ -167,6 +169,13 @@ class FakeVectorGateway:
             if "enabled == true" in filter_expr and not item.get("enabled"):
                 continue
             if "enabled == false" in filter_expr and item.get("enabled"):
+                continue
+            # chunk_index 半开区间 [min, max)：模拟 Milvus 在查询阶段按范围裁剪
+            min_match = re.search(r"chunk_index >= (\d+)", filter_expr)
+            if min_match and int(item.get("chunk_index", -1)) < int(min_match.group(1)):
+                continue
+            max_match = re.search(r"chunk_index < (\d+)", filter_expr)
+            if max_match and int(item.get("chunk_index", 10**9)) >= int(max_match.group(1)):
                 continue
             result.append(dict(item))
         return result[:limit]
@@ -388,3 +397,67 @@ def test_list_chunk_events_checks_current_chunk_before_returning_history():
     assert result["chunk_id"] == 1001
     assert result["index_version"] == 2
     assert [item["event_id"] for item in result["items"]] == ["event_1"]
+
+
+def test_list_document_chunks_true_pagination_beyond_2000():
+    """真分页：2500 chunk，offset=2000 limit=100 → chunk_index 2000~2099。
+
+    同时断言 Milvus 查询阶段就带了 chunk_index 范围条件且 limit=页大小，
+    而不是拉全量后 Python 切片。
+    """
+    doc = document(chunk_count=2500)
+    chunks = [
+        chunk(chunk_id=1000 + i, chunk_index=i)
+        for i in range(2500)
+    ]
+    vector = FakeVectorGateway(chunks)
+    service = build_service(
+        metadata=FakeMetadataRepository({"doc_1": doc}),
+        vector=vector,
+    )
+
+    result = service.list_document_chunks(
+        document_id="doc_1",
+        user_id="user_a",
+        limit=100,
+        offset=2000,
+    )
+
+    indexes = [item["chunk_index"] for item in result["items"]]
+    assert indexes == list(range(2000, 2100))
+    assert len(result["items"]) == 100
+
+    call = vector.calls[0]
+    assert "chunk_index >= 2000" in call["filter_expr"]
+    assert "chunk_index < 2100" in call["filter_expr"]
+    assert "index_version == 2" in call["filter_expr"]
+    assert 'document_id == "doc_1"' in call["filter_expr"]
+    assert call["limit"] == 100
+
+
+def test_list_document_chunks_default_offset_returns_head_page():
+    """offset 默认 0：第一页 0~limit-1，且 filter 不含排除性范围。"""
+    doc = document(chunk_count=2500)
+    chunks = [
+        chunk(chunk_id=1000 + i, chunk_index=i)
+        for i in range(2500)
+    ]
+    vector = FakeVectorGateway(chunks)
+    service = build_service(
+        metadata=FakeMetadataRepository({"doc_1": doc}),
+        vector=vector,
+    )
+
+    result = service.list_document_chunks(
+        document_id="doc_1",
+        user_id="user_a",
+        limit=50,
+    )
+
+    indexes = [item["chunk_index"] for item in result["items"]]
+    assert indexes == list(range(0, 50))
+
+    call = vector.calls[0]
+    assert "chunk_index >= 0" in call["filter_expr"]
+    assert "chunk_index < 50" in call["filter_expr"]
+    assert call["limit"] == 50

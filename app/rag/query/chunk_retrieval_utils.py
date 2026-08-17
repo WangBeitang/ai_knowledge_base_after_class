@@ -234,6 +234,35 @@ def _build_optional_bool_eq_clause(field_name: str, value, *, value_label: str) 
     return f"{field_name} == {'true' if value else 'false'}"
 
 
+def _build_chunk_index_range_clause(*, index_min: int | None, index_max: int | None) -> str:
+    """
+    构建 chunk_index 半开区间 ``[index_min, index_max)`` 条件（真分页用）。
+
+    两端都可省略：只传 index_min 时拼 ``chunk_index >= N``；只传 index_max 时拼
+    ``chunk_index < N``；都传时用 AND 连接。bool 是 int 的子类，这里显式拒绝，
+    避免 True/False 被当成 1/0 混进范围。
+    """
+    if index_min is None and index_max is None:
+        return ""
+    clauses = []
+    for field_value, label, operator in (
+        (index_min, "chunk_index_min", ">="),
+        (index_max, "chunk_index_max", "<"),
+    ):
+        if field_value is None:
+            continue
+        if isinstance(field_value, bool):
+            raise ValueError(f"{label} 必须是大于等于 0 的整数")
+        try:
+            normalized_value = int(field_value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{label} 必须是大于等于 0 的整数") from exc
+        if normalized_value < 0:
+            raise ValueError(f"{label} 必须是大于等于 0 的整数")
+        clauses.append(f"chunk_index {operator} {normalized_value}")
+    return " AND ".join(clauses)
+
+
 def _build_chunk_visibility_clause(*, owner_user_id: str, tenant_id: str) -> str:
     """
     构建 public/shared/owner 三个可见性分支，并始终返回带括号的 OR 组合。
@@ -300,6 +329,8 @@ def build_chunk_management_filter(
         document_id: str | None = None,
         index_version: int | None = None,
         enabled: bool | None = None,
+        chunk_index_min: int | None = None,
+        chunk_index_max: int | None = None,
 ) -> str:
     """
     生成 chunk 管理列表/详情使用的 Milvus 过滤表达式。
@@ -307,7 +338,9 @@ def build_chunk_management_filter(
     management 的中文含义是“管理场景”。它与检索过滤的边界不同：
     - dataset 和可见性仍然是硬权限条件；
     - document_id、index_version 和 enabled 是可选筛选条件；
-    - enabled 为 None 时不拼 ``enabled == true``，这样管理页才能看到 disabled chunk 并恢复。
+    - enabled 为 None 时不拼 ``enabled == true``，这样管理页才能看到 disabled chunk 并恢复；
+    - chunk_index_min/chunk_index_max 为真分页范围（半开区间 [min, max)），
+      由 Milvus 在查询阶段裁剪，而不是拉全量后 Python 切片。
 
     public/shared/owner 的 OR 分支仍由 ``_build_chunk_visibility_clause`` 统一加括号，不能让
     owner 条件绕过 dataset 或 document 范围。
@@ -343,6 +376,13 @@ def build_chunk_management_filter(
     )
     if enabled_clause:
         clauses.append(enabled_clause)
+
+    chunk_index_range_clause = _build_chunk_index_range_clause(
+        index_min=chunk_index_min,
+        index_max=chunk_index_max,
+    )
+    if chunk_index_range_clause:
+        clauses.append(chunk_index_range_clause)
 
     clauses.append(_build_chunk_visibility_clause(
         owner_user_id=owner_user_id,

@@ -133,7 +133,7 @@ def test_list_document_chunks_endpoint_passes_user_and_enabled_filter(monkeypatc
     monkeypatch.setattr(import_server, "get_chunk_management_service", lambda: service)
 
     response = TestClient(import_server.app).get(
-        "/documents/doc_1/chunks?enabled=false&limit=50",
+        "/documents/doc_1/chunks?enabled=false&limit=50&offset=10",
         headers={"X-User-Id": "user_a"},
     )
 
@@ -152,8 +152,48 @@ def test_list_document_chunks_endpoint_passes_user_and_enabled_filter(monkeypatc
             "tenant_id": "tenant_default",
             "enabled": False,
             "limit": 50,
+            "offset": 10,
         },
     )
+
+
+def test_list_document_chunks_endpoint_offset_defaults_to_zero(monkeypatch):
+    service = FakeChunkManagementService()
+    monkeypatch.setattr(import_server, "get_chunk_management_service", lambda: service)
+
+    response = TestClient(import_server.app).get(
+        "/documents/doc_1/chunks",
+        headers={"X-User-Id": "user_a"},
+    )
+
+    assert response.status_code == 200
+    assert service.calls[0][1]["offset"] == 0
+
+
+def test_list_document_chunks_endpoint_rejects_negative_offset(monkeypatch):
+    service = FakeChunkManagementService()
+    monkeypatch.setattr(import_server, "get_chunk_management_service", lambda: service)
+
+    response = TestClient(import_server.app).get(
+        "/documents/doc_1/chunks?offset=-1",
+        headers={"X-User-Id": "user_a"},
+    )
+
+    assert response.status_code == 422
+    assert service.calls == []
+
+
+def test_list_document_chunks_endpoint_rejects_limit_above_100(monkeypatch):
+    service = FakeChunkManagementService()
+    monkeypatch.setattr(import_server, "get_chunk_management_service", lambda: service)
+
+    response = TestClient(import_server.app).get(
+        "/documents/doc_1/chunks?limit=101",
+        headers={"X-User-Id": "user_a"},
+    )
+
+    assert response.status_code == 422
+    assert service.calls == []
 
 
 def test_chunk_detail_endpoint_returns_full_content(monkeypatch):
