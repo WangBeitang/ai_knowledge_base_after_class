@@ -534,6 +534,7 @@ def list_document_chunks(
         document_id: str,
         enabled: ChunkEnabledFilter = Query(default=ChunkEnabledFilter.ALL),
         limit: int = Query(default=100, ge=1, le=100),
+        offset: int = Query(default=0, ge=0),
 ) -> ChunkListSchema:
     owner_user_id = get_current_user_id(request)
     try:
@@ -543,6 +544,7 @@ def list_document_chunks(
             tenant_id=DEFAULT_TENANT_ID,
             enabled=enabled.to_bool(),
             limit=limit,
+            offset=offset,
         )
         return ChunkListSchema(**result)
     except ChunkManagementError as e:
@@ -565,6 +567,7 @@ def list_chunks(
         document_id: str | None = None,
         enabled: ChunkEnabledFilter = Query(default=ChunkEnabledFilter.ALL),
         limit: int = Query(default=100, ge=1, le=100),
+        offset: int = Query(default=0, ge=0),
 ) -> ChunkListSchema:
     owner_user_id = get_current_user_id(request)
     try:
@@ -580,6 +583,7 @@ def list_chunks(
             tenant_id=DEFAULT_TENANT_ID,
             enabled=enabled.to_bool(),
             limit=limit,
+            offset=offset,
         ))
     except ChunkManagementError as e:
         _raise_chunk_management_http_exception(

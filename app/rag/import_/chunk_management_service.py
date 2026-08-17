@@ -315,11 +315,16 @@ class ChunkManagementService:
             tenant_id: str = DEFAULT_TENANT_ID,
             enabled: bool | None = None,
             limit: int = 100,
+            offset: int = 0,
     ) -> dict[str, Any]:
-        """查看当前用户可见 document 的当前版本 chunk 列表。"""
+        """查看当前用户可见 document 的当前版本 chunk 列表。
+
+        分页兼容补丁：offset 基于当前版本内连续稳定的 chunk_index 排序结果做
+        [offset, offset+limit) 切片（不修改导入、检索或 Milvus Schema）。
+        """
         document = self._get_visible_document(document_id, user_id, tenant_id)
         query_limit = min(
-            max(limit, _as_int(document.get("chunk_count", limit), field_name="chunk_count") or limit),
+            max(offset + limit, _as_int(document.get("chunk_count", limit), field_name="chunk_count") or limit),
             2_000,
         )
         chunks = self._query_chunks(
@@ -332,6 +337,7 @@ class ChunkManagementService:
             enabled=None,
             limit=query_limit,
         )
+        chunks = chunks[offset:]
         index_version = self._document_index_version(document)
         overrides = self.status_repository.get_overrides(
             document_id=document_id,
@@ -366,6 +372,7 @@ class ChunkManagementService:
             document_id: str | None = None,
             enabled: bool | None = None,
             limit: int = 100,
+            offset: int = 0,
     ) -> dict[str, Any]:
         """
         跨 document 查询当前用户可见 chunk。
@@ -379,6 +386,7 @@ class ChunkManagementService:
                 tenant_id=tenant_id,
                 enabled=enabled,
                 limit=limit,
+                offset=offset,
             )
 
         filter_expr = build_chunk_management_filter(
