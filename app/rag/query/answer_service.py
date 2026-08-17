@@ -12,6 +12,7 @@ from app.infra.persistence.history_repository import history_repository
 from app.rag.query.citation_service import build_citations
 from app.rag.query.contracts import Citation, IdentifierResolutionStatus, PlannerReasonCode, RetrievalObservation
 from app.rag.query.query_identifier_service import identifier_requires_clarification
+from app.rag.query.token_usage_utils import extract_usage_metadata
 
 
 def apply_identifier_clarification_guard(state) -> bool:
@@ -122,47 +123,9 @@ def build_answer_prompt(reranked_docs, rewritten_query, standard_subject_names, 
 
 ANSWER_PROMPT_VERSION = "answer-out-v1"
 
-
-def _extract_usage_metadata(message) -> dict[str, int | bool]:
-    """兼容不同 LangChain provider 的 token 用量字段，并区分“缺失”与“真实 0”。
-
-    返回 dict 额外携带 ``answer_usage_available``：
-    - provider 明确存在 usage metadata（任一 token 字段非 None，即使真实值为 0）
-      → True；
-    - provider 完全没有返回 usage → False（数值 0 只是兼容占位，不是真实用量）。
-    """
-    usage = getattr(message, "usage_metadata", None) or {}
-    response_metadata = getattr(message, "response_metadata", None) or {}
-    token_usage = response_metadata.get("token_usage") or response_metadata.get("usage") or {}
-
-    def _first(*names: str) -> int | None:
-        for source in (usage, token_usage):
-            for name in names:
-                value = source.get(name)
-                if value is not None:
-                    try:
-                        return int(value)
-                    except (TypeError, ValueError):
-                        return None
-        return None
-
-    raw_input = _first("input_tokens", "prompt_tokens")
-    raw_output = _first("output_tokens", "completion_tokens")
-    raw_total = _first("total_tokens")
-
-    available = raw_input is not None or raw_output is not None or raw_total is not None
-    input_tokens = max(0, raw_input) if raw_input is not None else 0
-    output_tokens = max(0, raw_output) if raw_output is not None else 0
-    if raw_total is not None:
-        total_tokens = max(0, raw_total)
-    else:
-        total_tokens = input_tokens + output_tokens
-    return {
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
-        "total_tokens": total_tokens,
-        "answer_usage_available": available,
-    }
+# 统一使用 token_usage_utils.extract_usage_metadata（含 availability 语义）；
+# 保留 _extract_usage_metadata 别名以兼容既有测试与调用方。
+_extract_usage_metadata = extract_usage_metadata
 
 
 def generate_final_answer(state, prompt):

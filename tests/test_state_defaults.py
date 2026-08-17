@@ -121,6 +121,9 @@ def test_query_default_state_fields_are_complete():
         "prompt",
         "answer",
         "image_urls",
+        "subject_rewrite_usage_metadata",
+        "hyde_usage_metadata",
+        "provider_strict_errors",
     }
     assert state["is_stream"] is False
     assert state["owner_user_id"] == ""

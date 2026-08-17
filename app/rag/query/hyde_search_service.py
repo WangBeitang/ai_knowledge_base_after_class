@@ -16,6 +16,7 @@ from app.rag.query.config import (
     normalize_retrieval_mode,
 )
 from app.rag.query.contracts import RetrievalChannel, RetrievalMode
+from app.rag.query.token_usage_utils import extract_usage_metadata
 from app.shared.runtime.load_prompt import load_prompt
 from app.shared.runtime.logger import logger,step_log
 
@@ -99,9 +100,12 @@ def generate_hyde_answer(rewritten_query):
     messages = [
         HumanMessage(content=prompt)
     ]
-    chain = llm_client | StrOutputParser()
-    result = chain.invoke(messages)
-    return result
+    # 先拿原始 AIMessage（含 token usage），再用原 StrOutputParser 解析，保持输出语义不变
+    raw_result = llm_client.invoke(messages)
+    usage_metadata = extract_usage_metadata(raw_result)
+    parser = StrOutputParser()
+    result = parser.invoke(raw_result)
+    return result, usage_metadata
 
 
 def build_hyde_grounded_query(state: QueryGraphState, rewritten_query: str) -> str:
@@ -145,7 +149,9 @@ def search_by_hyde(state: QueryGraphState) -> QueryGraphState:
     # 2. 根据问题和已经确认的设备主体生成假设性答案。只把 subject_id 用在 Milvus
     # 过滤中会丢失“这台机器”“大孔”等指代的业务语义，导致 LLM 猜错设备。
     grounded_query = build_hyde_grounded_query(state, rewritten_query)
-    hyde_answer = generate_hyde_answer(grounded_query)
+    hyde_answer, hyde_usage = generate_hyde_answer(grounded_query)
+    # 记录 HyDE LLM 的 token usage（供整轮 Token 聚合）
+    state["hyde_usage_metadata"] = hyde_usage
 
     # 3. 混合检索也使用同一份主体化问题，避免生成阶段和向量化阶段的输入不一致。
     hyde_embedding_chunks = query_chunk_by_milvus(

@@ -61,7 +61,11 @@ def test_confirm_subject_name_writes_subject_ids_and_standard_names(monkeypatch)
     monkeypatch.setattr(
         service,
         "query_rewrite_and_subject_name_recognition",
-        lambda original_query, history_text: ("HAK180 怎么开机？", ["HAK180"]),
+        lambda original_query, history_text: (
+            "HAK180 怎么开机？",
+            ["HAK180"],
+            {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15, "answer_usage_available": True},
+        ),
     )
     monkeypatch.setattr(
         service,

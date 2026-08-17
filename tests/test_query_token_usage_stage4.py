@@ -199,3 +199,183 @@ def test_usage_metrics_serialization_backward_compatible():
     # 旧结构仍可直接解析（缺省 available=False）
     legacy = UsageMetrics.model_validate({"input_tokens": 5, "output_tokens": 3, "total_tokens": 8})
     assert legacy.available is False
+
+
+# ==================== 整轮 Token 聚合（首轮复核决策 2）====================
+
+from app.rag.query.token_usage_utils import aggregate_query_usage
+
+
+def _usage(inp, out, total, available=True):
+    return {
+        "input_tokens": inp,
+        "output_tokens": out,
+        "total_tokens": total,
+        "answer_usage_available": available,
+    }
+
+
+def test_aggregate_subject_plus_answer_sums():
+    """subject rewrite + answer 都有可信 usage → 求和 available=true。"""
+    state = {
+        "subject_rewrite_usage_metadata": _usage(100, 20, 120),
+        "answer_runtime_metadata": _usage(50, 10, 60),
+    }
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is True
+    assert metrics.input_tokens == 150
+    assert metrics.output_tokens == 30
+    assert metrics.total_tokens == 180
+
+
+def test_aggregate_with_hyde_sums():
+    """subject + hyde + answer 全执行且可信 → 求和。"""
+    state = {
+        "subject_rewrite_usage_metadata": _usage(100, 20, 120),
+        "hyde_usage_metadata": _usage(30, 8, 38),
+        "answer_runtime_metadata": _usage(50, 10, 60),
+    }
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is True
+    assert metrics.input_tokens == 180
+    assert metrics.output_tokens == 38
+    assert metrics.total_tokens == 218
+
+
+def test_aggregate_without_hyde_skips_it():
+    """HyDE 未执行（default {}）→ 只聚合 subject + answer。"""
+    state = {
+        "subject_rewrite_usage_metadata": _usage(100, 20, 120),
+        "hyde_usage_metadata": {},
+        "answer_runtime_metadata": _usage(50, 10, 60),
+    }
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is True
+    assert metrics.input_tokens == 150
+
+
+def test_aggregate_missing_subject_is_not_available():
+    """subject usage 缺失（无法证明）→ 整轮 available=false。"""
+    state = {"answer_runtime_metadata": _usage(50, 10, 60)}
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is False
+    assert metrics.input_tokens == 0
+
+
+def test_aggregate_subject_unavailable_is_not_available():
+    """任一实际调用 usage 缺失/不完整 → 整轮 available=false（不补 0 冒充）。"""
+    state = {
+        "subject_rewrite_usage_metadata": _usage(100, 20, 120, available=False),
+        "answer_runtime_metadata": _usage(50, 10, 60),
+    }
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is False
+
+
+def test_aggregate_hyde_unavailable_is_not_available():
+    state = {
+        "subject_rewrite_usage_metadata": _usage(100, 20, 120),
+        "hyde_usage_metadata": _usage(30, 8, 38, available=False),
+        "answer_runtime_metadata": _usage(50, 10, 60),
+    }
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is False
+
+
+def test_aggregate_answer_unavailable_is_not_available():
+    state = {
+        "subject_rewrite_usage_metadata": _usage(100, 20, 120),
+        "answer_runtime_metadata": _usage(50, 10, 60, available=False),
+    }
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is False
+
+
+def test_aggregate_explicit_zero_keeps_zero():
+    """provider 明确返回真实 0 → 仍保存 0（available=true）。"""
+    state = {
+        "subject_rewrite_usage_metadata": _usage(0, 0, 0),
+        "answer_runtime_metadata": _usage(0, 0, 0),
+    }
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is True
+    assert metrics.input_tokens == 0
+    assert metrics.output_tokens == 0
+    assert metrics.total_tokens == 0
+
+
+def test_aggregate_deterministic_terminal_answer_zero():
+    """确定性终态（无 answer_runtime_metadata，不调用答案模型）→ subject + 确定 0。"""
+    state = {"subject_rewrite_usage_metadata": _usage(100, 20, 120)}
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is True
+    assert metrics.input_tokens == 100
+    assert metrics.output_tokens == 20
+    assert metrics.total_tokens == 120
+
+
+def test_aggregate_hyde_structural_error_not_available():
+    state = {
+        "subject_rewrite_usage_metadata": _usage(100, 20, 120),
+        "hyde_usage_metadata": "bad",
+    }
+    metrics = aggregate_query_usage(state)
+    assert metrics.available is False
+
+
+def test_trace_completion_uses_aggregated_usage(monkeypatch):
+    """Trace 收口时 answer_usage 使用整轮聚合结果（subject + answer）。"""
+    from app.rag.query import trace_service
+    from app.rag.query.contracts import (
+        PlannerDecision,
+        PlannerExecutionStatus,
+        PlannerReasonCode,
+        QueryAction,
+    )
+
+    state = {
+        "session_id": "s",
+        "trace_id": "trace-agg",
+        "owner_user_id": "u",
+        "tenant_id": "t",
+        "dataset_ids": ["d"],
+        "original_query": "q",
+        "retrieval_mode": "dense_learned_sparse",
+        "retrieval_config_snapshot": {},
+        "query_started_at": "2026-08-17T00:00:00+00:00",
+        "trace_persistence_enabled": True,
+        "planner_type": "rule",
+        "policy_version": "v1",
+        "planner_runtime_metadata": {},
+        "planner_step": 1,
+        "current_planner_decision": PlannerDecision(
+            action=QueryAction.ANSWER,
+            query="q2",
+            reason_code=PlannerReasonCode.LOCAL_EVIDENCE_SUFFICIENT,
+        ),
+        "subject_rewrite_usage_metadata": _usage(100, 20, 120),
+        "answer_runtime_metadata": _usage(50, 10, 60),
+        "rewritten_query": "q2",
+        "subject_ids": [],
+        "standard_subject_names": [],
+        "citations": [],
+        "image_urls": [],
+    }
+    captured = {}
+
+    class FakeRepo:
+        def complete_step(self, trace_id, step):
+            pass
+
+        def complete_trace(self, trace_id, fields):
+            captured["fields"] = fields
+
+    monkeypatch.setattr(trace_service, "get_retrieval_trace_repository", lambda: FakeRepo())
+    trace_service.safe_complete_terminal_step_and_trace(
+        state, execution_status=PlannerExecutionStatus.COMPLETED
+    )
+    answer_usage = captured["fields"]["answer_usage"]
+    assert answer_usage["available"] is True
+    assert answer_usage["input_tokens"] == 150
+    assert answer_usage["output_tokens"] == 30
+    assert answer_usage["total_tokens"] == 180

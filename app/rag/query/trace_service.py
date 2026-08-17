@@ -33,6 +33,7 @@ from app.rag.query.contracts import (
     UsageMetrics,
 )
 from app.rag.query.query_identifier_service import extract_identifiers_from_record
+from app.rag.query.token_usage_utils import aggregate_query_usage
 from app.shared.runtime.logger import logger
 
 
@@ -399,7 +400,8 @@ def safe_complete_terminal_step_and_trace(
             "answer_model_id": answer_metadata.get("model_id"),
             "answer_model_revision": answer_metadata.get("model_revision"),
             "answer_prompt_version": answer_metadata.get("prompt_version"),
-            "answer_usage": _usage_from_metadata(answer_metadata).model_dump(mode="json"),
+            # 整轮生成式 LLM Token（subject rewrite + HyDE(如执行) + answer）
+            "answer_usage": aggregate_query_usage(state).model_dump(mode="json"),
             "retrieval_config_version": str(
                 state.get("retrieval_config_version") or RETRIEVAL_CONFIG_VERSION
             ),

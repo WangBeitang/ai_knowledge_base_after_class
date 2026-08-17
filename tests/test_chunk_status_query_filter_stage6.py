@@ -166,7 +166,7 @@ def test_hyde_search_excludes_mongo_disabled_chunk_from_actual_query(monkeypatch
     monkeypatch.setattr(
         hyde_search_service,
         "generate_hyde_answer",
-        lambda query: generated_queries.append(query) or "检查 E020 报警。",
+        lambda query: (generated_queries.append(query) or "检查 E020 报警。", {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15, "answer_usage_available": True}),
     )
     monkeypatch.setattr(
         hyde_search_service,

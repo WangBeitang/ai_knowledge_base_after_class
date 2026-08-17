@@ -186,7 +186,11 @@ def test_embedding_and_hyde_reuse_exactly_the_same_filter_expr(monkeypatch):
     monkeypatch.setattr(embedding_search_service, "milvus_gateway", fake_gateway)
     monkeypatch.setattr(hyde_search_service, "llm_provider", fake_llm_provider)
     monkeypatch.setattr(hyde_search_service, "milvus_gateway", fake_gateway)
-    monkeypatch.setattr(hyde_search_service, "generate_hyde_answer", lambda query: "开机前检查急停按钮。")
+    monkeypatch.setattr(
+        hyde_search_service,
+        "generate_hyde_answer",
+        lambda query: ("开机前检查急停按钮。", {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15, "answer_usage_available": True}),
+    )
 
     state = _query_state(query_identifiers={"alarm_code": ["E021"]})
     embedding_result = embedding_search_service.search_by_embedding(copy.deepcopy(state))

@@ -5,6 +5,7 @@ from app.process.query.agent.state import QueryGraphState
 from app.rag.query.config import QUERY_HISTORY_LIMIT, SUBJECT_NAME_CONFIRM_THRESHOLD, SUBJECT_NAME_CANDIDATE_THRESHOLD, \
     SUBJECT_NAME_OPTIONS_TOPK
 from app.rag.query.contracts import SubjectResolutionStatus
+from app.rag.query.token_usage_utils import extract_usage_metadata
 from app.shared.runtime.load_prompt import load_prompt
 from app.shared.runtime.logger import step_log,logger
 
@@ -52,9 +53,12 @@ def query_rewrite_and_subject_name_recognition(original_query, history_text):
     # 2.加载并渲染提示词模板
     prompt = load_prompt("rewritten_query_and_subject_names", history_text=history_text, query=original_query)
 
-    # 3.模型调用
-    chain = llm_client | JsonOutputParser()
-    result_dict = chain.invoke([HumanMessage(content=prompt)])
+    # 3.模型调用：先拿原始 AIMessage（含 token usage），再用原 JsonOutputParser 解析，
+    #    保持既有解析语义（兼容 markdown 代码块等）不改变输出结构。
+    raw_result = llm_client.invoke([HumanMessage(content=prompt)])
+    usage_metadata = extract_usage_metadata(raw_result)
+    parser = JsonOutputParser()
+    result_dict = parser.invoke(raw_result)
 
     # 4.结果处理
     if "subject_mentions" not in result_dict:
@@ -62,7 +66,7 @@ def query_rewrite_and_subject_name_recognition(original_query, history_text):
     if "rewritten_query" not in result_dict:
         result_dict["rewritten_query"] = original_query
 
-    return result_dict["rewritten_query"], result_dict["subject_mentions"]
+    return result_dict["rewritten_query"], result_dict["subject_mentions"], usage_metadata
 
 
 def search_subject_alias_in_milvus(subject_mentions):
@@ -214,8 +218,10 @@ def confirm_subject_name(state: QueryGraphState) -> QueryGraphState:
     history_text = build_history_text(history_messages)
 
     # 4.问题重写和主体提及识别
-    rewritten_query, subject_mentions = query_rewrite_and_subject_name_recognition(original_query, history_text)
+    rewritten_query, subject_mentions, subject_usage = query_rewrite_and_subject_name_recognition(original_query, history_text)
     state["rewritten_query"] = rewritten_query
+    # 记录问题改写 LLM 的 token usage（供整轮 Token 聚合）
+    state["subject_rewrite_usage_metadata"] = subject_usage
 
     # 5. 先初始化结构化主体输出。阶段 9 起主体节点不再把追问/未找到文本偷偷写进 answer；
     # Planner 只读取下面这些事实，决定 ask_clarification、refuse 或继续检索。

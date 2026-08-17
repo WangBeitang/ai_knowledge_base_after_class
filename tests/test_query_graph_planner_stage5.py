@@ -307,7 +307,11 @@ def test_subject_confirmation_writes_structured_status_and_saves_user_message_fo
         monkeypatch.setattr(
             subject_service,
             "query_rewrite_and_subject_name_recognition",
-            lambda original_query, history_text, mentions=mentions: (original_query, mentions),
+            lambda original_query, history_text, mentions=mentions: (
+                original_query,
+                mentions,
+                {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15, "answer_usage_available": True},
+            ),
         )
         monkeypatch.setattr(subject_service, "search_subject_alias_in_milvus", lambda mentions: {"x": []})
         monkeypatch.setattr(

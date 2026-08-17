@@ -245,6 +245,15 @@ class QueryGraphState(TypedDict):
     # 默认空字典；它和 planner_runtime_metadata 分开，便于区分策略成本与生成成本。
     answer_runtime_metadata: dict[str, object]
 
+    # subject rewrite usage metadata 的中文含义是“问题改写/主体识别 LLM 的 token usage
+    # 快照”。node_subject_name_confirm 每轮必执行；与 answer_runtime_metadata 一样携带
+    # answer_usage_available 标记，供整轮生成式 LLM Token 聚合（token_usage_utils）。
+    subject_rewrite_usage_metadata: dict[str, object]
+
+    # hyde usage metadata 的中文含义是“HyDE 假设答案 LLM 的 token usage 快照”。仅当
+    # HyDE 检索节点实际被 Planner 路由时写入非空 dict；未执行时保持默认空字典。
+    hyde_usage_metadata: dict[str, object]
+
     # retrieval config snapshot 的中文含义是“本次查询实际使用的检索配置快照”。与只表示
     # 名称的 retrieval_config_version 不同，这里直接保存 mode、top-k、RRF k、证据阈值
     # 和 Web 开关等真实数值；查询入口创建后不得在同一条 Trace 中途修改。
@@ -341,6 +350,8 @@ query_graph_default_state: QueryGraphState = {
     "citations": [],
     "terminal_reason_code": None,
     "answer_runtime_metadata": {},
+    "subject_rewrite_usage_metadata": {},
+    "hyde_usage_metadata": {},
     "retrieval_config_snapshot": {},
     "provider_strict_errors": False,
     "chunk_status_filter_enabled": False,
