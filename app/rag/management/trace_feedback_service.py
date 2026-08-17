@@ -18,6 +18,33 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _project_token_usage(trace: dict[str, Any]) -> dict[str, Any]:
+    """把答案 Token 用量安全投影为外部可读契约。
+
+    - available=true：返回真实非负整数（包括显式真实 0）；
+    - available=false（provider 没有 usage / 旧 Trace 无 availability 字段）：
+      token 全部为 null，绝不把默认 0 冒充真实 0；
+    - 不暴露 answer_runtime_metadata 全对象、完整 Prompt、成本内部配置、模型 secret。
+    """
+    answer_usage = trace.get("answer_usage") or {}
+    available = bool(answer_usage.get("available", False))
+    if not available:
+        return {"available": False, "input_tokens": None, "output_tokens": None, "total_tokens": None}
+    input_tokens = answer_usage.get("input_tokens")
+    output_tokens = answer_usage.get("output_tokens")
+    total_tokens = answer_usage.get("total_tokens")
+    if not all(isinstance(v, int) and not isinstance(v, bool) and v >= 0
+               for v in (input_tokens, output_tokens, total_tokens)):
+        # available=true 但数值缺失/非法：视为契约异常，保守按不可用投影
+        return {"available": False, "input_tokens": None, "output_tokens": None, "total_tokens": None}
+    return {
+        "available": True,
+        "input_tokens": int(input_tokens),
+        "output_tokens": int(output_tokens),
+        "total_tokens": int(total_tokens),
+    }
+
+
 def project_trace_summary(trace: dict[str, Any]) -> dict[str, Any]:
     """裁剪 Trace 响应，避免对外返回大正文或内部异常细节。"""
     return {
@@ -37,6 +64,7 @@ def project_trace_summary(trace: dict[str, Any]) -> dict[str, Any]:
         "terminal_action": trace.get("terminal_action"),
         "terminal_reason_code": trace.get("terminal_reason_code"),
         "execution_source": str(trace.get("execution_source") or "chat"),
+        "token_usage": _project_token_usage(trace),
     }
 
 

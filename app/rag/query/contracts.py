@@ -567,6 +567,11 @@ class UsageMetrics(QueryContractModel):
 
     规则 Planner 不调用模型，所以 token 和成本均为 0；答案 provider 没有返回 token 时也
     只能诚实记录 0，不能根据文本长度伪造精确 token 数。
+
+    ``available`` 表示本组数值是否为“确认真实的 provider 用量”：
+    - True：provider 明确存在 usage metadata，即使真实值恰好是 0 / 0 / 0；
+    - False：provider 没有返回任何真实 usage（或来自旧 Trace 缺省），数值 0 只是
+      为兼容旧 UsageMetrics 保留的占位，不得冒充真实 0。
     """
 
     input_tokens: NonNegativeInt = 0  # 输入 token 数；provider 未返回时为 0。
@@ -575,6 +580,7 @@ class UsageMetrics(QueryContractModel):
     duration_ms: NonNegativeInt = 0  # 本次 Planner 或答案调用的墙钟耗时，单位毫秒。
     estimated_cost: float = Field(default=0.0, ge=0)  # 估算费用；未配置计价规则时为 0。
     currency: str = "CNY"  # 费用币种。当前仅固化契约，不代表已经配置模型计价。
+    available: bool = False  # 数值是否被确认为真实 provider 用量（旧 Trace 缺省 False）。
 
 
 class RetrievalConfigSnapshot(QueryContractModel):

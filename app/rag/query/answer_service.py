@@ -123,28 +123,52 @@ def build_answer_prompt(reranked_docs, rewritten_query, standard_subject_names, 
 ANSWER_PROMPT_VERSION = "answer-out-v1"
 
 
-def _extract_usage_metadata(message) -> dict[str, int]:
-    """兼容不同 LangChain provider 的 token 用量字段；缺失时诚实返回 0。"""
+def _extract_usage_metadata(message) -> dict[str, int | bool]:
+    """兼容不同 LangChain provider 的 token 用量字段，并区分“缺失”与“真实 0”。
+
+    返回 dict 额外携带 ``answer_usage_available``：
+    - provider 明确存在 usage metadata（任一 token 字段非 None，即使真实值为 0）
+      → True；
+    - provider 完全没有返回 usage → False（数值 0 只是兼容占位，不是真实用量）。
+    """
     usage = getattr(message, "usage_metadata", None) or {}
     response_metadata = getattr(message, "response_metadata", None) or {}
     token_usage = response_metadata.get("token_usage") or response_metadata.get("usage") or {}
-    input_tokens = int(usage.get("input_tokens") or token_usage.get("prompt_tokens") or 0)
-    output_tokens = int(usage.get("output_tokens") or token_usage.get("completion_tokens") or 0)
-    total_tokens = int(
-        usage.get("total_tokens")
-        or token_usage.get("total_tokens")
-        or input_tokens + output_tokens
-    )
+
+    def _first(*names: str) -> int | None:
+        for source in (usage, token_usage):
+            for name in names:
+                value = source.get(name)
+                if value is not None:
+                    try:
+                        return int(value)
+                    except (TypeError, ValueError):
+                        return None
+        return None
+
+    raw_input = _first("input_tokens", "prompt_tokens")
+    raw_output = _first("output_tokens", "completion_tokens")
+    raw_total = _first("total_tokens")
+
+    available = raw_input is not None or raw_output is not None or raw_total is not None
+    input_tokens = max(0, raw_input) if raw_input is not None else 0
+    output_tokens = max(0, raw_output) if raw_output is not None else 0
+    if raw_total is not None:
+        total_tokens = max(0, raw_total)
+    else:
+        total_tokens = input_tokens + output_tokens
     return {
-        "input_tokens": max(0, input_tokens),
-        "output_tokens": max(0, output_tokens),
-        "total_tokens": max(0, total_tokens),
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "total_tokens": total_tokens,
+        "answer_usage_available": available,
     }
 
 
 def generate_final_answer(state, prompt):
     final_answer = ""
     usage_metadata = {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
+    usage_available = False
     started_at = perf_counter()
     # 1.获取模型对象
     client = llm_provider.chat()
@@ -165,13 +189,15 @@ def generate_final_answer(state, prompt):
             chunk_usage = _extract_usage_metadata(chunk)
             # 流式 provider 通常只在最后一个 chunk 返回累计 usage；取最大值可以兼容累计
             # 和仅末包两种形态，又不会把累计 token 在每个 chunk 上重复相加。
+            usage_available = usage_available or bool(chunk_usage.pop("answer_usage_available", False))
             for key, value in chunk_usage.items():
-                usage_metadata[key] = max(usage_metadata[key], value)
+                usage_metadata[key] = max(usage_metadata[key], int(value))
     else:
         result = client.invoke(prompt)
         logger.warning(f"大模型invoke返回结果为：======={str(result)}")
         final_answer = result.content
         usage_metadata = _extract_usage_metadata(result)
+        usage_available = bool(usage_metadata.pop("answer_usage_available", False))
 
     state["answer"] = final_answer
     state["answer_runtime_metadata"] = {
@@ -182,6 +208,7 @@ def generate_final_answer(state, prompt):
         "model_revision": None,
         "prompt_version": ANSWER_PROMPT_VERSION,
         **usage_metadata,
+        "answer_usage_available": usage_available,
         "duration_ms": max(0, int((perf_counter() - started_at) * 1000)),
         "estimated_cost": 0.0,
         "currency": "CNY",
@@ -253,6 +280,21 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
     # 0.编号候选尚未被用户确认时先触发安全保护。保护会写入已有 answer，随后复用统一的
     # 流式/非流式交付逻辑；因此不会调用答案 LLM，也不会生成 Citation。
     apply_identifier_clarification_guard(state)
+
+    # 任何终止路径都必须有 answer 运行时元数据，供 Trace 区分“调用了答案模型（可能
+    # 真实 0）”与“根本没有调用答案模型（确定 0）”。确定性终态（澄清/业务拒答）不
+    # 调用答案 LLM，因此 token 是确定的 0，available=true；随后真正调用答案 LLM 的
+    # generate_final_answer 会覆盖本默认值。
+    if not state.get("answer_runtime_metadata"):
+        state["answer_runtime_metadata"] = {
+            "answer_usage_available": True,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "duration_ms": 0,
+            "estimated_cost": 0.0,
+            "currency": "CNY",
+        }
 
     # 1.如果已有答案，直接返回
     if not try_return_existing_answer(state):

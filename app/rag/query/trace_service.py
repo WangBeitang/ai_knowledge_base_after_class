@@ -74,6 +74,9 @@ def _citation_trace_identity(citation: Citation) -> tuple[str, str]:
 
 def _usage_from_metadata(metadata: dict[str, object] | None, *, duration_ms: int | None = None) -> UsageMetrics:
     metadata = dict(metadata or {})
+    # answer_runtime_metadata 用 answer_usage_available 标记真实性（Stage 4 决策）；
+    # 其余来源（如 planner_runtime_metadata）没有该字段时保持 available=False。
+    available = bool(metadata.get("answer_usage_available", metadata.get("available", False)))
     input_tokens = max(0, int(metadata.get("input_tokens") or 0))
     output_tokens = max(0, int(metadata.get("output_tokens") or 0))
     total_tokens = max(0, int(metadata.get("total_tokens") or input_tokens + output_tokens))
@@ -84,6 +87,7 @@ def _usage_from_metadata(metadata: dict[str, object] | None, *, duration_ms: int
         duration_ms=max(0, int(duration_ms if duration_ms is not None else metadata.get("duration_ms") or 0)),
         estimated_cost=max(0.0, float(metadata.get("estimated_cost") or 0.0)),
         currency=str(metadata.get("currency") or "CNY"),
+        available=available,
     )
 
 
